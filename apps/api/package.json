@@ -1,0 +1,29 @@
+{
+  "name": "@mywatch/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts --format esm --dts",
+    "start": "node dist/index.js",
+    "test": "vitest run --reporter=verbose",
+    "migrate": "tsx src/db/migrate.ts"
+  },
+  "dependencies": {
+    "@fastify/jwt": "^9.0.0",
+    "@mywatch/core": "workspace:*",
+    "@mywatch/sync": "workspace:*",
+    "apple-signin-auth": "^1.7.5",
+    "bcryptjs": "^2.4.3",
+    "fastify": "^5.0.0",
+    "google-auth-library": "^9.14.0",
+    "postgres": "^3.4.4"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "tsx": "^4.7.0",
+    "vitest": "^2.0.0"
+  }
+}
