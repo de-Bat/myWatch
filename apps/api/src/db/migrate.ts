@@ -31,8 +31,10 @@ async function migrate() {
     }
 
     const content = await readFile(join(MIGRATIONS_DIR, file), 'utf-8')
-    await sql.unsafe(content)
-    await sql`INSERT INTO schema_migrations (version) VALUES (${version})`
+    await sql.begin(async (tx) => {
+      await tx.unsafe(content)
+      await tx`INSERT INTO schema_migrations (version) VALUES (${version})`
+    })
     console.log(`  apply ${file}`)
   }
 

@@ -17,12 +17,19 @@ CREATE TABLE IF NOT EXISTS oauth_accounts (
   UNIQUE(provider, provider_account_id)
 );
 
-CREATE TYPE media_type AS ENUM ('movie', 'tv');
-CREATE TYPE watch_status AS ENUM ('planned', 'in_progress', 'watched', 'quit');
+DO $$ BEGIN
+  CREATE TYPE media_type AS ENUM ('movie', 'tv');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE watch_status AS ENUM ('planned', 'in_progress', 'watched', 'quit');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS watchlist_items (
-  id UUID PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES users(id),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   tmdb_id INTEGER NOT NULL,
   media_type media_type NOT NULL,
   status watch_status NOT NULL,
@@ -56,9 +63,4 @@ CREATE TABLE IF NOT EXISTS media_cache (
   show_status TEXT,
   cached_at TIMESTAMPTZ NOT NULL,
   PRIMARY KEY (tmdb_id, media_type)
-);
-
-CREATE TABLE IF NOT EXISTS schema_migrations (
-  version TEXT PRIMARY KEY,
-  applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
