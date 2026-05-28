@@ -70,4 +70,37 @@ describe('mediaCacheSchema', () => {
     }
     expect(() => mediaCacheSchema.parse(entry)).not.toThrow()
   })
+
+  it('rejects empty title', () => {
+    const entry = {
+      tmdbId: 603, mediaType: 'movie', title: '', overview: '',
+      posterPath: null, backdropPath: null, releaseDate: null,
+      genres: [], voteAverage: 7.0, voteCount: 100,
+      runtime: null, seasonsCount: null, showStatus: null,
+      cachedAt: '2026-01-01T00:00:00.000Z',
+    }
+    expect(() => mediaCacheSchema.parse(entry)).toThrow()
+  })
+
+  it('rejects voteAverage above 10', () => {
+    const entry = {
+      tmdbId: 603, mediaType: 'movie', title: 'Test', overview: '',
+      posterPath: null, backdropPath: null, releaseDate: null,
+      genres: [], voteAverage: 10.1, voteCount: 100,
+      runtime: null, seasonsCount: null, showStatus: null,
+      cachedAt: '2026-01-01T00:00:00.000Z',
+    }
+    expect(() => mediaCacheSchema.parse(entry)).toThrow()
+  })
+
+  it('rejects non-datetime cachedAt', () => {
+    const entry = {
+      tmdbId: 603, mediaType: 'movie', title: 'Test', overview: '',
+      posterPath: null, backdropPath: null, releaseDate: null,
+      genres: [], voteAverage: 7.0, voteCount: 100,
+      runtime: null, seasonsCount: null, showStatus: null,
+      cachedAt: 'not-a-date',
+    }
+    expect(() => mediaCacheSchema.parse(entry)).toThrow()
+  })
 })
