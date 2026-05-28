@@ -28,7 +28,7 @@ export class TmdbClient {
     }
     const res = await fetch(url.toString())
     if (!res.ok) {
-      throw new Error(`TMDB ${path} failed: ${res.status} ${res.statusText}`)
+      throw new Error(`TMDB ${path} failed: ${res.status}`)
     }
     return res.json() as Promise<T>
   }
