@@ -20,33 +20,65 @@ export function MediaCard({ result, existingStatus, onAdd }: Props) {
       : result.first_air_date?.slice(0, 4)
 
   return (
-    <div className="flex gap-3 p-3 rounded-lg bg-zinc-800">
+    <div
+      className="flex gap-3 rounded-[var(--r)] border"
+      style={{ padding: '11px 12px', background: 'var(--surface)', borderColor: 'var(--border2)' }}
+    >
       <Link href={`/media/${result.media_type}/${result.id}`} className="flex-shrink-0">
-        <div className="w-12 h-[72px] rounded overflow-hidden bg-zinc-700">
+        <div
+          className="w-[52px] h-[78px] rounded-[6px] overflow-hidden"
+          style={{ background: 'var(--surface2)' }}
+        >
           {result.poster_path && (
             <img
               src={`${TMDB_IMG}${result.poster_path}`}
               alt={title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover block"
             />
           )}
         </div>
       </Link>
-      <div className="flex-1 min-w-0">
+
+      <div className="flex-1 min-w-0 flex flex-col gap-[3px] pt-[1px]">
         <Link href={`/media/${result.media_type}/${result.id}`}>
-          <p className="font-medium text-sm truncate hover:text-indigo-300">{title}</p>
+          <div
+            className="text-[14px] font-semibold tracking-[-0.015em] truncate leading-[1.25] hover:opacity-80"
+            style={{ color: 'var(--fg)' }}
+          >
+            {title}
+          </div>
         </Link>
-        <p className="text-xs text-zinc-400 mt-0.5">
-          {year} · {result.media_type === 'movie' ? 'Movie' : 'TV'} · ★{' '}
-          {result.vote_average.toFixed(1)}
-        </p>
-        <div className="mt-2">
+
+        <div
+          className="flex items-center gap-[5px] text-[11.5px] leading-none mb-[2px]"
+          style={{ color: 'var(--muted2)' }}
+        >
+          {year && <span>{year}</span>}
+          {year && <span style={{ opacity: 0.4 }}>·</span>}
+          <span
+            className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase leading-[1.3] px-[5px] py-[1.5px] rounded-[3px]"
+            style={
+              result.media_type === 'movie'
+                ? { background: 'rgba(251,146,60,.13)', color: 'var(--orange)' }
+                : { background: 'rgba(168,85,247,.13)', color: 'var(--purple)' }
+            }
+          >
+            {result.media_type === 'movie' ? 'Movie' : 'TV'}
+          </span>
+          <span style={{ opacity: 0.4 }}>·</span>
+          <span>★ {result.vote_average.toFixed(1)}</span>
+        </div>
+
+        <div className="mt-1">
           {existingStatus ? (
             <StatusBadge status={existingStatus} />
           ) : (
             <button
               onClick={() => onAdd(result)}
-              className="text-xs px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-500"
+              className="text-[11px] font-semibold px-[10px] py-[3px] rounded-full border-none cursor-pointer"
+              style={{ background: 'var(--accent)', color: '#fff' }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#4f46e5')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}
             >
               + Add
             </button>

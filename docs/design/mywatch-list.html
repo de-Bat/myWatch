@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>myWatch</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#18181b; --surface:#27272a; --s2:#2f2f33; --border:#3f3f46; --bs:#2d2d31;
+  --fg:#f4f4f5; --fg2:#d4d4d8; --mu:#a1a1aa; --mu2:#71717a;
+  --ac:#6366f1; --ac2:#818cf8; --acb:rgba(99,102,241,.14);
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+html,body { height:100%; background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',system-ui,sans-serif;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+
+/* === PLATFORM SWITCHER === */
+.psw { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); z-index:1000;
+  background:rgba(24,24,27,.92); backdrop-filter:blur(14px); border:1px solid var(--border);
+  border-radius:9999px; padding:4px 6px; display:flex; gap:2px;
+  box-shadow:0 4px 24px rgba(0,0,0,.55); }
+.psb { padding:5px 13px; border-radius:9999px; border:none; background:transparent;
+  color:var(--mu); font-size:12px; font-weight:600; cursor:pointer; transition:all .12s; }
+.psb.active { background:var(--ac); color:#fff; }
+.psb:not(.active):hover { color:var(--fg2); background:var(--surface); }
+
+/* === MOBILE / WEB === */
+.app { max-width:600px; margin:0 auto; padding:0 0 90px; }
+body[data-p="tv"] .app { display:none; }
+
+.app-hd { position:sticky; top:0; z-index:50; background:var(--bg); padding:14px 16px 0; }
+.hd-row { display:flex; align-items:center; gap:10px; padding-bottom:12px; }
+.wm { font-size:12px; font-weight:800; color:var(--ac2); background:var(--acb);
+  padding:3px 8px; border-radius:5px; letter-spacing:-.01em; }
+.pg-title { font-size:18px; font-weight:700; letter-spacing:-.03em;
+  display:flex; align-items:center; gap:7px; flex:1; }
+.cnt-pill { font-size:11px; font-weight:600; color:var(--mu2); background:var(--surface);
+  border:1px solid var(--border); border-radius:9999px; padding:1px 7px;
+  font-variant-numeric:tabular-nums; }
+.hd-acts { display:flex; gap:2px; align-items:center; }
+.ibtn { width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+  border:none; background:transparent; color:var(--mu); border-radius:8px;
+  cursor:pointer; transition:all .1s; }
+.ibtn:hover { background:var(--surface); color:var(--fg2); }
+.avatar { width:30px; height:30px; border-radius:50%; background:var(--acb);
+  border:1.5px solid var(--ac); color:var(--ac2); font-size:11px; font-weight:800;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; margin-left:4px; }
+
+.stabs { display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; padding-bottom:10px; }
+.stabs::-webkit-scrollbar { display:none; }
+.stab { flex-shrink:0; display:inline-flex; align-items:center; gap:5px; padding:5px 11px;
+  border-radius:9999px; border:1px solid transparent; background:var(--surface);
+  color:var(--mu); font-size:13px; font-weight:500; cursor:pointer; transition:all .12s;
+  white-space:nowrap; line-height:1; }
+.stab:hover { color:var(--fg2); border-color:var(--border); }
+.stab.on { background:var(--ac); color:#fff; font-weight:600; }
+.tabn { font-size:10px; font-weight:700; padding:1px 5px; border-radius:9999px;
+  min-width:18px; text-align:center; line-height:1.5;
+  background:rgba(255,255,255,.15); }
+.stab:not(.on) .tabn { background:var(--bs); color:var(--mu2); }
+
+.ctrl-row { display:flex; align-items:center; gap:8px; padding-bottom:12px;
+  border-bottom:1px solid var(--bs); }
+.seg { display:flex; background:var(--surface); border:1px solid var(--border);
+  border-radius:7px; padding:2px; }
+.sgb { padding:4px 10px; border-radius:5px; border:none; background:transparent;
+  color:var(--mu); font-size:12px; font-weight:500; cursor:pointer; transition:all .1s;
+  white-space:nowrap; line-height:1; }
+.sgb:hover { color:var(--fg2); }
+.sgb.on { background:var(--s2); color:var(--fg); font-weight:600; }
+.srt-btn { display:flex; align-items:center; gap:5px; padding:5px 10px;
+  border-radius:7px; border:1px solid var(--border); background:var(--surface);
+  color:var(--mu); font-size:12px; font-weight:500; cursor:pointer; margin-left:auto;
+  transition:all .1s; white-space:nowrap; }
+.srt-btn:hover { color:var(--fg2); border-color:var(--mu2); }
+
+/* === CARD LIST === */
+.list { padding:12px 16px; display:flex; flex-direction:column; gap:5px; }
+.card { display:flex; gap:12px; padding:11px 12px; border-radius:11px;
+  border:1px solid var(--bs); background:var(--surface); cursor:pointer;
+  transition:background .1s,border-color .12s,transform .12s,box-shadow .12s;
+  align-items:flex-start; }
+.card:hover { background:var(--s2); border-color:var(--border);
+  transform:translateY(-1px); box-shadow:0 3px 12px rgba(0,0,0,.3); }
+.card:active { transform:translateY(0); }
+.pw { flex-shrink:0; width:52px; height:78px; border-radius:7px; overflow:hidden;
+  box-shadow:0 2px 8px rgba(0,0,0,.4); }
+.pw img { width:100%; height:100%; object-fit:cover; display:block; }
+.ci { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; padding-top:2px; }
+.ct { font-size:14px; font-weight:600; letter-spacing:-.015em; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; color:var(--fg); line-height:1.25; }
+.cm { display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--mu2); line-height:1; }
+.tbadge { font-size:9px; font-weight:800; letter-spacing:.07em; padding:1.5px 5px;
+  border-radius:3px; text-transform:uppercase; line-height:1.4; }
+.tbadge.movie { background:rgba(251,146,60,.13); color:#fb923c; }
+.tbadge.tv { background:rgba(168,85,247,.13); color:#c084fc; }
+.csr { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:2px; }
+.sb { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600;
+  padding:2px 7px; border-radius:9999px; line-height:1.4; }
+.sb::before { content:''; width:5px; height:5px; border-radius:50%;
+  background:currentColor; flex-shrink:0; }
+.sb.planned { background:rgba(96,165,250,.13); color:#60a5fa; }
+.sb.in_progress { background:rgba(251,191,36,.13); color:#fbbf24; }
+.sb.watched { background:rgba(74,222,128,.13); color:#4ade80; }
+.sb.quit { background:rgba(248,113,113,.13); color:#f87171; }
+.eppill { font-size:11px; color:var(--mu2); background:var(--bg);
+  border:1px solid var(--bs); border-radius:9999px; padding:1.5px 7px;
+  font-variant-numeric:tabular-nums; line-height:1.4; }
+.crt { flex-shrink:0; padding-top:2px; display:flex; flex-direction:column;
+  align-items:flex-end; gap:4px; }
+.rat { font-size:13px; font-weight:700; color:#fbbf24; display:flex; align-items:center; gap:2px; }
+
+/* === DETAIL SHEET === */
+.ov { position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(4px);
+  z-index:100; opacity:0; pointer-events:none; transition:opacity .25s; }
+.ov.open { opacity:1; pointer-events:all; }
+.sheet { position:fixed; bottom:0; left:0; right:0; z-index:101;
+  background:#1e1e22; border-radius:18px 18px 0 0; max-height:90vh;
+  overflow-y:auto; transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.32,.72,0,1);
+  padding-bottom:max(var(--safe-b),24px); }
+body[data-p="web"] .sheet { max-width:480px; left:auto; right:20px; bottom:20px;
+  border-radius:18px; max-height:calc(100vh - 40px); }
+.sheet.open { transform:translateY(0); }
+.sh-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:10px auto 0; }
+body[data-p="web"] .sh-handle { display:none; }
+.sh-back { width:100%; height:170px; position:relative; overflow:hidden; margin-bottom:-28px; flex-shrink:0; }
+.sh-back::after { content:''; position:absolute; inset:0;
+  background:linear-gradient(to bottom,rgba(30,30,34,0) 30%,#1e1e22 100%); }
+.sh-xcl { position:absolute; top:12px; right:12px; z-index:10; width:30px; height:30px;
+  border-radius:50%; background:rgba(0,0,0,.55); backdrop-filter:blur(6px);
+  border:none; color:rgba(255,255,255,.8); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:background .1s; }
+.sh-xcl:hover { background:rgba(0,0,0,.75); }
+.sh-body { padding:0 18px 12px; position:relative; }
+.sh-hdr { display:flex; gap:14px; align-items:flex-end; margin-bottom:14px; }
+.sh-pst { flex-shrink:0; width:80px; height:120px; border-radius:8px; overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,.6); margin-top:-8px; }
+.sh-pst img { width:100%; height:100%; object-fit:cover; }
+.sh-tb { flex:1; min-width:0; padding-bottom:4px; }
+.sh-title { font-size:20px; font-weight:800; letter-spacing:-.03em; line-height:1.1; margin-bottom:5px; }
+.sh-meta { display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+  font-size:12px; color:var(--mu); margin-bottom:6px; }
+.gtag { background:var(--surface); border:1px solid var(--bs); border-radius:4px;
+  padding:2px 6px; font-size:10.5px; font-weight:500; color:var(--mu); }
+.sh-rat { font-size:15px; font-weight:700; color:#fbbf24; }
+.sh-syn { font-size:13px; line-height:1.6; color:var(--fg2); margin-bottom:14px; }
+.sh-lbl { font-size:10px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.08em; color:var(--mu2); margin-bottom:8px; }
+.cast-list { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+.cc { padding:4px 10px; background:var(--surface); border:1px solid var(--bs);
+  border-radius:9999px; font-size:12px; color:var(--fg2); }
+.ep-bar-wrap { height:4px; background:var(--border); border-radius:2px; overflow:hidden; margin-bottom:4px; }
+.ep-bar { height:100%; background:var(--ac); border-radius:2px; transition:width .4s; }
+.ep-lbl { font-size:11.5px; color:var(--mu2); margin-bottom:14px; }
+.sh-acts { display:flex; gap:8px; flex-wrap:wrap; padding-top:4px; }
+.abtn { flex:1; min-width:0; padding:9px 12px; border-radius:8px; border:1px solid var(--border);
+  background:var(--surface); color:var(--fg2); font-size:12.5px; font-weight:600;
+  cursor:pointer; text-align:center; transition:all .1s; white-space:nowrap; }
+.abtn:hover { background:var(--s2); border-color:var(--mu2); }
+.abtn.pri { background:var(--ac); border-color:transparent; color:#fff; }
+.abtn.pri:hover { background:#4f46e5; }
+.abtn.dng { color:#f87171; }
+.abtn.dng:hover { background:rgba(248,113,113,.1); border-color:rgba(248,113,113,.3); }
+
+/* === TV === */
+.app-tv { display:none; height:100vh; overflow:hidden; padding:5vh 6vw;
+  flex-direction:column; gap:0; }
+body[data-p="tv"] .app-tv { display:flex; }
+.tv-hd { display:flex; align-items:center; gap:20px; margin-bottom:2.5vh; }
+.tv-wm { font-size:20px; font-weight:800; color:var(--ac2); background:var(--acb);
+  padding:5px 14px; border-radius:6px; letter-spacing:-.02em; }
+.tv-pg { font-size:28px; font-weight:700; letter-spacing:-.04em; }
+
+.tv-hero { display:flex; gap:28px; margin-bottom:3vh; align-items:flex-end; min-height:140px; }
+.tv-hp { flex-shrink:0; width:90px; height:135px; border-radius:8px; overflow:hidden;
+  box-shadow:0 8px 30px rgba(0,0,0,.7); }
+.tv-hp img { width:100%; height:100%; object-fit:cover; }
+.tv-hi { flex:1; padding-bottom:4px; }
+.tv-ht { font-size:34px; font-weight:800; letter-spacing:-.04em; line-height:1.05; margin-bottom:7px; }
+.tv-hm { font-size:13px; color:var(--mu); margin-bottom:9px; display:flex; align-items:center; gap:8px; }
+.tv-hs { font-size:13px; color:var(--mu); max-width:520px; line-height:1.55;
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+
+.tv-rows { flex:1; overflow:hidden; display:flex; flex-direction:column; gap:2.5vh; }
+.tv-row-lbl { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--mu2); margin-bottom:10px; }
+.tv-row-cards { display:flex; gap:14px; overflow:hidden; }
+.tvc { flex-shrink:0; width:100px; cursor:pointer; transition:transform .15s,box-shadow .15s;
+  outline:none; border-radius:8px; }
+.tvc:focus, .tvc.foc { transform:scale(1.07) translateY(-3px);
+  box-shadow:0 0 0 3px var(--ac),0 10px 30px rgba(0,0,0,.6); }
+.tvc-p { width:100px; height:150px; border-radius:8px; overflow:hidden; margin-bottom:6px;
+  box-shadow:0 4px 12px rgba(0,0,0,.5); }
+.tvc-p img { width:100%; height:100%; object-fit:cover; display:block; }
+.tvc-t { font-size:10.5px; font-weight:600; color:var(--fg2); white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; padding:0 2px; }
+
+.tv-ov { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.85);
+  backdrop-filter:blur(10px); display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .2s; }
+.tv-ov.open { opacity:1; pointer-events:all; }
+.tv-det { background:#1e1e22; border-radius:16px; width:min(760px,90vw);
+  max-height:82vh; overflow:hidden; display:flex; flex-direction:column;
+  box-shadow:0 20px 60px rgba(0,0,0,.85); }
+.tv-dback { height:200px; position:relative; overflow:hidden; flex-shrink:0; }
+.tv-dback::after { content:''; position:absolute; inset:0;
+  background:linear-gradient(to bottom,rgba(30,30,34,0) 30%,#1e1e22 100%); }
+.tv-dbody { padding:0 26px 22px; display:flex; gap:22px; overflow-y:auto; }
+.tv-dpst { flex-shrink:0; width:95px; height:142px; border-radius:8px; overflow:hidden;
+  margin-top:-18px; box-shadow:0 4px 20px rgba(0,0,0,.6); }
+.tv-dpst img { width:100%; height:100%; object-fit:cover; }
+.tv-dinf { flex:1; padding-top:10px; }
+.tv-dtitle { font-size:24px; font-weight:800; letter-spacing:-.04em; margin-bottom:6px; }
+.tv-dmeta { display:flex; flex-wrap:wrap; gap:8px; font-size:13px;
+  color:var(--mu); margin-bottom:10px; align-items:center; }
+.tv-dsyn { font-size:13px; color:var(--fg2); line-height:1.6; margin-bottom:12px;
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }
+.tv-dcast { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+.tv-dacts { display:flex; gap:10px; }
+.tvab { padding:9px 18px; border-radius:8px; border:1.5px solid var(--border);
+  background:var(--surface); color:var(--fg2); font-size:13px; font-weight:600;
+  cursor:pointer; transition:all .12s; }
+.tvab:hover,.tvab:focus { background:var(--s2); border-color:var(--ac); color:var(--fg); outline:none; }
+.tvab.pri { background:var(--ac); border-color:transparent; color:#fff; }
+.tvab.pri:hover,.tvab.pri:focus { background:#4f46e5; }
+
+/* === BOTTOM TAB BAR (mobile only) === */
+.tbar { position:fixed; bottom:0; left:0; right:0;
+  background:rgba(24,24,27,.94); backdrop-filter:blur(14px);
+  border-top:1px solid var(--bs); display:flex;
+  padding:8px 0 max(var(--safe-b),8px); z-index:90; }
+body[data-p="tv"] .tbar, body[data-p="web"] .tbar { display:none; }
+.ti { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+  padding:4px 0; color:var(--mu2); font-size:10px; font-weight:500; cursor:pointer; transition:color .1s; }
+.ti.on { color:var(--ac2); }
+
+/* === EMPTY === */
+.empty { display:flex; flex-direction:column; align-items:center; gap:12px;
+  padding:64px 16px; text-align:center; }
+.ei { width:52px; height:52px; border-radius:12px; background:var(--surface);
+  border:1px solid var(--border); display:flex; align-items:center;
+  justify-content:center; color:var(--mu2); }
+.et { font-size:15px; font-weight:600; color:var(--fg2); }
+.es { font-size:13px; color:var(--mu2); max-width:220px; line-height:1.5; }
+
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body data-p="mobile">
+
+<!-- MOBILE / WEB -->
+<div class="app">
+  <header class="app-hd">
+    <div class="hd-row">
+      <span class="wm">myWatch</span>
+      <h1 class="pg-title">My List <span class="cnt-pill" id="cnt">8</span></h1>
+      <div class="hd-acts">
+        <button class="ibtn" title="Search">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><line x1="13" y1="13" x2="17.5" y2="17.5"/></svg>
+        </button>
+        <div class="avatar">R</div>
+      </div>
+    </div>
+    <div class="stabs" id="stabs"></div>
+    <div class="ctrl-row">
+      <div class="seg" id="seg"></div>
+      <button class="srt-btn" id="srtbtn">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="10" y2="8"/><line x1="2" y1="12" x2="6" y2="12"/></svg>
+        <span id="srtlbl">Recently Updated</span>
+      </button>
+    </div>
+  </header>
+  <div class="list" id="list"></div>
+</div>
+
+<!-- TV LAYOUT -->
+<div class="app-tv">
+  <header class="tv-hd">
+    <span class="tv-wm">myWatch</span>
+    <span class="tv-pg">My List</span>
+  </header>
+  <div class="tv-hero" id="tvhero"></div>
+  <div class="tv-rows" id="tvrows"></div>
+</div>
+
+<!-- DETAIL SHEET (mobile/web) -->
+<div class="ov" id="ov"></div>
+<div class="sheet" id="sheet">
+  <div class="sh-handle"></div>
+  <div class="sh-back" id="sh-back">
+    <button class="sh-xcl" id="sh-xcl">
+      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/></svg>
+    </button>
+  </div>
+  <div class="sh-body" id="sh-body"></div>
+</div>
+
+<!-- TV DETAIL OVERLAY -->
+<div class="tv-ov" id="tvov">
+  <div class="tv-det" id="tvdet"></div>
+</div>
+
+<!-- BOTTOM TAB BAR -->
+<nav class="tbar">
+  <div class="ti on">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="18" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    <span>My List</span>
+  </div>
+  <div class="ti">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span>Discover</span>
+  </div>
+  <div class="ti">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Profile</span>
+  </div>
+</nav>
+
+<!-- PLATFORM SWITCHER -->
+<div class="psw">
+  <button class="psb active" data-p="mobile">📱 iOS</button>
+  <button class="psb" data-p="web">🌐 Web</button>
+  <button class="psb" data-p="tv">📺 TV</button>
+</div>
+
+<script>
+const ITEMS = [
+  { id:1, title:'Dune: Part Two', type:'movie', year:2024, status:'watched', rating:9,
+    c1:'#C4900A', c2:'#4A1E04',
+    genre:['Sci-Fi','Adventure'], runtime:'2h 46m', dir:'Denis Villeneuve',
+    cast:['Timothée Chalamet','Zendaya','Rebecca Ferguson','Austin Butler'],
+    syn:"Paul Atreides unites with Chani and the Fremen while seeking revenge against those who destroyed his family. Facing a choice between love and the fate of the universe, he must prevent a terrible future only he can foresee.",
+    motif:'dunes', upd:'2024-03-10' },
+  { id:2, title:'The Last of Us', type:'tv', year:2023, status:'in_progress', season:1, ep:6, eps:9,
+    c1:'#2D6A4F', c2:'#0A1E12',
+    genre:['Drama','Horror'], runtime:'50–70 min/ep', dir:'Craig Mazin & Neil Druckmann',
+    cast:['Pedro Pascal','Bella Ramsey','Anna Torv','Gabriel Luna'],
+    syn:"After a fungal outbreak devastates civilization, a hardened survivor named Joel is tasked with smuggling 14-year-old Ellie across a post-apocalyptic US. The journey across the ruins of America transforms them both.",
+    motif:'spores', upd:'2024-03-09' },
+  { id:3, title:'Oppenheimer', type:'movie', year:2023, status:'planned',
+    c1:'#2C4A8C', c2:'#080E1E',
+    genre:['Biography','Drama'], runtime:'3h 0m', dir:'Christopher Nolan',
+    cast:['Cillian Murphy','Emily Blunt','Matt Damon','Robert Downey Jr.'],
+    syn:"The story of J. Robert Oppenheimer and his role in the Manhattan Project. A man who unlocked the power of the atom and then lived to witness the consequences of his work reshaping world history forever.",
+    motif:'atomic', upd:'2024-03-07' },
+  { id:4, title:'Severance', type:'tv', year:2022, status:'in_progress', season:2, ep:4, eps:10, rating:10,
+    c1:'#1A4A6B', c2:'#03090F',
+    genre:['Thriller','Sci-Fi'], runtime:'~50 min/ep', dir:'Dan Erickson',
+    cast:['Adam Scott','Britt Lower','Patricia Arquette','John Turturro'],
+    syn:"Mark's team of office workers have their memories surgically divided between work and personal lives. When a colleague disappears, Mark begins a journey that will change everything about how he sees his two worlds.",
+    motif:'grid', upd:'2024-03-08' },
+  { id:5, title:'Past Lives', type:'movie', year:2023, status:'watched', rating:8,
+    c1:'#7A3B5C', c2:'#1E0812',
+    genre:['Drama','Romance'], runtime:'1h 46m', dir:'Celine Song',
+    cast:['Greta Lee','Teo Yoo','John Magaro'],
+    syn:"Nora and Hae Sung, deeply connected childhood friends, are separated when Nora's family emigrates. Twenty years later, reunited in New York, they must confront their past, their intertwined destinies, and the choices defining their futures.",
+    motif:'sil', upd:'2024-02-28' },
+  { id:6, title:'Shōgun', type:'tv', year:2024, status:'watched', rating:9,
+    c1:'#8B3A1A', c2:'#200804',
+    genre:['Drama','Historical'], runtime:'~65 min/ep', dir:'Rachel Kondo & Caillin Pujols',
+    cast:['Hiroyuki Sanada','Cosmo Jarvis','Anna Sawai','Tadanobu Asano'],
+    syn:"A shipwrecked English navigator in feudal Japan finds himself drawn into an epic struggle for power between rival warlords. Through his outsider's eyes the complex world of samurai and political intrigue unfolds.",
+    motif:'wave', upd:'2024-03-05' },
+  { id:7, title:'Killers of the Flower Moon', type:'movie', year:2023, status:'planned',
+    c1:'#3A5C1A', c2:'#0A1205',
+    genre:['Crime','History'], runtime:'3h 26m', dir:'Martin Scorsese',
+    cast:['Leonardo DiCaprio','Robert De Niro','Lily Gladstone','Jesse Plemons'],
+    syn:"Osage Nation members are murdered one by one after oil is found beneath their land. The true story behind one of the FBI's earliest major investigations into a conspiracy of breathtaking greed in 1920s Oklahoma.",
+    motif:'oil', upd:'2024-02-20' },
+  { id:8, title:'Poor Things', type:'movie', year:2023, status:'quit',
+    c1:'#3A6B3A', c2:'#081208',
+    genre:['Fantasy','Comedy'], runtime:'2h 21m', dir:'Yorgos Lanthimos',
+    cast:['Emma Stone','Mark Ruffalo','Willem Dafoe'],
+    syn:"The incredible tale of Bella Baxter, a young woman brought back to life by the unorthodox scientist Dr. Godwin Baxter. Eager to learn and hungry for the world, Bella embarks on a wild adventure across the continents.",
+    motif:'orn', upd:'2024-02-15' },
+];
+
+const MOTIFS = {
+  dunes:`<path d="M0,185 Q45,158 90,175 Q135,192 180,162 L180,270 L0,270Z" fill="rgba(255,215,80,.07)"/>
+         <path d="M0,205 Q60,175 120,200 Q150,215 180,190 L180,270 L0,270Z" fill="rgba(255,215,80,.05)"/>
+         <circle cx="136" cy="58" r="32" fill="rgba(255,225,100,.1)"/>`,
+  spores:`<circle cx="90" cy="90" r="2.5" fill="rgba(100,210,140,.55)"/>
+          <circle cx="55" cy="130" r="2" fill="rgba(100,210,140,.4)"/>
+          <circle cx="125" cy="110" r="1.5" fill="rgba(100,210,140,.4)"/>
+          <circle cx="40" cy="75" r="3" fill="rgba(100,210,140,.3)"/>
+          <circle cx="145" cy="55" r="2" fill="rgba(100,210,140,.35)"/>
+          <line x1="90" y1="90" x2="55" y2="130" stroke="rgba(100,210,140,.18)" stroke-width="1"/>
+          <line x1="90" y1="90" x2="125" y2="110" stroke="rgba(100,210,140,.18)" stroke-width="1"/>
+          <line x1="55" y1="130" x2="40" y2="75" stroke="rgba(100,210,140,.12)" stroke-width="1"/>`,
+  atomic:`<circle cx="90" cy="105" r="62" fill="none" stroke="rgba(140,185,255,.12)" stroke-width="1"/>
+          <circle cx="90" cy="105" r="42" fill="none" stroke="rgba(140,185,255,.1)" stroke-width="1"/>
+          <circle cx="90" cy="105" r="22" fill="rgba(140,185,255,.07)" stroke="rgba(140,185,255,.14)" stroke-width="1"/>
+          <circle cx="90" cy="105" r="5" fill="rgba(210,225,255,.5)"/>
+          <line x1="90" y1="43" x2="90" y2="167" stroke="rgba(140,185,255,.07)" stroke-width="1"/>
+          <line x1="28" y1="105" x2="152" y2="105" stroke="rgba(140,185,255,.07)" stroke-width="1"/>`,
+  grid:`${[0,1,2,3,4,5].map(i=>`<line x1="${i*36}" y1="0" x2="${i*36}" y2="270" stroke="rgba(100,145,255,.06)" stroke-width="1"/>`).join('')}
+        ${[0,1,2,3,4,5,6,7].map(i=>`<line x1="0" y1="${i*36}" x2="180" y2="${i*36}" stroke="rgba(100,145,255,.06)" stroke-width="1"/>`).join('')}
+        <rect x="63" y="90" width="54" height="54" fill="none" stroke="rgba(100,145,255,.14)" stroke-width="1"/>
+        <rect x="76" y="103" width="28" height="28" fill="rgba(100,145,255,.07)"/>`,
+  sil:`<ellipse cx="65" cy="140" rx="20" ry="55" fill="rgba(255,195,220,.1)"/>
+       <circle cx="65" cy="78" r="16" fill="rgba(255,195,220,.1)"/>
+       <ellipse cx="115" cy="140" rx="20" ry="55" fill="rgba(255,195,220,.08)"/>
+       <circle cx="115" cy="78" r="16" fill="rgba(255,195,220,.08)"/>`,
+  wave:`${[0,1,2,3,4].map(i=>{const y=105+i*25;return`<path d="M0,${y} Q22,${y-16} 45,${y} Q67,${y+16} 90,${y} Q112,${y-16} 135,${y} Q157,${y+16} 180,${y}" fill="none" stroke="rgba(255,145,70,.11)" stroke-width="1.5"/>`;}).join('')}`,
+  oil:`<line x1="90" y1="185" x2="68" y2="82" stroke="rgba(140,255,100,.14)" stroke-width="2"/>
+       <line x1="90" y1="185" x2="112" y2="82" stroke="rgba(140,255,100,.14)" stroke-width="2"/>
+       <line x1="68" y1="82" x2="112" y2="82" stroke="rgba(140,255,100,.14)" stroke-width="2"/>
+       <line x1="90" y1="82" x2="90" y2="44" stroke="rgba(140,255,100,.2)" stroke-width="2"/>
+       <line x1="78" y1="122" x2="102" y2="122" stroke="rgba(140,255,100,.09)" stroke-width="1.5"/>
+       <line x1="74" y1="144" x2="106" y2="144" stroke="rgba(140,255,100,.09)" stroke-width="1.5"/>`,
+  orn:`<rect x="14" y="14" width="152" height="242" fill="none" stroke="rgba(190,255,190,.1)" stroke-width="1"/>
+       <rect x="22" y="22" width="136" height="226" fill="none" stroke="rgba(190,255,190,.06)" stroke-width="0.5"/>
+       <circle cx="14" cy="14" r="4" fill="rgba(190,255,190,.18)"/>
+       <circle cx="166" cy="14" r="4" fill="rgba(190,255,190,.18)"/>
+       <circle cx="14" cy="256" r="4" fill="rgba(190,255,190,.18)"/>
+       <circle cx="166" cy="256" r="4" fill="rgba(190,255,190,.18)"/>
+       <circle cx="90" cy="100" r="28" fill="none" stroke="rgba(190,255,190,.09)" stroke-width="0.5"/>`,
+};
+
+const SL = { planned:'Planned', in_progress:'In Progress', watched:'Watched', quit:'Quit' };
+const SORTS = ['Recently Updated','Top Rated','A–Z'];
+let ST = { sf:'all', tf:'all', si:0 };
+let tvFocus = { row:0, col:0 };
+
+function puri(item) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 270"><defs><linearGradient id="g${item.id}" x1=".2" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${item.c1}"/><stop offset="100%" stop-color="${item.c2}"/></linearGradient></defs><rect width="180" height="270" fill="url(#g${item.id})"/>${MOTIFS[item.motif]||''}<text x="13" y="243" font-family="-apple-system,sans-serif" font-size="12.5" font-weight="800" fill="rgba(255,255,255,.9)">${item.title.length>18?item.title.slice(0,16)+'…':item.title}</text><text x="13" y="257" font-family="-apple-system,sans-serif" font-size="9.5" fill="rgba(255,255,255,.45)">${item.year}</text></svg>`;
+  return 'data:image/svg+xml,'+encodeURIComponent(svg);
+}
+
+function buri(item) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180"><defs><linearGradient id="bg${item.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${item.c1}"/><stop offset="100%" stop-color="${item.c2}"/></linearGradient></defs><rect width="640" height="180" fill="url(#bg${item.id})"/></svg>`;
+  return 'data:image/svg+xml,'+encodeURIComponent(svg);
+}
+
+function filtered() {
+  let d = ITEMS;
+  if (ST.sf!=='all') d=d.filter(i=>i.status===ST.sf);
+  if (ST.tf!=='all') d=d.filter(i=>i.type===ST.tf);
+  const s = SORTS[ST.si];
+  return [...d].sort((a,b)=>s==='Top Rated'?(b.rating||0)-(a.rating||0):s==='A–Z'?a.title.localeCompare(b.title):b.upd.localeCompare(a.upd));
+}
+
+function renderStabs() {
+  const counts = {};
+  ['all','planned','in_progress','watched','quit'].forEach(k=>{
+    counts[k]=k==='all'?ITEMS.length:ITEMS.filter(i=>i.status===k).length;
+  });
+  const tabs=[['all','All'],['planned','Planned'],['in_progress','In Progress'],['watched','Watched'],['quit','Quit']];
+  document.getElementById('stabs').innerHTML=tabs.map(([k,l])=>
+    `<button class="stab${ST.sf===k?' on':''}" data-s="${k}">${l} <span class="tabn">${counts[k]}</span></button>`
+  ).join('');
+}
+
+function renderSeg() {
+  document.getElementById('seg').innerHTML=
+    [['all','All'],['movie','Movies'],['tv','TV']].map(([k,l])=>
+      `<button class="sgb${ST.tf===k?' on':''}" data-t="${k}">${l}</button>`
+    ).join('');
+}
+
+function renderList() {
+  const d=filtered();
+  document.getElementById('cnt').textContent=d.length;
+  if(!d.length) {
+    document.getElementById('list').innerHTML=`<div class="empty">
+      <div class="ei"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="3" width="15" height="14" rx="2"/><polyline points="17 8 22 8 22 19 7 19 7 17"/></svg></div>
+      <div class="et">Nothing here</div><div class="es">Try a different filter</div></div>`;
+    return;
+  }
+  document.getElementById('list').innerHTML=d.map(item=>`
+    <div class="card" data-id="${item.id}">
+      <div class="pw"><img src="${puri(item)}" alt="${item.title}"></div>
+      <div class="ci">
+        <div class="ct">${item.title}</div>
+        <div class="cm"><span>${item.year}</span><span style="opacity:.4">·</span>
+          <span class="tbadge ${item.type}">${item.type==='movie'?'Movie':'TV'}</span>
+          <span style="opacity:.4">·</span><span>${item.runtime}</span></div>
+        <div class="csr">
+          <span class="sb ${item.status}">${SL[item.status]}</span>
+          ${item.type==='tv'&&item.ep!=null?`<span class="eppill">S${item.season} · E${item.ep}/${item.eps}</span>`:''}
+        </div>
+      </div>
+      ${item.rating!=null?`<div class="crt"><div class="rat">★${item.rating}</div></div>`:''}
+    </div>`).join('');
+}
+
+function openDetail(item) {
+  const prog = item.type==='tv'&&item.ep!=null
+    ? `<div class="ep-bar-wrap"><div class="ep-bar" style="width:${Math.round((item.ep/item.eps)*100)}%"></div></div>
+       <div class="ep-lbl">Season ${item.season} · Episode ${item.ep} of ${item.eps} — ${Math.round((item.ep/item.eps)*100)}% complete</div>`
+    : '';
+  const rat = item.rating!=null ? `<span class="sh-rat">★ ${item.rating}/10</span>` : '';
+  document.getElementById('sh-back').style.background=`linear-gradient(135deg,${item.c1} 0%,${item.c2} 100%)`;
+  document.getElementById('sh-body').innerHTML=`
+    <div class="sh-hdr">
+      <div class="sh-pst"><img src="${puri(item)}" alt="${item.title}"></div>
+      <div class="sh-tb">
+        <div class="sh-title">${item.title}</div>
+        <div class="sh-meta">
+          <span>${item.year}</span>
+          <span class="tbadge ${item.type}">${item.type==='movie'?'Movie':'TV'}</span>
+          ${item.genre.map(g=>`<span class="gtag">${g}</span>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+          <span class="sb ${item.status}" style="margin:0">${SL[item.status]}</span>
+          ${rat}
+        </div>
+        <div style="font-size:12px;color:var(--mu2)">${item.type==='movie'?'Dir.':'Creator:'} ${item.dir} · ${item.runtime}</div>
+      </div>
+    </div>
+    ${prog}
+    <p class="sh-syn">${item.syn}</p>
+    <div class="sh-lbl">Cast</div>
+    <div class="cast-list">${item.cast.map(c=>`<span class="cc">${c}</span>`).join('')}</div>
+    <div class="sh-acts">
+      <button class="abtn pri">Edit Status</button>
+      <button class="abtn">Edit Rating</button>
+      <button class="abtn dng">Remove</button>
+    </div>`;
+  document.getElementById('ov').classList.add('open');
+  document.getElementById('sheet').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('ov').classList.remove('open');
+  document.getElementById('sheet').classList.remove('open');
+}
+
+// TV
+function tvRows() {
+  const groups = [
+    { key:'in_progress', label:'Continue Watching' },
+    { key:'planned', label:'Up Next' },
+    { key:'watched', label:'Watched' },
+    { key:'quit', label:'Stopped' },
+  ].filter(g=>ITEMS.some(i=>i.status===g.key));
+  return groups;
+}
+
+function renderTV() {
+  const rows=tvRows();
+  const allCards=rows.flatMap(r=>ITEMS.filter(i=>i.status===r.key));
+  const focItem=allCards[0]||ITEMS[0];
+  renderTVHero(focItem);
+  document.getElementById('tvrows').innerHTML=rows.map((row,ri)=>{
+    const items=ITEMS.filter(i=>i.status===row.key);
+    return `<div class="tv-row">
+      <div class="tv-row-lbl">${row.label}</div>
+      <div class="tv-row-cards">${items.map((item,ci)=>`
+        <div class="tvc${ri===0&&ci===0?' foc':''}" data-id="${item.id}" tabindex="-1" data-ri="${ri}" data-ci="${ci}">
+          <div class="tvc-p"><img src="${puri(item)}" alt="${item.title}"></div>
+          <div class="tvc-t">${item.title}</div>
+        </div>`).join('')}</div></div>`;
+  }).join('');
+}
+
+function renderTVHero(item) {
+  const rat = item.rating ? `<span style="color:#fbbf24;font-weight:700">★ ${item.rating}</span>` : '';
+  document.getElementById('tvhero').innerHTML=`
+    <div class="tv-hp"><img src="${puri(item)}" alt="${item.title}"></div>
+    <div class="tv-hi">
+      <div class="tv-ht">${item.title}</div>
+      <div class="tv-hm">
+        <span>${item.year}</span><span style="opacity:.4">·</span>
+        <span class="tbadge ${item.type}" style="font-size:10px">${item.type==='movie'?'Movie':'TV'}</span>
+        <span style="opacity:.4">·</span><span>${item.runtime}</span>
+        ${rat}
+      </div>
+      <div class="tv-hs">${item.syn}</div>
+    </div>`;
+}
+
+function openTVDetail(item) {
+  const prog = item.type==='tv'&&item.ep!=null
+    ? `<div class="ep-bar-wrap" style="margin-bottom:4px"><div class="ep-bar" style="width:${Math.round((item.ep/item.eps)*100)}%"></div></div>
+       <div class="ep-lbl" style="margin-bottom:12px">S${item.season} E${item.ep}/${item.eps}</div>` : '';
+  const rat = item.rating ? `<span style="color:#fbbf24;font-size:14px;font-weight:700">★ ${item.rating}/10</span>` : '';
+  document.getElementById('tvdet').innerHTML=`
+    <div class="tv-dback" style="background:linear-gradient(135deg,${item.c1} 0%,${item.c2} 100%)"></div>
+    <div class="tv-dbody">
+      <div class="tv-dpst"><img src="${puri(item)}" alt="${item.title}"></div>
+      <div class="tv-dinf">
+        <div class="tv-dtitle">${item.title}</div>
+        <div class="tv-dmeta">
+          <span>${item.year}</span>
+          <span class="tbadge ${item.type}">${item.type==='movie'?'Movie':'TV'}</span>
+          ${item.genre.map(g=>`<span class="gtag">${g}</span>`).join('')}
+          <span style="color:var(--mu2)">${item.runtime}</span>
+          ${rat}
+        </div>
+        <div class="tv-dsyn">${item.syn}</div>
+        ${prog}
+        <div class="sh-lbl" style="margin-bottom:8px">Cast</div>
+        <div class="tv-dcast">${item.cast.map(c=>`<span class="cc">${c}</span>`).join('')}</div>
+        <div class="tv-dacts">
+          <button class="tvab pri" onclick="closeTVDetail()">▶ Play</button>
+          <button class="tvab">Edit Status</button>
+          <button class="tvab" onclick="closeTVDetail()">✕ Close</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('tvov').classList.add('open');
+}
+
+function closeTVDetail() {
+  document.getElementById('tvov').classList.remove('open');
+}
+
+function render() {
+  renderStabs();
+  renderSeg();
+  renderList();
+  renderTV();
+}
+
+// Events
+document.getElementById('stabs').addEventListener('click',e=>{
+  const b=e.target.closest('.stab'); if(!b) return;
+  ST.sf=b.dataset.s; render();
+});
+document.getElementById('seg').addEventListener('click',e=>{
+  const b=e.target.closest('.sgb'); if(!b) return;
+  ST.tf=b.dataset.t; render();
+});
+document.getElementById('srtbtn').addEventListener('click',()=>{
+  ST.si=(ST.si+1)%SORTS.length;
+  document.getElementById('srtlbl').textContent=SORTS[ST.si];
+  renderList();
+});
+document.getElementById('list').addEventListener('click',e=>{
+  const c=e.target.closest('.card'); if(!c) return;
+  const item=ITEMS.find(i=>i.id===+c.dataset.id); if(item) openDetail(item);
+});
+document.getElementById('ov').addEventListener('click',closeDetail);
+document.getElementById('sh-xcl').addEventListener('click',closeDetail);
+
+// TV clicks
+document.getElementById('tvrows').addEventListener('click',e=>{
+  const c=e.target.closest('.tvc'); if(!c) return;
+  const item=ITEMS.find(i=>i.id===+c.dataset.id); if(item) { renderTVHero(item); openTVDetail(item); }
+});
+
+// TV keyboard nav
+document.addEventListener('keydown',e=>{
+  const p=document.body.dataset.p;
+  if(p!=='tv') return;
+  if(document.getElementById('tvov').classList.contains('open')) {
+    if(e.key==='Escape'||e.key==='Backspace') closeTVDetail();
+    return;
+  }
+  const rows=tvRows();
+  if(e.key==='ArrowDown') tvFocus.row=Math.min(tvFocus.row+1,rows.length-1);
+  if(e.key==='ArrowUp') tvFocus.row=Math.max(tvFocus.row-1,0);
+  if(e.key==='ArrowRight') {
+    const maxC=ITEMS.filter(i=>i.status===rows[tvFocus.row].key).length-1;
+    tvFocus.col=Math.min(tvFocus.col+1,maxC);
+  }
+  if(e.key==='ArrowLeft') tvFocus.col=Math.max(tvFocus.col-1,0);
+  if(['ArrowDown','ArrowUp','ArrowRight','ArrowLeft'].includes(e.key)) {
+    e.preventDefault();
+    document.querySelectorAll('.tvc').forEach(c=>c.classList.remove('foc'));
+    const tgt=document.querySelector(`.tvc[data-ri="${tvFocus.row}"][data-ci="${tvFocus.col}"]`);
+    if(tgt) {
+      tgt.classList.add('foc');
+      const item=ITEMS.find(i=>i.id===+tgt.dataset.id);
+      if(item) renderTVHero(item);
+    }
+  }
+  if(e.key==='Enter') {
+    const tgt=document.querySelector(`.tvc[data-ri="${tvFocus.row}"][data-ci="${tvFocus.col}"]`);
+    if(tgt) { const item=ITEMS.find(i=>i.id===+tgt.dataset.id); if(item) openTVDetail(item); }
+  }
+});
+
+// Platform switcher
+document.querySelectorAll('.psb').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.body.dataset.p=b.dataset.p;
+    document.querySelectorAll('.psb').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    closeDetail(); closeTVDetail();
+  });
+});
+
+// Swipe-to-close sheet (mobile)
+let swY=0;
+const sheet=document.getElementById('sheet');
+sheet.addEventListener('touchstart',e=>swY=e.touches[0].clientY,{passive:true});
+sheet.addEventListener('touchmove',e=>{
+  if(e.touches[0].clientY-swY>60) closeDetail();
+},{passive:true});
+
+render();
+</script>
+</body>
+</html>

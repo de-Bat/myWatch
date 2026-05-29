@@ -7,16 +7,24 @@ const labels: Record<WatchStatus, string> = {
   quit: 'Quit',
 }
 
-const colors: Record<WatchStatus, string> = {
-  planned: 'bg-blue-500/20 text-blue-300',
-  in_progress: 'bg-yellow-500/20 text-yellow-300',
-  watched: 'bg-green-500/20 text-green-300',
-  quit: 'bg-red-500/20 text-red-300',
+const styles: Record<WatchStatus, { bg: string; color: string }> = {
+  planned: { bg: 'rgba(96,165,250,.13)', color: 'var(--blue)' },
+  in_progress: { bg: 'rgba(251,191,36,.13)', color: 'var(--amber)' },
+  watched: { bg: 'rgba(74,222,128,.13)', color: 'var(--green)' },
+  quit: { bg: 'rgba(248,113,113,.13)', color: 'var(--red)' },
 }
 
 export function StatusBadge({ status }: { status: WatchStatus }) {
+  const { bg, color } = styles[status]
   return (
-    <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${colors[status]}`}>
+    <span
+      style={{ background: bg, color }}
+      className="inline-flex items-center gap-1 text-[11px] font-semibold px-[7px] py-[2px] rounded-full leading-[1.4]"
+    >
+      <span
+        className="w-[5px] h-[5px] rounded-full flex-shrink-0"
+        style={{ background: 'currentColor' }}
+      />
       {labels[status]}
     </span>
   )
