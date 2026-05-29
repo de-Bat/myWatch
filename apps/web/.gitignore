@@ -1,0 +1,10 @@
+# Next.js
+.next/
+next-env.d.ts
+out/
+
+# Local env
+.env.local
+
+# Build output
+dist/
