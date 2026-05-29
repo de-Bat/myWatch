@@ -50,6 +50,11 @@ NEXT_PUBLIC_TMDB_API_KEY=<your TMDB token>
 AUTH_SECRET=<random base64 string>
 AUTH_URL=http://localhost:3000
 
+# Ports — change if defaults conflict with other local services
+PORT_WEB=3000
+PORT_API=3001
+PORT_DB=5432
+
 # Optional — email/password works without these
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
@@ -95,10 +100,11 @@ web       | ✓ Ready
 
 ### Step 4 — Open the app
 
-| Service | URL |
-|---------|-----|
-| Web app | http://localhost:3000 |
-| API health | http://localhost:3001/health |
+| Service | Default URL | Configurable via |
+|---------|-------------|-----------------|
+| Web app | http://localhost:3000 | `PORT_WEB` in `.env` |
+| API health | http://localhost:3001/health | `PORT_API` in `.env` |
+| PostgreSQL | localhost:5432 | `PORT_DB` in `.env` |
 
 ### Docker commands reference
 
@@ -218,6 +224,7 @@ Add:
 ```env
 DATABASE_URL=postgresql://localhost:5432/mywatch
 JWT_SECRET=<random secret>
+# PORT=3001  # uncomment to change the API port
 ```
 
 With username/password:
@@ -288,7 +295,10 @@ Copy-Item apps/web/.env.local.example apps/web/.env.local
 Edit `apps/web/.env.local`:
 
 ```env
-# Fastify API base URL
+# Dev server port (default: 3000)
+PORT=3000
+
+# Fastify API base URL — update port if you changed PORT in apps/api/.env
 NEXT_PUBLIC_API_URL=http://localhost:3001
 
 # TMDB API key from Step 2
@@ -330,7 +340,7 @@ Expected:
 API listening on http://0.0.0.0:3001
 ```
 
-Verify:
+Verify (replace `3001` with your `PORT` if changed):
 
 ```bash
 curl http://localhost:3001/health
@@ -358,7 +368,7 @@ Expected:
 - Ready in 2s
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3000 (or the port set in `PORT`).
 
 ---
 
@@ -366,7 +376,7 @@ Open http://localhost:3000.
 
 ### Create an account
 
-1. Go to http://localhost:3000
+1. Go to http://localhost:3000 (or `http://localhost:$PORT_WEB` if changed)
 2. Click **Profile** in the top-right nav
 3. Click **Register** on the login page
 4. Enter email, password, display name → redirected to My List
@@ -426,8 +436,8 @@ Example result: `192.168.1.42`
 Edit `.env`:
 
 ```env
-AUTH_URL=http://192.168.1.42:3000
-NEXT_PUBLIC_API_URL=http://192.168.1.42:3001
+AUTH_URL=http://192.168.1.42:3000          # replace 3000 with PORT_WEB if changed
+NEXT_PUBLIC_API_URL=http://192.168.1.42:3001  # replace 3001 with PORT_API if changed
 ```
 
 Rebuild:
@@ -536,7 +546,7 @@ pnpm test:watch
 PostgreSQL isn't running or `DATABASE_URL` is wrong.
 
 ```bash
-# Check Postgres is running
+# Check Postgres is running (replace 5432 with PORT_DB if changed)
 pg_isready
 
 # Test connection directly
@@ -562,9 +572,9 @@ docker compose logs api
 
 API isn't reachable from the web app.
 
-1. Confirm API terminal shows `API listening on http://0.0.0.0:3001`
-2. Open http://localhost:3001/health — must return `{"status":"ok"}`
-3. Confirm `NEXT_PUBLIC_API_URL=http://localhost:3001` in `.env.local`
+1. Confirm API terminal shows `API listening on http://0.0.0.0:<PORT>`
+2. Open `http://localhost:<PORT_API>/health` — must return `{"status":"ok"}`
+3. Confirm `NEXT_PUBLIC_API_URL` in `.env.local` matches the API port
 
 ### Session loop / "AUTH_SECRET" error
 
@@ -575,11 +585,11 @@ API isn't reachable from the web app.
 The callback URL in your OAuth provider doesn't match `AUTH_URL`.
 
 - **Google Cloud Console** → Credentials → OAuth 2.0 Client → Authorized redirect URIs:
-  Add `http://localhost:3000/api/auth/callback/google`
+  Add `http://localhost:<PORT_WEB>/api/auth/callback/google`
 - **Apple Developer** → Certificates → Services ID → Return URLs:
-  Add `http://localhost:3000/api/auth/callback/apple`
+  Add `http://localhost:<PORT_WEB>/api/auth/callback/apple`
 
-For LAN access replace `localhost:3000` with your IP.
+For LAN access replace `localhost:<PORT_WEB>` with your IP and port.
 
 ### TMDB posters not showing
 
@@ -594,8 +604,8 @@ If they never appear: check `NEXT_PUBLIC_TMDB_API_KEY` is set and not expired.
 ### Can't reach the app from phone or TV
 
 1. Both devices must be on the same Wi-Fi
-2. Test API from the device: open `http://<your-ip>:3001/health` in the device browser
-3. If unreachable, check firewall — allow inbound on ports 3000 and 3001
+2. Test API from the device: open `http://<your-ip>:<PORT_API>/health` in the device browser
+3. If unreachable, check firewall — allow inbound on `PORT_WEB` and `PORT_API` (defaults: 3000, 3001)
 4. For Docker: confirm `NEXT_PUBLIC_API_URL` uses the IP, not `localhost`, and rebuild
 
 ### Docker build fails — "NEXT_PUBLIC_TMDB_API_KEY is required"

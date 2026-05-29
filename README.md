@@ -64,7 +64,7 @@ cp .env.example .env   # fill in JWT_SECRET, NEXT_PUBLIC_TMDB_API_KEY, AUTH_SECR
 docker compose up --build
 ```
 
-Open http://localhost:3000
+Open http://localhost:3000 (or `http://localhost:$PORT_WEB` if you changed it)
 
 ### Manual
 
@@ -99,17 +99,32 @@ cd apps/web && pnpm dev   # http://localhost:3000
 
 ## Environment Variables
 
-### `apps/api/.env`
+### Docker (`.env` at repo root)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `JWT_SECRET` | yes | Secret for signing JWTs |
+| `NEXT_PUBLIC_TMDB_API_KEY` | yes | TMDB API key |
+| `AUTH_SECRET` | yes | Auth.js session secret |
+| `AUTH_URL` | yes | Web app base URL (for OAuth callbacks) |
+| `NEXT_PUBLIC_API_URL` | no | Public API URL (default: `http://localhost:3001`) |
+| `PORT_WEB` | no | Host port for the web container (default: `3000`) |
+| `PORT_API` | no | Host port for the API container (default: `3001`) |
+| `PORT_DB` | no | Host port for the Postgres container (default: `5432`) |
+| `GOOGLE_CLIENT_ID` | OAuth only | Google app client ID |
+| `GOOGLE_CLIENT_SECRET` | OAuth only | Google app client secret |
+| `APPLE_ID` | OAuth only | Apple Services ID |
+| `APPLE_SECRET` | OAuth only | Apple JWT secret |
+
+### Manual (`apps/api/.env`)
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `DATABASE_URL` | yes | PostgreSQL connection string |
 | `JWT_SECRET` | yes | Secret for signing JWTs |
-| `PORT` | no | API port (default: 3001) |
-| `GOOGLE_CLIENT_ID` | OAuth only | Google app client ID |
-| `APPLE_BUNDLE_ID` | OAuth only | Apple Services ID |
+| `PORT` | no | API port (default: `3001`) |
 
-### `apps/web/.env.local`
+### Manual (`apps/web/.env.local`)
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -117,6 +132,7 @@ cd apps/web && pnpm dev   # http://localhost:3000
 | `NEXT_PUBLIC_TMDB_API_KEY` | yes | TMDB API key |
 | `AUTH_SECRET` | yes | Auth.js session secret |
 | `AUTH_URL` | yes | Web app base URL (for OAuth callbacks) |
+| `PORT` | no | Next.js dev server port (default: `3000`) |
 | `GOOGLE_CLIENT_ID` | OAuth only | Google app client ID |
 | `GOOGLE_CLIENT_SECRET` | OAuth only | Google app client secret |
 | `APPLE_ID` | OAuth only | Apple Services ID |
