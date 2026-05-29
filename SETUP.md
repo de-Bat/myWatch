@@ -1,50 +1,88 @@
 # myWatch — Setup Guide
 
-A local-first media watchlist app. Fastify API + PostgreSQL backend, Next.js 14 frontend with IndexedDB sync.
-
-Two ways to run it: **Docker** (recommended, zero setup) or **manual** (for development).
+- [Option A: Docker](#option-a--docker-recommended) — zero local setup, recommended for running the app
+- [Option B: Manual](#option-b--manual-development) — for active development with hot reload
+- [First Use](#first-use)
+- [Access from iOS / Android TV](#access-from-ios--android-tv)
+- [Running Tests](#running-tests)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Option A — Docker (Recommended)
 
-Runs Postgres + API + Web in containers. No local Node.js or Postgres required.
+Spins up PostgreSQL, the API, and the web app in containers. No local Node.js or Postgres needed.
 
 ### Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop) (includes docker compose)
+Install [Docker Desktop](https://www.docker.com/products/docker-desktop) (Mac/Windows/Linux).
 
 Verify:
+
 ```bash
-docker --version        # Docker version 24+
-docker compose version  # Docker Compose version 2.x
+docker --version        # 24+
+docker compose version  # 2.x
 ```
 
-### 1. Create the env file
+### Step 1 — Get a TMDB API key
+
+The app needs TMDB for search, posters, metadata, and discover.
+
+1. Sign up free at https://www.themoviedb.org/signup
+2. Go to **Settings → API**: https://www.themoviedb.org/settings/api
+3. Request a key — choose **Developer**, fill in the form
+4. Copy the **API Read Access Token** (the long `eyJ…` JWT)
+
+> The shorter "API Key (v3)" also works.
+
+### Step 2 — Create the env file
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env`:
+Open `.env` and fill in:
 
 ```env
-JWT_SECRET=<random string>             # node -e "require('crypto').randomBytes(32).toString('hex') |> console.log"
-NEXT_PUBLIC_TMDB_API_KEY=<your key>    # https://www.themoviedb.org/settings/api
-AUTH_SECRET=<random string>            # openssl rand -base64 32
+# Required
+JWT_SECRET=<random 32-byte hex string>
+NEXT_PUBLIC_TMDB_API_KEY=<your TMDB token>
+AUTH_SECRET=<random base64 string>
 AUTH_URL=http://localhost:3000
+
+# Optional — email/password works without these
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+APPLE_ID=
+APPLE_SECRET=
 ```
 
-### 2. Build and start
+Generate secrets:
+
+```bash
+# JWT_SECRET / any hex secret (Mac/Linux/Windows Node)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# AUTH_SECRET (Mac/Linux)
+openssl rand -base64 32
+
+# AUTH_SECRET (Windows PowerShell)
+[System.Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+```
+
+> Keep `JWT_SECRET` stable — changing it logs everyone out.
+
+### Step 3 — Build and start
 
 ```bash
 docker compose up --build
 ```
 
-First build takes ~3–5 minutes (installs deps, compiles TypeScript, builds Next.js).  
-Subsequent starts are fast (images cached).
+First build: ~3–5 minutes (downloads base images, installs deps, compiles TypeScript, builds Next.js).  
+Subsequent starts: ~15 seconds (images cached).
 
-Expected output:
+Expected output when ready:
+
 ```
 postgres  | database system is ready to accept connections
 api       | Running database migrations...
@@ -52,61 +90,56 @@ api       | Migrations complete.
 api       | Starting API server...
 api       | API listening on http://0.0.0.0:3001
 web       | ▲ Next.js 14.2.29
-web       | ✓ Ready in 2.1s
+web       | ✓ Ready
 ```
 
-### 3. Open the app
+### Step 4 — Open the app
 
-- Web: http://localhost:3000
-- API health: http://localhost:3001/health
+| Service | URL |
+|---------|-----|
+| Web app | http://localhost:3000 |
+| API health | http://localhost:3001/health |
 
-### Useful Docker commands
+### Docker commands reference
 
 ```bash
-# Run in background
+# Start in background (detached)
 docker compose up -d
 
-# View logs
+# View all logs
 docker compose logs -f
+
+# View logs for one service
 docker compose logs -f api
 docker compose logs -f web
+docker compose logs -f postgres
 
-# Stop
+# Stop (keeps database data)
 docker compose down
 
-# Stop and delete database volume (full reset)
+# Stop and wipe database (full reset)
 docker compose down -v
 
 # Rebuild after code changes
 docker compose up --build
 
-# Run one-off command (e.g. check DB)
+# Open a Postgres shell
+docker compose exec postgres psql -U mywatch -d mywatch
+
+# Check tables
 docker compose exec postgres psql -U mywatch -d mywatch -c "\dt"
+
+# Restart one service
+docker compose restart api
 ```
-
-### Accessing from iOS or Android TV
-
-1. Find your local IP (see Step 11 in the manual setup below)
-2. Edit `.env`:
-   ```env
-   AUTH_URL=http://192.168.1.x:3000
-   NEXT_PUBLIC_API_URL=http://192.168.1.x:3001
-   ```
-3. Rebuild and restart:
-   ```bash
-   docker compose up --build
-   ```
-4. Open `http://192.168.1.x:3000` on the device
-
-> `NEXT_PUBLIC_*` vars are baked in at build time — rebuild required when changing them.
 
 ---
 
-## Option B — Manual Setup
+## Option B — Manual (Development)
 
-For local development with hot reload.
+Run everything locally with hot reload. Better for active development.
 
-### What You'll Need
+### Prerequisites
 
 | Tool | Version | Install |
 |------|---------|---------|
@@ -114,7 +147,7 @@ For local development with hot reload.
 | pnpm | 9+ | `npm install -g pnpm` |
 | PostgreSQL | 15+ | https://www.postgresql.org/download |
 
-Verify everything is installed:
+Verify:
 
 ```bash
 node --version    # v20.x.x or higher
@@ -124,7 +157,7 @@ psql --version    # psql (PostgreSQL) 15.x or higher
 
 ---
 
-## Step 1 — Clone and Install Dependencies
+### Step 1 — Clone and install
 
 ```bash
 git clone <repo-url>
@@ -132,47 +165,45 @@ cd myWatch
 pnpm install
 ```
 
-This installs dependencies for all workspaces: `apps/api`, `apps/web`, and `packages/*`.
-
-Expected output ends with something like:
-```
-Done in 30s
-```
+Installs dependencies for all workspaces: `apps/api`, `apps/web`, `packages/*`.
 
 ---
 
-## Step 2 — Create the PostgreSQL Database
+### Step 2 — Get a TMDB API key
 
-### Option A: Using psql (command line)
+Same as Docker Step 1 above — sign up at https://www.themoviedb.org and get an API key.
+
+---
+
+### Step 3 — Create the PostgreSQL database
+
+**Option A: psql**
 
 ```bash
 psql -U postgres
 ```
-
-Then inside psql:
 
 ```sql
 CREATE DATABASE mywatch;
 \q
 ```
 
-### Option B: Using a GUI (TablePlus, pgAdmin, DBeaver)
+**Option B: GUI** (TablePlus, pgAdmin, DBeaver)
 
-Create a new database named `mywatch`.
+Create a database named `mywatch`.
 
-### Verify
+**Verify:**
 
 ```bash
 psql -U postgres -d mywatch -c "SELECT 1"
+# Expected: ?column? = 1
 ```
-
-Expected: `?column? = 1`
 
 ---
 
-## Step 3 — Configure the API
+### Step 4 — Configure the API
 
-Create the file `apps/api/.env`:
+Create `apps/api/.env`:
 
 ```bash
 # Mac/Linux
@@ -182,20 +213,20 @@ touch apps/api/.env
 New-Item apps/api/.env
 ```
 
-Add these two variables:
+Add:
 
 ```env
 DATABASE_URL=postgresql://localhost:5432/mywatch
-JWT_SECRET=replace-this-with-a-random-secret
+JWT_SECRET=<random secret>
 ```
 
-If your Postgres has a username and password:
+With username/password:
 
 ```env
 DATABASE_URL=postgresql://myuser:mypassword@localhost:5432/mywatch
 ```
 
-Generate a strong `JWT_SECRET`:
+Generate `JWT_SECRET`:
 
 ```bash
 # Mac/Linux
@@ -204,66 +235,47 @@ openssl rand -hex 32
 # Windows (PowerShell)
 [System.Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 
-# Any platform (Node.js)
+# Any platform
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-> Keep `JWT_SECRET` stable across restarts — changing it invalidates all existing login sessions.
+> Keep `JWT_SECRET` stable across restarts — changing it invalidates all login sessions.
 
 ---
 
-## Step 4 — Run Database Migrations
+### Step 5 — Run database migrations
 
-This creates the tables: `users`, `oauth_accounts`, `watchlist_items`, `media_cache`.
+Creates the tables: `users`, `oauth_accounts`, `watchlist_items`, `media_cache`.
 
 ```bash
 cd apps/api
 pnpm migrate
 ```
 
-Expected output:
+Expected:
 
 ```
   apply 001_initial
 Migrations complete.
 ```
 
-If you see `apply` → the migration ran fresh.  
-If you see `skip` → the migration was already applied (safe to ignore).
+`apply` = ran fresh. `skip` = already applied (safe to ignore).
 
-Verify the tables were created:
+Verify tables:
 
 ```bash
 psql -U postgres -d mywatch -c "\dt"
 ```
 
-Expected tables:
+Expected:
+
 ```
- public | media_cache       | table | ...
- public | oauth_accounts    | table | ...
- public | schema_migrations | table | ...
- public | users             | table | ...
- public | watchlist_items   | table | ...
+ media_cache | oauth_accounts | schema_migrations | users | watchlist_items
 ```
 
 ---
 
-## Step 5 — Get a TMDB API Key
-
-The app uses TMDB (The Movie Database) for search, metadata, posters, and discover.
-
-1. Create a free account at https://www.themoviedb.org/signup
-2. Go to Settings → API: https://www.themoviedb.org/settings/api
-3. Request an API key (choose "Developer", fill in the form)
-4. Copy the **API Read Access Token** (long JWT starting with `eyJ...`)
-
-> The shorter "API Key (v3 auth)" also works — both are accepted.
-
----
-
-## Step 6 — Configure the Web App
-
-Copy the example env file:
+### Step 6 — Configure the web app
 
 ```bash
 # Mac/Linux
@@ -273,146 +285,126 @@ cp apps/web/.env.local.example apps/web/.env.local
 Copy-Item apps/web/.env.local.example apps/web/.env.local
 ```
 
-Edit `apps/web/.env.local` and fill in the values:
+Edit `apps/web/.env.local`:
 
 ```env
-# URL of the Fastify API (do not change for local dev)
+# Fastify API base URL
 NEXT_PUBLIC_API_URL=http://localhost:3001
 
-# TMDB API key from Step 5
+# TMDB API key from Step 2
 NEXT_PUBLIC_TMDB_API_KEY=eyJhbGciOiJIUzI1NiJ9...
 
-# Random secret for Auth.js session encryption
-# Generate with: openssl rand -base64 32
+# Auth.js session secret — openssl rand -base64 32
 AUTH_SECRET=your-random-secret-here
 
-# URL this web app is served from (must match exactly for OAuth callbacks)
+# Web app URL — must match exactly for OAuth callbacks
 AUTH_URL=http://localhost:3000
 
 # --- Optional: Google OAuth ---
-# From Google Cloud Console → Credentials → OAuth 2.0 Client IDs
-# Redirect URI to add: http://localhost:3000/api/auth/callback/google
+# Redirect URI to register: http://localhost:3000/api/auth/callback/google
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 
 # --- Optional: Apple Sign-In ---
-# From Apple Developer → Certificates, Identifiers & Profiles → Services IDs
-# Redirect URI to add: http://localhost:3000/api/auth/callback/apple
+# Redirect URI to register: http://localhost:3000/api/auth/callback/apple
 APPLE_ID=
 APPLE_SECRET=
 ```
 
-> Google and Apple OAuth are optional. Email/password login works without them.
-
-Generate `AUTH_SECRET`:
-
-```bash
-# Mac/Linux
-openssl rand -base64 32
-
-# Windows (PowerShell)
-[System.Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
-```
+> Email/password login works without Google and Apple credentials.
 
 ---
 
-## Step 7 — Start the API
+### Step 7 — Start the API
 
-Open a terminal and run:
+**Terminal 1:**
 
 ```bash
 cd apps/api
 pnpm dev
 ```
 
-Expected output:
+Expected:
 
 ```
 API listening on http://0.0.0.0:3001
 ```
 
-Verify it's healthy:
+Verify:
 
 ```bash
 curl http://localhost:3001/health
+# {"status":"ok"}
 ```
 
-Expected response:
-
-```json
-{"status":"ok"}
-```
-
-> Keep this terminal running. The API uses `tsx watch` so it auto-reloads on file changes.
+Uses `tsx watch` — auto-reloads on file changes.
 
 ---
 
-## Step 8 — Start the Web App
+### Step 8 — Start the web app
 
-Open a **second terminal** and run:
+**Terminal 2:**
 
 ```bash
 cd apps/web
 pnpm dev
 ```
 
-Expected output:
+Expected:
 
 ```
 ▲ Next.js 14.2.29
 - Local:        http://localhost:3000
-- Ready in 2.1s
+- Ready in 2s
 ```
 
-Open http://localhost:3000 in your browser.
+Open http://localhost:3000.
 
 ---
 
-## Step 9 — Create Your First Account
+## First Use
+
+### Create an account
 
 1. Go to http://localhost:3000
-2. Click **Profile** in the top nav (or go to http://localhost:3000/auth/login)
-3. Click **Register** at the bottom of the login page
-4. Fill in email, password, and display name
-5. You'll be logged in automatically and redirected to My List
+2. Click **Profile** in the top-right nav
+3. Click **Register** on the login page
+4. Enter email, password, display name → redirected to My List
 
----
+### Try the features
 
-## Step 10 — Test the App
-
-**Search for something:**
+**Search and add:**
 1. Click **Search** in the nav
-2. Type a movie or show name (e.g. "Inception")
-3. Click **+ Add** → choose a status (Planned, In Progress, Watched, Quit)
+2. Type a movie or show name (e.g. "The Wire")
+3. Click **+ Add** → pick a status (Planned / In Progress / Watched / Quit)
 
-**View your list:**
-1. Go back to **My List** (home screen)
-2. Use the status tabs to filter (All / Planned / In Progress / Watched / Quit)
-3. Use the dropdowns to filter by type (Movies / TV) and sort
+**My List:**
+1. Home screen shows your list
+2. Filter by status using the tabs at the top
+3. Filter by type (Movies / TV) and sort using the dropdowns
 
-**View media detail:**
-1. Click any item in your list (or any card in Search/Discover)
-2. Change status, set a rating, add notes
+**Media detail:**
+1. Click any item in your list, search results, or discover cards
+2. Change status, rate 1–10, add notes
 3. For TV shows set to **In Progress**: season + episode tracker appears
-4. Click **Save** to persist changes
+4. Click **Save** to persist
 
 **Discover:**
-1. Go to **Discover** in the nav
-2. Browse Trending This Week and Top Rated
-3. After adding something to In Progress/Watched, personalized recommendations appear
+- Browse Trending This Week, Top Rated
+- After adding an In Progress or Watched item, personalized recs appear ("Because You Watched…")
 
 **Sync:**
-1. While logged in, click **Sync** in the top-right of My List
-2. Or go to **Profile** → **Sync Now**
-3. Changes push to PostgreSQL and pull back any changes from other devices
+- Click **Sync** (top-right of My List) or **Profile → Sync Now**
+- Pushes local changes to Postgres, pulls any changes from other devices
+- Works across devices logged into the same account
 
 ---
 
-## Step 11 — Access from iOS or Android TV
+## Access from iOS / Android TV
 
-The web app works on any device on the same Wi-Fi network.
+The web app runs in any browser — no native app needed.
 
-### Find your local IP address
+### Step 1 — Find your local IP
 
 ```bash
 # Mac
@@ -425,78 +417,94 @@ hostname -I | awk '{print $1}'
 (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.InterfaceAlias -notlike '*Loopback*' })[0].IPAddress
 ```
 
-### Start web server accessible on network
+Example result: `192.168.1.42`
 
-Stop the current `pnpm dev` and restart with:
+### Step 2 — Expose the servers on your network
 
-```bash
-cd apps/web
-pnpm dev -- --hostname 0.0.0.0
-```
+**Docker:**
 
-### Update AUTH_URL
-
-Edit `apps/web/.env.local` — change `AUTH_URL` to your local IP:
+Edit `.env`:
 
 ```env
-AUTH_URL=http://192.168.1.x:3000
+AUTH_URL=http://192.168.1.42:3000
+NEXT_PUBLIC_API_URL=http://192.168.1.42:3001
 ```
 
-Restart `pnpm dev` after changing `.env.local`.
+Rebuild:
 
-### Open on device
+```bash
+docker compose up --build
+```
 
-Open `http://192.168.1.x:3000` (use your actual IP) in the device browser.
+> `NEXT_PUBLIC_*` vars are baked in at build time — rebuild is required.
 
-**iOS Safari:**
-- Works immediately
-- For full-screen: tap Share → **Add to Home Screen** → gives app-like experience without browser chrome
+**Manual:**
 
-**Android TV:**
-- Open Chrome or the built-in browser
-- Navigate to `http://192.168.1.x:3000`
-- Use D-pad to navigate, on-screen keyboard for search
-- Recommend casting from phone if D-pad navigation is awkward
+Stop `pnpm dev` in both terminals and restart:
+
+```bash
+# Terminal 1 — API (already binds to 0.0.0.0, nothing to change)
+cd apps/api && pnpm dev
+
+# Terminal 2 — Web
+cd apps/web && pnpm dev -- --hostname 0.0.0.0
+```
+
+Edit `apps/web/.env.local`:
+
+```env
+AUTH_URL=http://192.168.1.42:3000
+```
+
+Restart `pnpm dev` in the web terminal.
+
+### Step 3 — Open on the device
+
+Navigate to `http://192.168.1.42:3000` in the device browser.
+
+Both devices must be on the same Wi-Fi network.
+
+**iOS Safari tips:**
+- Works immediately — no configuration needed
+- Full-screen mode: tap **Share → Add to Home Screen** → launches without browser chrome, like a native app
+
+**Android TV tips:**
+- Open Chrome or the built-in browser, navigate to the URL
+- D-pad navigates focus, select button confirms, back button goes back
+- Use the on-screen keyboard for search
+- If D-pad navigation is awkward, cast from an Android phone instead
 
 ---
 
-## Production Build
-
-Build optimized bundles for both apps:
+## Production Build (without Docker)
 
 ```bash
-# Build the API
+# Build API
 cd apps/api
 pnpm build
 # Output: apps/api/dist/index.js
 
-# Build the web app
+# Build web
 cd apps/web
 pnpm build
-# Output: apps/web/.next/
+# Output: apps/web/.next/standalone/
+
+# Run API
+cd apps/api && NODE_ENV=production pnpm start
+
+# Run web
+cd apps/web && NODE_ENV=production pnpm start
 ```
 
-Run in production mode:
-
-```bash
-# Terminal 1 — API
-cd apps/api
-pnpm start
-# Listens on http://0.0.0.0:3001
-
-# Terminal 2 — Web
-cd apps/web
-pnpm start
-# Listens on http://localhost:3000
-```
-
-For production deployment, set `NODE_ENV=production` and use a process manager like PM2:
+Using PM2:
 
 ```bash
 npm install -g pm2
+
 pm2 start apps/api/dist/index.js --name mywatch-api
 pm2 start "pnpm start" --name mywatch-web --cwd apps/web
 pm2 save
+pm2 startup   # auto-start on reboot
 ```
 
 ---
@@ -504,68 +512,92 @@ pm2 save
 ## Running Tests
 
 ```bash
-# Run all 103 tests across all packages
+# All 103 tests (run from repo root)
 pnpm test
 
-# Watch mode (re-runs on file changes)
+# Watch mode
 pnpm test:watch
 ```
 
-Test breakdown:
-- `packages/core` — 21 tests (schemas, status machine)
-- `packages/tmdb` — 21 tests (normalize, cache, client)
-- `packages/sync` — 12 tests (conflict resolution, device ID)
-- `apps/api` — 26 tests (health, auth, oauth, sync, password)
-- `apps/web` — 23 tests (api client, Dexie store, sync engine)
+| Package | Tests | What's covered |
+|---------|-------|----------------|
+| `packages/core` | 21 | Zod schemas, status machine |
+| `packages/tmdb` | 21 | normalize, cache staleness, client |
+| `packages/sync` | 12 | LWW conflict resolution, device ID |
+| `apps/api` | 26 | health, register/login/me, OAuth, sync push/pull, password hash |
+| `apps/web` | 23 | API client, Dexie store, sync engine (tombstone propagation) |
 
 ---
 
 ## Troubleshooting
 
-### "ECONNREFUSED" when starting API
-PostgreSQL isn't running, or `DATABASE_URL` is wrong.
+### API won't start — "ECONNREFUSED"
+
+PostgreSQL isn't running or `DATABASE_URL` is wrong.
 
 ```bash
 # Check Postgres is running
 pg_isready
 
-# Test the connection string directly
+# Test connection directly
 psql "postgresql://localhost:5432/mywatch" -c "SELECT 1"
+
+# Docker: check postgres container
+docker compose logs postgres
 ```
 
-### "relation does not exist" error
-Migrations haven't run yet.
+### "relation does not exist"
+
+Migrations haven't run.
 
 ```bash
+# Manual
 cd apps/api && pnpm migrate
+
+# Docker — migrations run automatically; check logs
+docker compose logs api
 ```
 
 ### Login returns "Invalid email or password"
-The API isn't reachable from the web app. Check:
-1. API terminal shows `API listening on http://0.0.0.0:3001`
-2. `NEXT_PUBLIC_API_URL=http://localhost:3001` in `.env.local`
-3. Visit http://localhost:3001/health — should return `{"status":"ok"}`
 
-### "AUTH_SECRET" error or session loop
-`AUTH_SECRET` is missing or empty in `apps/web/.env.local`. Must be set to any non-empty string (use the generated value from Step 6).
+API isn't reachable from the web app.
 
-### Google/Apple OAuth "redirect_uri_mismatch"
-The callback URL registered in Google Cloud Console or Apple Developer portal doesn't match.
+1. Confirm API terminal shows `API listening on http://0.0.0.0:3001`
+2. Open http://localhost:3001/health — must return `{"status":"ok"}`
+3. Confirm `NEXT_PUBLIC_API_URL=http://localhost:3001` in `.env.local`
 
-- Google: add `http://localhost:3000/api/auth/callback/google` in Authorized redirect URIs
-- Apple: add `http://localhost:3000/api/auth/callback/apple` in Return URLs
+### Session loop / "AUTH_SECRET" error
 
-### TMDB images not showing
-Expected on first load — images are fetched from TMDB and cached in IndexedDB. They appear after the first successful fetch. If they never appear, check `NEXT_PUBLIC_TMDB_API_KEY` is set correctly.
+`AUTH_SECRET` is missing or empty. Set it to any non-empty string in `.env.local` (or `.env` for Docker) and restart.
 
-### "invalid signature" on API requests
-`JWT_SECRET` changed between API restarts. Log out and back in to get a new token.
+### Google/Apple OAuth — "redirect_uri_mismatch"
 
-### Cannot access from phone/TV
-- Confirm both devices are on the same Wi-Fi network
-- API must also be accessible: open `http://<your-ip>:3001/health` from the device browser
-- If API is unreachable from the device, update `NEXT_PUBLIC_API_URL` in `.env.local` to use your local IP instead of `localhost`:
-  ```env
-  NEXT_PUBLIC_API_URL=http://192.168.1.x:3001
-  ```
-  Then restart `pnpm dev`.
+The callback URL in your OAuth provider doesn't match `AUTH_URL`.
+
+- **Google Cloud Console** → Credentials → OAuth 2.0 Client → Authorized redirect URIs:
+  Add `http://localhost:3000/api/auth/callback/google`
+- **Apple Developer** → Certificates → Services ID → Return URLs:
+  Add `http://localhost:3000/api/auth/callback/apple`
+
+For LAN access replace `localhost:3000` with your IP.
+
+### TMDB posters not showing
+
+Expected on first load — fetched from TMDB and cached in IndexedDB. Appear after first successful fetch.
+
+If they never appear: check `NEXT_PUBLIC_TMDB_API_KEY` is set and not expired.
+
+### "invalid signature" on API calls
+
+`JWT_SECRET` changed between restarts. Sign out and sign back in to get a fresh token.
+
+### Can't reach the app from phone or TV
+
+1. Both devices must be on the same Wi-Fi
+2. Test API from the device: open `http://<your-ip>:3001/health` in the device browser
+3. If unreachable, check firewall — allow inbound on ports 3000 and 3001
+4. For Docker: confirm `NEXT_PUBLIC_API_URL` uses the IP, not `localhost`, and rebuild
+
+### Docker build fails — "NEXT_PUBLIC_TMDB_API_KEY is required"
+
+The variable isn't set in `.env`. Check `.env` exists (not just `.env.example`) and the variable is filled in.
