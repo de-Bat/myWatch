@@ -10,13 +10,13 @@ export interface PendingPush {
 class WatchDB extends Dexie {
   watchlistItems!: Table<WatchlistItem, string>
   pendingPushes!: Table<PendingPush, number>
-  mediaCache!: Table<MediaCache, [number, MediaType]>
+  mediaCache!: Table<MediaCache, [number, string]>
 
   constructor() {
     super('mywatch')
     this.version(1).stores({
       watchlistItems: 'id, userId, status, mediaType, updatedAt',
-      pendingPushes: '++id, itemId',
+      pendingPushes: '++id, itemId, queuedAt',
       mediaCache: '[tmdbId+mediaType], cachedAt',
     })
   }

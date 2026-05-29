@@ -95,4 +95,28 @@ describe('mediaCache', () => {
     const found = await db.mediaCache.get([550, 'movie'])
     expect(found?.title).toBe('Fight Club')
   })
+
+  it('overwrites existing entry on put with same compound key', async () => {
+    const entry = {
+      tmdbId: 550,
+      mediaType: 'movie' as const,
+      title: 'Original',
+      overview: '',
+      posterPath: null,
+      backdropPath: null,
+      releaseDate: null,
+      genres: [],
+      voteAverage: 0,
+      voteCount: 0,
+      runtime: null,
+      seasonsCount: null,
+      showStatus: null,
+      cachedAt: '2024-01-01T00:00:00Z',
+    }
+    await db.mediaCache.put(entry)
+    await db.mediaCache.put({ ...entry, title: 'Updated' })
+    expect(await db.mediaCache.count()).toBe(1)
+    const found = await db.mediaCache.get([550, 'movie'])
+    expect(found?.title).toBe('Updated')
+  })
 })
