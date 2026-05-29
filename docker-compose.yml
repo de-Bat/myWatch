@@ -10,7 +10,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${PORT_DB:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mywatch -d mywatch"]
       interval: 5s
@@ -28,11 +28,11 @@ services:
     environment:
       DATABASE_URL: postgresql://mywatch:mywatch@postgres:5432/mywatch
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required — set it in .env}
-      PORT: 3001
+      PORT: ${PORT_API:-3001}
     ports:
-      - "3001:3001"
+      - "${PORT_API:-3001}:${PORT_API:-3001}"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${PORT_API:-3001}/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,23 +42,24 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:${PORT_API:-3001}}
         NEXT_PUBLIC_TMDB_API_KEY: ${NEXT_PUBLIC_TMDB_API_KEY:?NEXT_PUBLIC_TMDB_API_KEY is required — set it in .env}
     restart: unless-stopped
     depends_on:
       api:
         condition: service_healthy
     environment:
+      PORT: ${PORT_WEB:-3000}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required — set it in .env}
-      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      AUTH_URL: ${AUTH_URL:-http://localhost:${PORT_WEB:-3000}}
       # Server-side URL for Next.js → API calls inside Docker network
-      INTERNAL_API_URL: http://api:3001
+      INTERNAL_API_URL: http://api:${PORT_API:-3001}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       APPLE_ID: ${APPLE_ID:-}
       APPLE_SECRET: ${APPLE_SECRET:-}
     ports:
-      - "3000:3000"
+      - "${PORT_WEB:-3000}:${PORT_WEB:-3000}"
 
 volumes:
   postgres_data:
