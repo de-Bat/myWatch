@@ -45,8 +45,13 @@ RUN mkdir -p apps/api/dist/db/migrations \
 # pnpm deploy: resolves production node_modules incl. workspace packages
 RUN pnpm --filter '@mywatch/api' deploy --prod /prod/api
 
-# Overlay compiled output (deploy only copies source, not dist)
+# Overlay API dist (pnpm deploy may exclude .gitignored dist/ dirs)
 RUN cp -r /app/apps/api/dist /prod/api/dist
+
+# Overlay workspace package dists inside the deploy's node_modules.
+# pnpm deploy copies workspace packages but may omit their dist/ (gitignored).
+RUN cp -r /app/packages/core/dist /prod/api/node_modules/@mywatch/core/dist \
+  && cp -r /app/packages/sync/dist /prod/api/node_modules/@mywatch/sync/dist
 
 # ---- runner ----
 FROM node:20-alpine AS runner

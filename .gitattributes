@@ -1,0 +1,16 @@
+# Force LF for shell scripts — CRLF breaks sh/bash on Linux/Alpine
+*.sh text eol=lf
+
+# Force LF for Docker and config files
+Dockerfile text eol=lf
+docker-compose*.yml text eol=lf
+.env* text eol=lf
+*.json text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.css text eol=lf
+*.sql text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf

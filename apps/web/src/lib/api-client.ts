@@ -1,6 +1,12 @@
 import type { User, WatchlistItem } from '@mywatch/core'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+// Server-side (Auth.js callbacks, API routes): use INTERNAL_API_URL so the
+// Next.js container reaches the API container via Docker's internal network.
+// Client-side (browser fetch): NEXT_PUBLIC_API_URL points to the host port.
+const API_URL =
+  typeof window === 'undefined'
+    ? (process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001')
+    : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001')
 
 async function apiFetch<T>(
   path: string,

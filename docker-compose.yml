@@ -51,6 +51,8 @@ services:
     environment:
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required — set it in .env}
       AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      # Server-side URL for Next.js → API calls inside Docker network
+      INTERNAL_API_URL: http://api:3001
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       APPLE_ID: ${APPLE_ID:-}

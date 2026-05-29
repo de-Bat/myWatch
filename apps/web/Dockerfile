@@ -47,6 +47,9 @@ ARG NEXT_PUBLIC_TMDB_API_KEY
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_TMDB_API_KEY=$NEXT_PUBLIC_TMDB_API_KEY
 
+# Ensure public dir exists (COPY in runner fails if source is absent)
+RUN mkdir -p apps/web/public
+
 RUN cd apps/web && pnpm exec next build
 
 # ---- runner ----
