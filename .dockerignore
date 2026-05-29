@@ -1,0 +1,25 @@
+node_modules
+.git
+.gitignore
+*.log
+*.md
+
+# Next.js
+apps/web/.next
+apps/web/out
+
+# Build output (rebuilt in Docker)
+apps/api/dist
+packages/*/dist
+
+# Env files (injected at runtime)
+apps/web/.env.local
+apps/api/.env
+
+# Test files
+packages/*/tests
+apps/*/tests
+
+# Dev tools
+.vscode
+.idea
