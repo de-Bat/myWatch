@@ -10,7 +10,7 @@ async function apiFetch<T>(
   const res = await fetch(`${API_URL}${path}`, {
     ...rest,
     headers: {
-      'Content-Type': 'application/json',
+      ...(rest.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(extraHeaders as Record<string, string> | undefined),
     },
@@ -42,10 +42,10 @@ export const apiClient = {
         body: JSON.stringify({ idToken }),
       })
     },
-    oauthApple(identityToken: string) {
+    oauthApple(identityToken: string, fullName?: { firstName?: string; lastName?: string }) {
       return apiFetch<{ token: string; user: User }>('/auth/oauth/apple', {
         method: 'POST',
-        body: JSON.stringify({ identityToken }),
+        body: JSON.stringify({ identityToken, ...(fullName ? { fullName } : {}) }),
       })
     },
   },

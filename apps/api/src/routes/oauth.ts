@@ -4,9 +4,17 @@ import appleSignin from 'apple-signin-auth'
 import type { UserRepo } from '../repos/user-repo.js'
 
 function userResponse(user: {
-  id: string; email: string | null; displayName: string; avatarUrl: string | null; isGuest: boolean
+  id: string; email: string | null; displayName: string; avatarUrl: string | null; isGuest: boolean; createdAt: string; updatedAt: string
 }) {
-  return { id: user.id, email: user.email, displayName: user.displayName, avatarUrl: user.avatarUrl, isGuest: user.isGuest }
+  return {
+    id: user.id,
+    email: user.email,
+    displayName: user.displayName,
+    avatarUrl: user.avatarUrl,
+    isGuest: user.isGuest,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  }
 }
 
 export function registerOAuthRoutes(app: FastifyInstance, userRepo: UserRepo) {

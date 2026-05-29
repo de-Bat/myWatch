@@ -18,13 +18,15 @@ function signToken(app: FastifyInstance, user: { id: string; email: string | nul
   return app.jwt.sign({ sub: user.id, email: user.email, isGuest: user.isGuest })
 }
 
-function userResponse(user: { id: string; email: string | null; displayName: string; avatarUrl: string | null; isGuest: boolean }) {
+function userResponse(user: { id: string; email: string | null; displayName: string; avatarUrl: string | null; isGuest: boolean; createdAt: string; updatedAt: string }) {
   return {
     id: user.id,
     email: user.email,
     displayName: user.displayName,
     avatarUrl: user.avatarUrl,
     isGuest: user.isGuest,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   }
 }
 
@@ -100,7 +102,7 @@ export function registerAuthRoutes(app: FastifyInstance, userRepo: UserRepo) {
       if (!user) {
         return reply.status(404).send({ error: 'User not found' })
       }
-      return reply.send(userResponse(user))
+      return reply.send({ user: userResponse(user) })
     },
   )
 }

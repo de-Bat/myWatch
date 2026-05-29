@@ -96,7 +96,9 @@ describe('apiClient.sync', () => {
     expect(result.items).toEqual([])
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/sync/pull?since='),
-      expect.any(Object),
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer tok' }),
+      }),
     )
   })
 })

@@ -115,7 +115,7 @@ describe('GET /auth/me', () => {
       headers: { authorization: `Bearer ${token}` },
     })
     expect(res.statusCode).toBe(200)
-    expect(res.json<{ id: string }>().id).toBe(mockUser.id)
+    expect(res.json<{ user: { id: string } }>().user.id).toBe(mockUser.id)
   })
 
   it('returns 401 without token', async () => {
