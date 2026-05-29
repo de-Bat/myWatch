@@ -61,7 +61,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY --from=builder /prod/api ./
-COPY --from=builder /app/apps/api/docker-entrypoint.sh ./
+COPY apps/api/docker-entrypoint.sh ./
 
 RUN chmod +x docker-entrypoint.sh
 
