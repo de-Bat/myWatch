@@ -1,5 +1,6 @@
 'use client'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useCallback } from 'react'
 import type { WatchlistItem, WatchStatus, MediaType } from '@mywatch/core'
 import { getOrCreateDeviceId } from '@mywatch/sync'
 import { db } from '@/lib/db'
@@ -42,16 +43,16 @@ export function useWatchlistItem(tmdbId: number, mediaType: MediaType) {
 }
 
 export function useUpsertItem() {
-  return async (item: Omit<WatchlistItem, 'updatedAt' | 'deviceId'>) => {
+  return useCallback(async (item: Omit<WatchlistItem, 'updatedAt' | 'deviceId'>) => {
     const now = new Date().toISOString()
     const full: WatchlistItem = { ...item, updatedAt: now, deviceId: getLocalDeviceId() }
     await db.watchlistItems.put(full)
     await db.pendingPushes.add({ itemId: item.id, queuedAt: now })
-  }
+  }, [])
 }
 
 export function useSoftDeleteItem() {
-  return async (id: string) => {
+  return useCallback(async (id: string) => {
     const now = new Date().toISOString()
     await db.watchlistItems.where('id').equals(id).modify({
       deletedAt: now,
@@ -59,5 +60,5 @@ export function useSoftDeleteItem() {
       deviceId: getLocalDeviceId(),
     })
     await db.pendingPushes.add({ itemId: id, queuedAt: now })
-  }
+  }, [])
 }

@@ -1,4 +1,4 @@
-import { mergeItems } from '@mywatch/sync'
+import { resolveConflict } from '@mywatch/sync'
 import { db } from './db'
 import { apiClient } from './api-client'
 
@@ -18,8 +18,13 @@ export async function pullItems(since: string, token: string): Promise<string> {
   if (remoteItems.length > 0) {
     const ids = remoteItems.map((i) => i.id)
     const localItems = await db.watchlistItems.where('id').anyOf(ids).toArray()
-    const merged = mergeItems(localItems, remoteItems)
-    await db.watchlistItems.bulkPut(merged)
+    const localMap = new Map(localItems.map((i) => [i.id, i]))
+    // Resolve LWW per item, preserving tombstones (deletedAt is not filtered out)
+    const resolved = remoteItems.map((remote) => {
+      const local = localMap.get(remote.id)
+      return local === undefined ? remote : resolveConflict(local, remote)
+    })
+    await db.watchlistItems.bulkPut(resolved)
   }
   return pulledAt
 }

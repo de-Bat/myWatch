@@ -15,12 +15,12 @@ export function useMediaMeta(tmdbId: number, mediaType: MediaType) {
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      const cached = await db.mediaCache.get([tmdbId, mediaType])
-      if (cached && !isStale(cached)) {
-        if (!cancelled) setMeta(cached)
-        return
-      }
       try {
+        const cached = await db.mediaCache.get([tmdbId, mediaType])
+        if (cached && !isStale(cached)) {
+          if (!cancelled) setMeta(cached)
+          return
+        }
         const client = getClient()
         const detail =
           mediaType === 'movie'
@@ -33,6 +33,8 @@ export function useMediaMeta(tmdbId: number, mediaType: MediaType) {
         await db.mediaCache.put(normalized)
         if (!cancelled) setMeta(normalized)
       } catch {
+        // serve stale on any error (Dexie or network)
+        const cached = await db.mediaCache.get([tmdbId, mediaType]).catch(() => undefined)
         if (cached && !cancelled) setMeta(cached)
       }
     })()

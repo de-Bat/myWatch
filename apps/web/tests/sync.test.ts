@@ -103,4 +103,15 @@ describe('pullItems', () => {
 
     expect((await db.watchlistItems.get('i1'))?.status).toBe('in_progress')
   })
+
+  it('propagates remote soft-delete tombstone to local store', async () => {
+    await db.watchlistItems.put(baseItem) // local: deletedAt null
+    const tombstone = { ...baseItem, deletedAt: '2024-01-02T00:00:00Z', updatedAt: '2024-01-02T00:00:00Z' }
+    mockedPull.mockResolvedValueOnce({ items: [tombstone], pulledAt: '2024-01-02T01:00:00Z' })
+
+    await pullItems('2024-01-01T00:00:00Z', 'token123')
+
+    const stored = await db.watchlistItems.get('i1')
+    expect(stored?.deletedAt).toBe('2024-01-02T00:00:00Z')
+  })
 })
