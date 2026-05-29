@@ -29,12 +29,13 @@ COPY packages/tmdb/src  ./packages/tmdb/src
 COPY apps/api/src       ./apps/api/src
 COPY apps/api/tsconfig.json ./apps/api/
 
-# Build workspace packages the API depends on
-RUN pnpm --filter '@mywatch/core' build
-RUN pnpm --filter '@mywatch/sync' build
+# Build workspace packages — skip --dts (not needed at runtime, and pnpm isolated
+# store causes TS to fail resolving transitive deps during declaration generation)
+RUN cd packages/core && pnpm exec tsup src/index.ts --format esm --no-dts
+RUN cd packages/sync && pnpm exec tsup src/index.ts --format esm --no-dts
 
-# Build API index + migrate as separate ESM bundles
-RUN cd apps/api && pnpm exec tsup src/index.ts src/db/migrate.ts --format esm
+# Build API index + migrate as separate ESM bundles (also no DTS needed)
+RUN cd apps/api && pnpm exec tsup src/index.ts src/db/migrate.ts --format esm --no-dts
 
 # Copy SQL migration files next to compiled migrate.js
 # migrate.ts resolves migrations relative to __dirname → dist/db/migrations/

@@ -34,10 +34,11 @@ COPY apps/web/next.config.mjs   ./apps/web/
 COPY apps/web/tailwind.config.ts ./apps/web/
 COPY apps/web/postcss.config.js ./apps/web/
 
-# Build workspace packages the web app depends on
-RUN pnpm --filter '@mywatch/core' build
-RUN pnpm --filter '@mywatch/sync' build
-RUN pnpm --filter '@mywatch/tmdb' build
+# Build workspace packages — skip --dts (not needed at runtime, and pnpm isolated
+# store causes TS to fail resolving transitive deps during declaration generation)
+RUN cd packages/core && pnpm exec tsup src/index.ts --format esm --no-dts
+RUN cd packages/sync && pnpm exec tsup src/index.ts --format esm --no-dts
+RUN cd packages/tmdb && pnpm exec tsup src/index.ts --format esm --no-dts
 
 # Build Next.js (output: standalone)
 # NEXT_PUBLIC_* vars must be provided at build time
