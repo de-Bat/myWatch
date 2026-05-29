@@ -2,9 +2,111 @@
 
 A local-first media watchlist app. Fastify API + PostgreSQL backend, Next.js 14 frontend with IndexedDB sync.
 
+Two ways to run it: **Docker** (recommended, zero setup) or **manual** (for development).
+
 ---
 
-## What You'll Need
+## Option A — Docker (Recommended)
+
+Runs Postgres + API + Web in containers. No local Node.js or Postgres required.
+
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) (includes docker compose)
+
+Verify:
+```bash
+docker --version        # Docker version 24+
+docker compose version  # Docker Compose version 2.x
+```
+
+### 1. Create the env file
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+
+```env
+JWT_SECRET=<random string>             # node -e "require('crypto').randomBytes(32).toString('hex') |> console.log"
+NEXT_PUBLIC_TMDB_API_KEY=<your key>    # https://www.themoviedb.org/settings/api
+AUTH_SECRET=<random string>            # openssl rand -base64 32
+AUTH_URL=http://localhost:3000
+```
+
+### 2. Build and start
+
+```bash
+docker compose up --build
+```
+
+First build takes ~3–5 minutes (installs deps, compiles TypeScript, builds Next.js).  
+Subsequent starts are fast (images cached).
+
+Expected output:
+```
+postgres  | database system is ready to accept connections
+api       | Running database migrations...
+api       | Migrations complete.
+api       | Starting API server...
+api       | API listening on http://0.0.0.0:3001
+web       | ▲ Next.js 14.2.29
+web       | ✓ Ready in 2.1s
+```
+
+### 3. Open the app
+
+- Web: http://localhost:3000
+- API health: http://localhost:3001/health
+
+### Useful Docker commands
+
+```bash
+# Run in background
+docker compose up -d
+
+# View logs
+docker compose logs -f
+docker compose logs -f api
+docker compose logs -f web
+
+# Stop
+docker compose down
+
+# Stop and delete database volume (full reset)
+docker compose down -v
+
+# Rebuild after code changes
+docker compose up --build
+
+# Run one-off command (e.g. check DB)
+docker compose exec postgres psql -U mywatch -d mywatch -c "\dt"
+```
+
+### Accessing from iOS or Android TV
+
+1. Find your local IP (see Step 11 in the manual setup below)
+2. Edit `.env`:
+   ```env
+   AUTH_URL=http://192.168.1.x:3000
+   NEXT_PUBLIC_API_URL=http://192.168.1.x:3001
+   ```
+3. Rebuild and restart:
+   ```bash
+   docker compose up --build
+   ```
+4. Open `http://192.168.1.x:3000` on the device
+
+> `NEXT_PUBLIC_*` vars are baked in at build time — rebuild required when changing them.
+
+---
+
+## Option B — Manual Setup
+
+For local development with hot reload.
+
+### What You'll Need
 
 | Tool | Version | Install |
 |------|---------|---------|
