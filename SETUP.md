@@ -48,12 +48,14 @@ Open `.env` and fill in:
 JWT_SECRET=<random 32-byte hex string>
 NEXT_PUBLIC_TMDB_API_KEY=<your TMDB token>
 AUTH_SECRET=<random base64 string>
-AUTH_URL=http://localhost:3000
 
 # Ports — change if defaults conflict with other local services
 PORT_WEB=3000
 PORT_API=3001
 PORT_DB=5432
+
+# AUTH_URL, NEXT_PUBLIC_API_URL, INTERNAL_API_URL are auto-derived from the port
+# variables above — leave them out unless you need a custom value (e.g. LAN IP)
 
 # Optional — email/password works without these
 GOOGLE_CLIENT_ID=
@@ -61,6 +63,8 @@ GOOGLE_CLIENT_SECRET=
 APPLE_ID=
 APPLE_SECRET=
 ```
+
+> **Changing ports?** Only edit `PORT_WEB` / `PORT_API` / `PORT_DB`. Do **not** also set `AUTH_URL` or `NEXT_PUBLIC_API_URL` — if those are present in `.env` they override the port variables. If your existing `.env` has them, delete those lines.
 
 Generate secrets:
 

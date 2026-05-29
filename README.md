@@ -106,11 +106,11 @@ cd apps/web && pnpm dev   # http://localhost:3000
 | `JWT_SECRET` | yes | Secret for signing JWTs |
 | `NEXT_PUBLIC_TMDB_API_KEY` | yes | TMDB API key |
 | `AUTH_SECRET` | yes | Auth.js session secret |
-| `AUTH_URL` | yes | Web app base URL (for OAuth callbacks) |
-| `NEXT_PUBLIC_API_URL` | no | Public API URL (default: `http://localhost:3001`) |
 | `PORT_WEB` | no | Host port for the web container (default: `3000`) |
 | `PORT_API` | no | Host port for the API container (default: `3001`) |
 | `PORT_DB` | no | Host port for the Postgres container (default: `5432`) |
+| `AUTH_URL` | no | Web app base URL — **auto-derived from `PORT_WEB`**, only set to override (e.g. LAN IP) |
+| `NEXT_PUBLIC_API_URL` | no | Public API URL — **auto-derived from `PORT_API`**, only set to override |
 | `GOOGLE_CLIENT_ID` | OAuth only | Google app client ID |
 | `GOOGLE_CLIENT_SECRET` | OAuth only | Google app client secret |
 | `APPLE_ID` | OAuth only | Apple Services ID |
