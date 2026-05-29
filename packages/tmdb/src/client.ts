@@ -22,11 +22,15 @@ export class TmdbClient {
 
   private async get<T>(path: string, params: Record<string, string> = {}): Promise<T> {
     const url = new URL(`${this.baseUrl}${path}`)
-    url.searchParams.set('api_key', this.apiKey)
+    const isBearer = this.apiKey.startsWith('eyJ')
+    if (!isBearer) url.searchParams.set('api_key', this.apiKey)
     for (const [k, v] of Object.entries(params)) {
       url.searchParams.set(k, v)
     }
-    const res = await fetch(url.toString())
+    const headers: Record<string, string> = isBearer
+      ? { Authorization: `Bearer ${this.apiKey}` }
+      : {}
+    const res = await fetch(url.toString(), { headers })
     if (!res.ok) {
       throw new Error(`TMDB ${path} failed: ${res.status}`)
     }

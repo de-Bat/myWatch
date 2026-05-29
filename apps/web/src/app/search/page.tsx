@@ -13,20 +13,24 @@ import { StatusPicker } from '@/components/StatusPicker'
 function useTmdbSearch(query: string, mediaType: MediaType | 'all') {
   const [results, setResults] = useState<TmdbSearchResult[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!query.trim()) {
       setResults([])
+      setError(null)
       return
     }
     const timer = setTimeout(async () => {
       setLoading(true)
+      setError(null)
       try {
         const client = new TmdbClient({ apiKey: process.env.NEXT_PUBLIC_TMDB_API_KEY ?? '' })
         const res = await client.search(query, mediaType === 'all' ? undefined : mediaType)
         setResults(res)
-      } catch {
+      } catch (e) {
         setResults([])
+        setError(e instanceof Error ? e.message : 'Search failed')
       } finally {
         setLoading(false)
       }
@@ -34,7 +38,7 @@ function useTmdbSearch(query: string, mediaType: MediaType | 'all') {
     return () => clearTimeout(timer)
   }, [query, mediaType])
 
-  return { results, loading }
+  return { results, loading, error }
 }
 
 function SearchResult({
@@ -53,7 +57,7 @@ export default function SearchPage() {
   const [query, setQuery] = useState('')
   const [mediaType, setMediaType] = useState<MediaType | 'all'>('all')
   const [pending, setPending] = useState<TmdbSearchResult | null>(null)
-  const { results, loading } = useTmdbSearch(query, mediaType)
+  const { results, loading, error } = useTmdbSearch(query, mediaType)
   const upsert = useUpsertItem()
 
   async function handleAdd(result: TmdbSearchResult, status: WatchStatus) {
@@ -106,7 +110,11 @@ export default function SearchPage() {
         </select>
       </div>
 
+      {!process.env.NEXT_PUBLIC_TMDB_API_KEY && (
+        <p className="text-red-400 text-sm">NEXT_PUBLIC_TMDB_API_KEY not set — search won't work</p>
+      )}
       {loading && <p className="text-zinc-500 text-sm">Searching…</p>}
+      {error && <p className="text-red-400 text-sm">{error}</p>}
 
       <div className="space-y-2">
         {results.map((r) => (
