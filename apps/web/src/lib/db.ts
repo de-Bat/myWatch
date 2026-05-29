@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { WatchlistItem, MediaCache, MediaType } from '@mywatch/core'
+import type { WatchlistItem, MediaCache } from '@mywatch/core'
 
 export interface PendingPush {
   id?: number

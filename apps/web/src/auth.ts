@@ -41,7 +41,7 @@ const result: NextAuthResult = NextAuth({
   callbacks: {
     async jwt({ token, user, account }) {
       if (user && account?.provider === 'credentials') {
-        token.apiToken = (user as any).apiToken as string
+        token.apiToken = (user as Record<string, unknown>).apiToken as string
         token.userId = user.id!
       }
       if (account?.provider === 'google' && account.id_token) {
