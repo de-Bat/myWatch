@@ -31,4 +31,26 @@ export function registerSyncRoutes(app: FastifyInstance, watchlistRepo: Watchlis
       return reply.send({ pushedAt: new Date().toISOString() })
     },
   )
+
+  app.get<{ Querystring: { since?: string } }>(
+    '/sync/pull',
+    { preHandler: [authenticate] },
+    async (req, reply) => {
+      const { since } = req.query
+
+      if (!since) {
+        return reply.status(400).send({ error: 'Missing required query param: since' })
+      }
+
+      if (isNaN(Date.parse(since))) {
+        return reply.status(400).send({ error: 'Invalid since: must be an ISO 8601 timestamp' })
+      }
+
+      const userId = req.user.sub
+      const items = await watchlistRepo.findSince(userId, since)
+      const pulledAt = new Date().toISOString()
+
+      return reply.send({ items, pulledAt })
+    },
+  )
 }

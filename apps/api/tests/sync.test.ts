@@ -113,3 +113,62 @@ describe('POST /sync/push', () => {
     expect(res.statusCode).toBe(200)
   })
 })
+
+describe('GET /sync/pull', () => {
+  it('returns items updated since given timestamp', async () => {
+    const watchlistRepo = makeWatchlistRepo()
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo })
+    const token = getAuthToken(app)
+    const since = '2024-01-01T00:00:00.000Z'
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/sync/pull?since=${encodeURIComponent(since)}`,
+      headers: { authorization: `Bearer ${token}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json<{ items: WatchlistItem[]; pulledAt: string }>()
+    expect(body.pulledAt).toBeDefined()
+    expect(body.items).toHaveLength(1)
+    expect(body.items[0].id).toBe(mockItem.id)
+    expect(watchlistRepo.findSince).toHaveBeenCalledWith(mockUser.id, since)
+  })
+
+  it('returns 401 without token', async () => {
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo() })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/sync/pull?since=2024-01-01T00:00:00.000Z',
+    })
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('returns 400 when since param is missing', async () => {
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo() })
+    const token = getAuthToken(app)
+    const res = await app.inject({
+      method: 'GET',
+      url: '/sync/pull',
+      headers: { authorization: `Bearer ${token}` },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('uses epoch (1970) when since=0 to pull all items', async () => {
+    const watchlistRepo = makeWatchlistRepo()
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo })
+    const token = getAuthToken(app)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/sync/pull?since=1970-01-01T00:00:00.000Z',
+      headers: { authorization: `Bearer ${token}` },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(watchlistRepo.findSince).toHaveBeenCalledWith(
+      mockUser.id,
+      '1970-01-01T00:00:00.000Z',
+    )
+  })
+})
