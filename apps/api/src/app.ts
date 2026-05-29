@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify'
 import type { UserRepo } from './repos/user-repo.js'
 import type { WatchlistRepo } from './repos/watchlist-repo.js'
 import { registerAuthRoutes } from './routes/auth.js'
+import { registerOAuthRoutes } from './routes/oauth.js'
 
 export interface AppDeps {
   userRepo?: UserRepo
@@ -11,7 +12,7 @@ export interface AppDeps {
 }
 
 export async function createApp(deps?: AppDeps): Promise<FastifyInstance> {
-  const app = Fastify({ logger: process.env.NODE_ENV !== 'test' })
+  const app = Fastify({ logger: false })
 
   await app.register(jwt, {
     secret: process.env.JWT_SECRET ?? 'dev-secret-change-in-production',
@@ -21,6 +22,7 @@ export async function createApp(deps?: AppDeps): Promise<FastifyInstance> {
 
   if (deps?.userRepo) {
     registerAuthRoutes(app, deps.userRepo)
+    registerOAuthRoutes(app, deps.userRepo)
   }
 
   return app
