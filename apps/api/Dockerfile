@@ -3,7 +3,7 @@
 
 # ---- base ----
 FROM node:20-alpine AS base
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
@@ -50,7 +50,9 @@ RUN cp -r /app/apps/api/dist /prod/api/dist
 
 # Overlay workspace package dists inside the deploy's node_modules.
 # pnpm deploy copies workspace packages but may omit their dist/ (gitignored).
-RUN cp -r /app/packages/core/dist /prod/api/node_modules/@mywatch/core/dist \
+RUN mkdir -p /prod/api/node_modules/@mywatch/core \
+  && cp -r /app/packages/core/dist /prod/api/node_modules/@mywatch/core/dist \
+  && mkdir -p /prod/api/node_modules/@mywatch/sync \
   && cp -r /app/packages/sync/dist /prod/api/node_modules/@mywatch/sync/dist
 
 # ---- runner ----
