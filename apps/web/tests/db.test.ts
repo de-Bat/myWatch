@@ -19,6 +19,7 @@ const baseItem: WatchlistItem = {
   updatedAt: '2024-01-01T00:00:00Z',
   deviceId: 'dev-1',
   deletedAt: null,
+  customPlatforms: [],
 }
 
 beforeEach(async () => {
@@ -90,6 +91,9 @@ describe('mediaCache', () => {
       seasonsCount: null,
       showStatus: 'Released',
       cachedAt: '2024-01-01T00:00:00Z',
+      watchProviders: null,
+      watchProvidersRegion: null,
+      watchProvidersCachedAt: null,
     }
     await db.mediaCache.put(entry)
     const found = await db.mediaCache.get([550, 'movie'])
@@ -112,6 +116,9 @@ describe('mediaCache', () => {
       seasonsCount: null,
       showStatus: null,
       cachedAt: '2024-01-01T00:00:00Z',
+      watchProviders: null,
+      watchProvidersRegion: null,
+      watchProvidersCachedAt: null,
     }
     await db.mediaCache.put(entry)
     await db.mediaCache.put({ ...entry, title: 'Updated' })

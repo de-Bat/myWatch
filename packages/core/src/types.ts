@@ -29,6 +29,14 @@ export interface WatchlistItem {
   updatedAt: string
   deviceId: string
   deletedAt: string | null
+  customPlatforms: string[]
+}
+
+export interface WatchProvider {
+  providerId: number
+  providerName: string
+  logoPath: string | null
+  displayPriority: number
 }
 
 export interface MediaCache {
@@ -46,4 +54,38 @@ export interface MediaCache {
   seasonsCount: number | null
   showStatus: string | null
   cachedAt: string
+  watchProviders: WatchProvider[] | null
+  watchProvidersRegion: string | null
+  watchProvidersCachedAt: string | null
+}
+
+export interface Playlist {
+  id: string
+  userId: string
+  name: string
+  description: string | null
+  type: 'manual' | 'smart'
+  smartRules: SmartRules | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+  deviceId: string
+}
+
+export interface PlaylistItem {
+  id: string
+  playlistId: string
+  tmdbId: number
+  mediaType: MediaType
+  position: number
+  addedAt: string
+}
+
+export interface SmartRules {
+  statuses?: WatchStatus[]
+  mediaTypes?: MediaType[]
+  genres?: string[]
+  minRating?: number
+  maxRating?: number
 }

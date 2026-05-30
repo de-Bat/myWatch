@@ -1,20 +1,52 @@
 'use client'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { WatchlistItem } from '@mywatch/core'
 import { StatusBadge } from './StatusBadge'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
+import { usePlaylists, useAddToPlaylist } from '@/hooks/usePlaylists'
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w92'
+
+function isUpcoming(releaseDate: string | null): boolean {
+  if (!releaseDate) return false
+  return new Date(releaseDate) > new Date()
+}
+
+function formatDate(releaseDate: string): string {
+  return new Date(releaseDate).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
 
 export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
   const meta = useMediaMeta(item.tmdbId, item.mediaType)
   const router = useRouter()
+  const playlists = usePlaylists()
+  const addToPlaylist = useAddToPlaylist()
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!ctxMenu) return
+    function close(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setCtxMenu(null)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [ctxMenu])
 
   const year = meta?.releaseDate?.slice(0, 4) ?? null
+  const upcoming = isUpcoming(meta?.releaseDate ?? null)
+  const genres = meta?.genres?.slice(0, 2) ?? []
 
   return (
+    <div className="relative">
     <div
       onClick={() => router.push(`/media/${item.mediaType}/${item.tmdbId}`)}
+      onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY }) }}
       className="flex gap-3 rounded-[var(--r)] border cursor-pointer transition-all duration-[120ms]
         hover:-translate-y-px hover:shadow-[0_2px_10px_rgba(0,0,0,.25)]"
       style={{
@@ -48,9 +80,7 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
         ) : (
           <div
             className="w-full h-full"
-            style={{
-              background: `linear-gradient(135deg, var(--surface2), var(--bg))`,
-            }}
+            style={{ background: `linear-gradient(135deg, var(--surface2), var(--bg))` }}
           />
         )}
       </div>
@@ -64,8 +94,9 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
           {meta?.title ?? `#${item.tmdbId}`}
         </div>
 
+        {/* Year + type badge + upcoming */}
         <div
-          className="flex items-center gap-[5px] text-[11.5px] leading-none mb-[2px]"
+          className="flex items-center gap-[5px] text-[11.5px] leading-none mb-[1px]"
           style={{ color: 'var(--muted2)' }}
         >
           {year && <span>{year}</span>}
@@ -80,23 +111,50 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
           >
             {item.mediaType === 'movie' ? 'Movie' : 'TV'}
           </span>
+          {upcoming && (
+            <span
+              className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase leading-[1.3] px-[5px] py-[1.5px] rounded-[3px]"
+              style={{ background: 'rgba(251,191,36,.15)', color: 'var(--amber)' }}
+            >
+              Upcoming
+            </span>
+          )}
         </div>
 
+        {/* Release date (full) when upcoming */}
+        {upcoming && meta?.releaseDate && (
+          <div className="text-[10.5px] leading-none mb-[1px]" style={{ color: 'var(--muted2)' }}>
+            {formatDate(meta.releaseDate)}
+          </div>
+        )}
+
+        {/* Status + progress */}
         <div className="flex items-center gap-[5px] flex-wrap mt-[1px]">
           <StatusBadge status={item.status} />
           {item.mediaType === 'tv' && item.progressSeason != null && (
             <span
               className="text-[11px] font-medium rounded-full px-[7px] py-[1.5px] border leading-[1.4] tabular-nums"
-              style={{
-                color: 'var(--muted2)',
-                background: 'var(--bg)',
-                borderColor: 'var(--border2)',
-              }}
+              style={{ color: 'var(--muted2)', background: 'var(--bg)', borderColor: 'var(--border2)' }}
             >
               S{item.progressSeason}·E{item.progressEpisode ?? '?'}
             </span>
           )}
         </div>
+
+        {/* Genres */}
+        {genres.length > 0 && (
+          <div className="flex items-center gap-[4px] flex-wrap mt-[2px]">
+            {genres.map((g) => (
+              <span
+                key={g.id}
+                className="text-[10px] font-medium px-[6px] py-[1px] rounded-[4px] leading-[1.4]"
+                style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+              >
+                {g.name}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Rating column */}
@@ -110,6 +168,53 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
           </div>
         </div>
       )}
+    </div>
+
+    {/* Context menu */}
+    {ctxMenu && (
+      <div
+        ref={menuRef}
+        className="fixed z-50 rounded-[8px] py-1 min-w-[160px]"
+        style={{
+          top: ctxMenu.y,
+          left: ctxMenu.x,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          boxShadow: '0 8px 24px rgba(0,0,0,.4)',
+        }}
+      >
+        <div
+          className="px-3 py-1.5 text-[10px] font-bold tracking-[0.08em] uppercase"
+          style={{ color: 'var(--muted2)' }}
+        >
+          Add to Playlist
+        </div>
+        {(playlists ?? []).filter((p) => p.type === 'manual').length === 0 ? (
+          <div className="px-3 py-1.5 text-[12px]" style={{ color: 'var(--muted2)' }}>
+            No manual playlists yet
+          </div>
+        ) : (
+          (playlists ?? [])
+            .filter((p) => p.type === 'manual')
+            .map((p) => (
+              <button
+                key={p.id}
+                onClick={async (e) => {
+                  e.stopPropagation()
+                  await addToPlaylist(p.id, item.tmdbId, item.mediaType as 'movie' | 'tv')
+                  setCtxMenu(null)
+                }}
+                className="w-full text-left px-3 py-1.5 text-[12px] transition-all duration-100 cursor-pointer border-none"
+                style={{ background: 'transparent', color: 'var(--fg2)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface2)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+              >
+                {p.name}
+              </button>
+            ))
+        )}
+      </div>
+    )}
     </div>
   )
 }

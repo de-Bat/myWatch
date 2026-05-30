@@ -66,3 +66,20 @@ export interface TmdbPagedResponse<T> {
   total_pages: number
   total_results: number
 }
+
+export interface TmdbWatchProvider {
+  provider_id: number
+  provider_name: string
+  logo_path: string | null
+  display_priority: number
+}
+
+export interface TmdbWatchProvidersResponse {
+  id: number
+  results: Record<string, {
+    link?: string
+    flatrate?: TmdbWatchProvider[]
+    rent?: TmdbWatchProvider[]
+    buy?: TmdbWatchProvider[]
+  }>
+}

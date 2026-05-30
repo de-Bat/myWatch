@@ -5,19 +5,35 @@ import { useSession } from 'next-auth/react'
 import { v4 as uuidv4 } from 'uuid'
 import Link from 'next/link'
 import type { MediaType, WatchStatus } from '@mywatch/core'
-import { useWatchlistItem, useUpsertItem, useSoftDeleteItem, getLocalDeviceId } from '@/hooks/useWatchlist'
+import { useWatchlistItem, useUpsertItem, useSoftDeleteItem, getLocalDeviceId, type UpsertItemInput } from '@/hooks/useWatchlist'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ProgressTracker } from '@/components/ProgressTracker'
 
 const TMDB_BACKDROP = 'https://image.tmdb.org/t/p/w780'
 const TMDB_POSTER = 'https://image.tmdb.org/t/p/w342'
+const TMDB_LOGO = 'https://image.tmdb.org/t/p/w45'
 const STATUSES: WatchStatus[] = ['planned', 'in_progress', 'watched', 'quit']
 const STATUS_LABELS: Record<WatchStatus, string> = {
   planned: 'Planned',
   in_progress: 'In Progress',
   watched: 'Watched',
   quit: 'Quit',
+}
+
+const PRESET_PLATFORMS = ['Jellyfin', 'Cellcom', 'FreTV', 'Plex', 'Emby']
+
+function isUpcoming(releaseDate: string | null): boolean {
+  if (!releaseDate) return false
+  return new Date(releaseDate) > new Date()
+}
+
+function formatReleaseDate(releaseDate: string): string {
+  return new Date(releaseDate).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 export default function MediaDetailPage() {
@@ -36,6 +52,9 @@ export default function MediaDetailPage() {
   const [notes, setNotes] = useState('')
   const [season, setSeason] = useState<number | null>(null)
   const [episode, setEpisode] = useState<number | null>(null)
+  const [customPlatforms, setCustomPlatforms] = useState<string[]>([])
+  const [customInput, setCustomInput] = useState('')
+  const [showCustomInput, setShowCustomInput] = useState(false)
 
   useEffect(() => {
     if (existingItem) {
@@ -43,6 +62,7 @@ export default function MediaDetailPage() {
       setNotes(existingItem.notes ?? '')
       setSeason(existingItem.progressSeason)
       setEpisode(existingItem.progressEpisode)
+      setCustomPlatforms(existingItem.customPlatforms ?? [])
     }
   }, [existingItem?.id])
 
@@ -58,6 +78,7 @@ export default function MediaDetailPage() {
       progressEpisode: episode,
       rating,
       notes: notes || null,
+      customPlatforms,
       addedAt: existingItem?.addedAt ?? now,
       startedAt: existingItem?.startedAt ?? (status === 'in_progress' ? now : null),
       finishedAt: existingItem?.finishedAt ?? (status === 'watched' ? now : null),
@@ -74,6 +95,7 @@ export default function MediaDetailPage() {
       notes: notes || null,
       progressSeason: season,
       progressEpisode: episode,
+      customPlatforms,
     })
   }
 
@@ -83,15 +105,27 @@ export default function MediaDetailPage() {
     router.push('/')
   }
 
+  function addCustomPlatform(name: string) {
+    const trimmed = name.trim()
+    if (!trimmed || customPlatforms.includes(trimmed)) return
+    setCustomPlatforms((prev) => [...prev, trimmed])
+    setCustomInput('')
+    setShowCustomInput(false)
+  }
+
+  function removeCustomPlatform(name: string) {
+    setCustomPlatforms((prev) => prev.filter((p) => p !== name))
+  }
+
+  const upcoming = isUpcoming(meta?.releaseDate ?? null)
+  const providers = meta?.watchProviders ?? []
+  const hasProviders = providers.length > 0 || customPlatforms.length > 0
+
   return (
     <div className="max-w-2xl mx-auto">
       {meta?.backdropPath && (
         <div className="relative h-48 overflow-hidden">
-          <img
-            src={`${TMDB_BACKDROP}${meta.backdropPath}`}
-            alt=""
-            className="w-full h-full object-cover"
-          />
+          <img src={`${TMDB_BACKDROP}${meta.backdropPath}`} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-900" />
         </div>
       )}
@@ -103,11 +137,7 @@ export default function MediaDetailPage() {
 
         <div className="flex gap-4">
           {meta?.posterPath && (
-            <img
-              src={`${TMDB_POSTER}${meta.posterPath}`}
-              alt=""
-              className="w-24 rounded-lg flex-shrink-0 self-start"
-            />
+            <img src={`${TMDB_POSTER}${meta.posterPath}`} alt="" className="w-24 rounded-lg flex-shrink-0 self-start" />
           )}
           <div className="space-y-1 min-w-0">
             <h1 className="text-2xl font-bold">{meta?.title ?? `#${tmdbId}`}</h1>
@@ -117,9 +147,37 @@ export default function MediaDetailPage() {
               {meta?.runtime ? ` · ${meta.runtime} min` : ''}
               {meta?.seasonsCount ? ` · ${meta.seasonsCount} seasons` : ''}
             </p>
-            {meta?.genres && meta.genres.length > 0 && (
-              <p className="text-xs text-zinc-500">{meta.genres.map((g) => g.name).join(', ')}</p>
+
+            {/* Release date with upcoming badge */}
+            {meta?.releaseDate && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {upcoming && (
+                  <span
+                    className="text-[10px] font-extrabold tracking-[0.06em] uppercase px-[6px] py-[2px] rounded-[3px]"
+                    style={{ background: 'rgba(251,191,36,.15)', color: 'var(--amber)' }}
+                  >
+                    Upcoming
+                  </span>
+                )}
+                <span className="text-xs text-zinc-500">{formatReleaseDate(meta.releaseDate)}</span>
+              </div>
             )}
+
+            {/* Genres */}
+            {meta?.genres && meta.genres.length > 0 && (
+              <div className="flex flex-wrap gap-[4px] pt-[2px]">
+                {meta.genres.map((g) => (
+                  <span
+                    key={g.id}
+                    className="text-[10px] font-medium px-[7px] py-[2px] rounded-[4px]"
+                    style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+                  >
+                    {g.name}
+                  </span>
+                ))}
+              </div>
+            )}
+
             <p className="text-sm text-zinc-300">
               ★ {meta?.voteAverage.toFixed(1)} ({meta?.voteCount.toLocaleString()} votes)
             </p>
@@ -130,6 +188,114 @@ export default function MediaDetailPage() {
           <p className="text-sm text-zinc-300 leading-relaxed">{meta.overview}</p>
         )}
 
+        {/* WHERE TO WATCH */}
+        <div className="space-y-2">
+          <p
+            className="text-[10px] font-bold tracking-[0.08em] uppercase"
+            style={{ color: 'var(--muted2)' }}
+          >
+            Where to Watch
+          </p>
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* TMDB providers */}
+            {providers.map((p) => (
+              <div
+                key={p.providerId}
+                className="flex items-center gap-[6px] px-[8px] py-[5px] rounded-[6px]"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border2)' }}
+                title={p.providerName}
+              >
+                {p.logoPath ? (
+                  <img
+                    src={`${TMDB_LOGO}${p.logoPath}`}
+                    alt={p.providerName}
+                    className="w-[16px] h-[16px] rounded-[3px]"
+                  />
+                ) : null}
+                <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>
+                  {p.providerName}
+                </span>
+              </div>
+            ))}
+
+            {/* Custom platforms */}
+            {customPlatforms.map((p) => (
+              <div
+                key={p}
+                className="flex items-center gap-[5px] px-[8px] py-[5px] rounded-[6px] group"
+                style={{ background: 'var(--accent-bg)', border: '1px solid rgba(99,102,241,.3)' }}
+              >
+                <span className="text-[11px] font-medium" style={{ color: 'var(--accent2)' }}>{p}</span>
+                <button
+                  onClick={() => removeCustomPlatform(p)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity ml-[1px]"
+                  style={{ color: 'var(--muted2)', fontSize: 11, lineHeight: 1 }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+
+            {/* Add custom button */}
+            {!showCustomInput ? (
+              <button
+                onClick={() => setShowCustomInput(true)}
+                className="flex items-center gap-[4px] px-[8px] py-[5px] rounded-[6px] transition-all duration-100"
+                style={{
+                  background: 'transparent',
+                  border: '1px dashed var(--border)',
+                  color: 'var(--muted2)',
+                  fontSize: 11,
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--muted2)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted2)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+              >
+                + Add platform
+              </button>
+            ) : (
+              <div className="flex items-center gap-[4px]">
+                {/* Preset suggestions */}
+                <div className="flex gap-[3px] flex-wrap">
+                  {PRESET_PLATFORMS.filter((p) => !customPlatforms.includes(p)).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => addCustomPlatform(p)}
+                      className="px-[7px] py-[3px] rounded-[4px] text-[10px] font-medium transition-all duration-100 cursor-pointer"
+                      style={{ background: 'var(--surface)', border: '1px solid var(--border2)', color: 'var(--muted)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface2)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'var(--surface)' }}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  autoFocus
+                  value={customInput}
+                  onChange={(e) => setCustomInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') addCustomPlatform(customInput)
+                    if (e.key === 'Escape') setShowCustomInput(false)
+                  }}
+                  placeholder="Custom…"
+                  className="w-[100px] px-[8px] py-[4px] rounded-[5px] text-[11px] focus:outline-none"
+                  style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--accent)',
+                    color: 'var(--fg)',
+                  }}
+                />
+              </div>
+            )}
+
+            {!hasProviders && !showCustomInput && (
+              <span className="text-xs text-zinc-500">No streaming info available</span>
+            )}
+          </div>
+        </div>
+
+        {/* Status */}
         <div className="space-y-2">
           <p className="text-sm font-medium text-zinc-400">Status</p>
           <div className="flex flex-wrap gap-2">
@@ -155,10 +321,7 @@ export default function MediaDetailPage() {
             <ProgressTracker
               season={season}
               episode={episode}
-              onChange={(s, e) => {
-                setSeason(s)
-                setEpisode(e)
-              }}
+              onChange={(s, e) => { setSeason(s); setEpisode(e) }}
             />
           </div>
         )}

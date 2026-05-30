@@ -4,6 +4,7 @@ import type {
   TmdbMovieDetail,
   TmdbTvDetail,
   TmdbPagedResponse,
+  TmdbWatchProvidersResponse,
 } from './types'
 
 export interface TmdbClientConfig {
@@ -76,5 +77,16 @@ export class TmdbClient {
     const path = mediaType === 'movie' ? '/movie/top_rated' : '/tv/top_rated'
     const data = await this.get<TmdbPagedResponse<TmdbSearchResult>>(path)
     return data.results.map((r) => ({ ...r, media_type: mediaType })) as TmdbSearchResult[]
+  }
+
+  async getWatchProviders(
+    tmdbId: number,
+    mediaType: MediaType,
+    region = 'US',
+  ): Promise<TmdbWatchProvidersResponse> {
+    const path = mediaType === 'movie'
+      ? `/movie/${tmdbId}/watch/providers`
+      : `/tv/${tmdbId}/watch/providers`
+    return this.get<TmdbWatchProvidersResponse>(path, { watch_region: region })
   }
 }

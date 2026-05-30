@@ -17,6 +17,9 @@ export function normalizeMovie(movie: TmdbMovieDetail): MediaCache {
     seasonsCount: null,
     showStatus: movie.status,
     cachedAt: new Date().toISOString(),
+    watchProviders: null,
+    watchProvidersRegion: null,
+    watchProvidersCachedAt: null,
   }
 }
 
@@ -43,5 +46,8 @@ export function normalizeTv(show: TmdbTvDetail): MediaCache {
     seasonsCount: show.number_of_seasons,
     showStatus: show.status,
     cachedAt: new Date().toISOString(),
+    watchProviders: null,
+    watchProvidersRegion: null,
+    watchProvidersCachedAt: null,
   }
 }

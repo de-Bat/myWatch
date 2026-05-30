@@ -1,12 +1,48 @@
 'use client'
 import { useEffect, useState } from 'react'
-import type { MediaCache, MediaType } from '@mywatch/core'
+import type { MediaCache, MediaType, WatchProvider } from '@mywatch/core'
 import { TmdbClient, normalizeMovie, normalizeTv, isStale } from '@mywatch/tmdb'
 import type { TmdbMovieDetail, TmdbTvDetail } from '@mywatch/tmdb'
 import { db } from '@/lib/db'
 
+const PROVIDERS_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
+
 function getClient() {
   return new TmdbClient({ apiKey: process.env.NEXT_PUBLIC_TMDB_API_KEY ?? '' })
+}
+
+function isProviderStale(cachedAt: string | null): boolean {
+  if (!cachedAt) return true
+  return Date.now() - new Date(cachedAt).getTime() > PROVIDERS_MAX_AGE_MS
+}
+
+async function fetchAndStoreProviders(
+  client: TmdbClient,
+  tmdbId: number,
+  mediaType: MediaType,
+  region: string,
+): Promise<WatchProvider[]> {
+  try {
+    const data = await client.getWatchProviders(tmdbId, mediaType, region)
+    const regionData = data.results[region]
+    const flatrate = regionData?.flatrate ?? []
+    const providers: WatchProvider[] = flatrate.map((p) => ({
+      providerId: p.provider_id,
+      providerName: p.provider_name,
+      logoPath: p.logo_path,
+      displayPriority: p.display_priority,
+    }))
+    providers.sort((a, b) => a.displayPriority - b.displayPriority)
+    const now = new Date().toISOString()
+    await db.mediaCache.where('[tmdbId+mediaType]').equals([tmdbId, mediaType]).modify({
+      watchProviders: providers,
+      watchProvidersRegion: region,
+      watchProvidersCachedAt: now,
+    })
+    return providers
+  } catch {
+    return []
+  }
 }
 
 export function useMediaMeta(tmdbId: number, mediaType: MediaType) {
@@ -14,14 +50,22 @@ export function useMediaMeta(tmdbId: number, mediaType: MediaType) {
 
   useEffect(() => {
     let cancelled = false
+    const region = navigator.language?.split('-')[1] ?? 'US'
+    const client = getClient()
+
     ;(async () => {
       try {
         const cached = await db.mediaCache.get([tmdbId, mediaType])
         if (cached && !isStale(cached)) {
           if (!cancelled) setMeta(cached)
+          // Fetch providers in background if stale
+          if (isProviderStale(cached.watchProvidersCachedAt ?? null)) {
+            fetchAndStoreProviders(client, tmdbId, mediaType, region).then((providers) => {
+              if (!cancelled) setMeta((prev) => prev ? { ...prev, watchProviders: providers } : prev)
+            })
+          }
           return
         }
-        const client = getClient()
         const detail =
           mediaType === 'movie'
             ? await client.getMovie(tmdbId)
@@ -32,8 +76,11 @@ export function useMediaMeta(tmdbId: number, mediaType: MediaType) {
             : normalizeTv(detail as TmdbTvDetail)
         await db.mediaCache.put(normalized)
         if (!cancelled) setMeta(normalized)
+        // Fetch providers after main meta
+        fetchAndStoreProviders(client, tmdbId, mediaType, region).then((providers) => {
+          if (!cancelled) setMeta((prev) => prev ? { ...prev, watchProviders: providers } : prev)
+        })
       } catch {
-        // serve stale on any error (Dexie or network)
         const cached = await db.mediaCache.get([tmdbId, mediaType]).catch(() => undefined)
         if (cached && !cancelled) setMeta(cached)
       }

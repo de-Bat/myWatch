@@ -42,10 +42,19 @@ export function useWatchlistItem(tmdbId: number, mediaType: MediaType) {
   )
 }
 
+export type UpsertItemInput = Omit<WatchlistItem, 'updatedAt' | 'deviceId' | 'customPlatforms'> & {
+  customPlatforms?: string[]
+}
+
 export function useUpsertItem() {
-  return useCallback(async (item: Omit<WatchlistItem, 'updatedAt' | 'deviceId'>) => {
+  return useCallback(async (item: UpsertItemInput) => {
     const now = new Date().toISOString()
-    const full: WatchlistItem = { ...item, updatedAt: now, deviceId: getLocalDeviceId() }
+    const full: WatchlistItem = {
+      customPlatforms: [],
+      ...item,
+      updatedAt: now,
+      deviceId: getLocalDeviceId(),
+    }
     await db.watchlistItems.put(full)
     await db.pendingPushes.add({ itemId: item.id, queuedAt: now })
   }, [])

@@ -89,6 +89,7 @@ myWatch/
 | progress_season | integer nullable | TV: last watched season number |
 | rating | integer nullable | 1–10, user's own rating |
 | notes | text nullable | |
+| custom_platforms | text[] | user-added streaming platforms (Jellyfin, Cellcom, etc.) |
 | added_at | timestamptz | when user first added |
 | started_at | timestamptz nullable | |
 | finished_at | timestamptz nullable | |
@@ -113,6 +114,35 @@ myWatch/
 | seasons_count | integer nullable | tv only |
 | status | text nullable | 'Ended', 'Returning Series', etc. |
 | cached_at | timestamptz | stale if >7 days |
+| watch_providers | jsonb nullable | [{providerId, providerName, logoPath, displayPriority}] flatrate only |
+| watch_providers_region | text nullable | ISO 3166-1 alpha-2, e.g. 'US' |
+| watch_providers_cached_at | timestamptz nullable | stale if >7 days |
+
+### `playlists`
+
+| Field | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| user_id | uuid FK | → users |
+| name | text | |
+| description | text nullable | |
+| type | text | 'manual' \| 'smart' |
+| smart_rules | jsonb nullable | {statuses, mediaTypes, genres, minRating, maxRating} |
+| sort_order | int | display order |
+| created_at / updated_at | timestamptz | |
+| device_id | text | sync key |
+| deleted_at | timestamptz nullable | soft delete |
+
+### `playlist_items`
+
+| Field | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| playlist_id | uuid FK | → playlists ON DELETE CASCADE |
+| tmdb_id | integer | |
+| media_type | text | 'movie' \| 'tv' |
+| position | int | ordering within manual playlist |
+| added_at | timestamptz | |
 
 ---
 
@@ -122,9 +152,11 @@ myWatch/
 
 - Status filter tabs: All / Planned / In Progress / Watched / Quit
 - Type filter: All / Movies / TV
-- Sort options: Recently Added, Title A–Z, Rating, Release Date, TMDB Score
-- Genre filter
-- List view: poster thumbnail, title, type, progress (TV: S/E), TMDB score, status badge
+- Sort options: Recently Updated, Top Rated, A–Z
+- Genre filter chips (derived from cached media, horizontal scrollable)
+- View toggle: List (enhanced row cards) / Grid (poster grid)
+- List view: poster, title, year, type badge, UPCOMING badge, release date, status badge, TV progress (S/E), genre chips, streaming provider pills
+- Grid view: poster cards (2:3 ratio) with title overlay, status dot, first genre
 
 ### Search
 
@@ -137,13 +169,23 @@ myWatch/
 ### Media Detail
 
 - Backdrop + poster
-- Title, type, year range, seasons count (TV), runtime, genres, TMDB score
+- Title, type, year range, seasons count (TV), runtime, genres (chips), TMDB score
+- Release date: full formatted date + UPCOMING badge if future
 - Overview text
+- WHERE TO WATCH section: TMDB streaming providers (flatrate, by region) + custom platform pills (Jellyfin, Cellcom, FreTV, etc.)
 - Status selector (Planned / In Progress / Watched / Quit) — always visible
 - Progress tracker for TV: season + episode selectors (when In Progress)
 - User rating (1–10 stars)
 - Notes field
 - Timestamps: added, started, finished/quit
+
+### Playlists
+
+- Manual playlists: user-created named collections, items added via right-click context menu on cards
+- Smart playlists: auto-populated by rules (status, media type, genres, min rating)
+- Playlist list at `/playlists`: poster stack preview, item count, type badge
+- Playlist detail: same view toggle (list/grid), drag-to-reorder for manual playlists
+- Create modal: name, description, type toggle, smart rule builder
 
 ### Discover
 
@@ -202,7 +244,6 @@ myWatch/
 ## 9. Out of Scope
 
 - Social features (sharing lists, following users)
-- Watch provider availability ("available on Netflix")
 - Push notifications
 - iPad-specific layout (iOS phone layout scales to iPad)
 - Apple TV (only Android TV in scope)
