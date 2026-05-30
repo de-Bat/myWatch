@@ -167,6 +167,29 @@ describe('POST /sync/push', () => {
   })
 })
 
+describe('GET /sync/events', () => {
+  it('returns 401 without token', async () => {
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo(), playlistRepo: makePlaylistRepo() })
+    const res = await app.inject({ method: 'GET', url: '/sync/events' })
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('returns SSE connected event with connId', async () => {
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo(), playlistRepo: makePlaylistRepo() })
+    const token = getAuthToken(app)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/sync/events?token=${encodeURIComponent(token)}`,
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.headers['content-type']).toContain('text/event-stream')
+    expect(res.body).toContain('event: connected')
+    expect(res.body).toContain('"connId"')
+  })
+})
+
 describe('GET /sync/pull', () => {
   it('returns items updated since given timestamp', async () => {
     const watchlistRepo = makeWatchlistRepo()

@@ -1,8 +1,20 @@
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import type { WatchlistItem, Playlist, PlaylistItem } from '@mywatch/core'
 import type { WatchlistRepo } from '../repos/watchlist-repo.js'
 import type { PlaylistRepo } from '../repos/playlist-repo.js'
 import { authenticate } from '../middleware/authenticate.js'
+import { sseBus } from '../utils/sse-bus.js'
+
+async function authenticateQuery(req: FastifyRequest, reply: FastifyReply) {
+  const { token } = req.query as { token?: string }
+  if (!token) return reply.status(401).send({ error: 'Unauthorized' })
+  try {
+    const decoded = await req.server.jwt.verify<{ sub: string; email: string; isGuest: boolean }>(token)
+    req.user = decoded
+  } catch {
+    return reply.status(401).send({ error: 'Unauthorized' })
+  }
+}
 
 interface PushBody {
   items: WatchlistItem[]
@@ -83,6 +95,42 @@ export function registerSyncRoutes(
       const pulledAt = new Date().toISOString()
 
       return reply.send({ items, playlists, playlistItems, pulledAt } satisfies PullResponse)
+    },
+  )
+
+  app.get(
+    '/sync/events',
+    { preHandler: [authenticateQuery] },
+    async (req, reply) => {
+      const userId = req.user.sub
+      const connId = crypto.randomUUID()
+
+      reply.raw.setHeader('Content-Type', 'text/event-stream')
+      reply.raw.setHeader('Cache-Control', 'no-cache')
+      reply.raw.setHeader('Connection', 'keep-alive')
+      reply.raw.flushHeaders()
+
+      const send = (data: string) => reply.raw.write(data)
+
+      send(`event: connected\ndata: ${JSON.stringify({ connId })}\n\n`)
+      sseBus.subscribe(userId, connId, send)
+
+      const keepalive = setInterval(() => {
+        try { reply.raw.write(': keepalive\n\n') } catch { clearInterval(keepalive) }
+      }, 30_000)
+
+      req.raw.on('close', () => {
+        clearInterval(keepalive)
+        sseBus.unsubscribe(userId, connId)
+      })
+
+      reply.hijack()
+
+      // In inject/test mode the socket is synchronously readable — detect and close immediately.
+      // In production (real TCP socket) the response stays open until the client disconnects.
+      if (!req.socket || !req.socket.writable) {
+        reply.raw.end()
+      }
     },
   )
 }
