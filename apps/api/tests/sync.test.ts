@@ -4,6 +4,7 @@ import type { UserRepo, UserRecord } from '../src/repos/user-repo.js'
 import type { WatchlistRepo } from '../src/repos/watchlist-repo.js'
 import type { PlaylistRepo } from '../src/repos/playlist-repo.js'
 import type { WatchlistItem } from '@mywatch/core'
+import { SseBus } from '../src/utils/sse-bus.js'
 
 const mockUser: UserRecord = {
   id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
@@ -64,6 +65,37 @@ function makePlaylistRepo(): PlaylistRepo {
 function getAuthToken(app: Awaited<ReturnType<typeof createApp>>) {
   return app.jwt.sign({ sub: mockUser.id, email: mockUser.email, isGuest: false })
 }
+
+describe('SseBus', () => {
+  it('emits to all connections for a userId except excludeConnId', () => {
+    const bus = new SseBus()
+    const sent: string[] = []
+    const fakeReply = (data: string) => { sent.push(data) }
+    bus.subscribe('u1', 'conn-a', fakeReply)
+    bus.subscribe('u1', 'conn-b', fakeReply)
+    bus.subscribe('u2', 'conn-c', fakeReply)
+
+    bus.emit('u1', 'conn-a', { pushedAt: '2024-01-01T00:00:00Z' })
+
+    expect(sent).toHaveLength(1)
+    expect(sent[0]).toContain('event: sync')
+    expect(sent[0]).toContain('"pushedAt"')
+  })
+
+  it('does nothing when no connections for userId', () => {
+    const bus = new SseBus()
+    expect(() => bus.emit('u1', 'conn-x', { pushedAt: '2024-01-01T00:00:00Z' })).not.toThrow()
+  })
+
+  it('unsubscribe removes connection', () => {
+    const bus = new SseBus()
+    const sent: string[] = []
+    bus.subscribe('u1', 'conn-a', (data) => { sent.push(data) })
+    bus.unsubscribe('u1', 'conn-a')
+    bus.emit('u1', 'conn-b', { pushedAt: '2024-01-01T00:00:00Z' })
+    expect(sent).toHaveLength(0)
+  })
+})
 
 describe('POST /sync/push', () => {
   it('upserts items and returns pushedAt', async () => {
