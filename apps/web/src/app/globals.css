@@ -63,6 +63,20 @@ html[data-font="mono"] body {
 }
 
 /* ── Responsive / iOS ── */
+.subpage-root {
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  padding: max(18px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+}
+
+@media (max-width: 768px) {
+  .subpage-root {
+    max-width: 100%;
+  }
+}
+
+
 .page-root {
   max-width: 75vw;
   width: 100%;

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { v4 as uuidv4 } from 'uuid'
 import Link from 'next/link'
@@ -59,6 +59,11 @@ export default function SearchPage() {
   const [pending, setPending] = useState<TmdbSearchResult | null>(null)
   const { results, loading, error } = useTmdbSearch(query, mediaType)
   const upsert = useUpsertItem()
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
 
   async function handleAdd(result: TmdbSearchResult, status: WatchStatus) {
     const now = new Date().toISOString()
@@ -82,41 +87,93 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-      <header className="flex items-center gap-3">
-        <Link href="/" className="text-zinc-400 hover:text-zinc-200 text-sm">
-          ← Back
+    <div className="subpage-root">
+      {/* Header */}
+      <header className="flex items-center gap-3 mb-5">
+        <Link
+          href="/"
+          className="flex items-center justify-center w-[32px] h-[32px] rounded-full border-none flex-shrink-0"
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="10 4 6 8 10 12" />
+          </svg>
         </Link>
-        <h1 className="text-xl font-bold">Search</h1>
+        <h1 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}>
+          Search
+        </h1>
       </header>
 
-      <div className="flex gap-2">
+      {/* Search input row */}
+      <div className="flex gap-2 mb-4">
         <input
-          autoFocus
+          ref={inputRef}
           type="search"
           placeholder="Search movies and TV shows…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="flex-1 px-3 py-2 rounded bg-zinc-800 border border-zinc-700 focus:outline-none focus:border-zinc-500 text-sm"
+          className="flex-1 focus:outline-none"
+          style={{
+            padding: '9px 13px',
+            borderRadius: 'var(--rsm)',
+            border: '1px solid var(--border)',
+            background: 'var(--surface)',
+            color: 'var(--fg)',
+            fontSize: 14,
+          }}
         />
-        <select
-          value={mediaType}
-          onChange={(e) => setMediaType(e.target.value as MediaType | 'all')}
-          className="bg-zinc-800 text-sm rounded px-2 border border-zinc-700"
+        <div
+          className="flex flex-shrink-0"
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--rsm)',
+            padding: 2,
+            gap: 1,
+          }}
         >
-          <option value="all">All</option>
-          <option value="movie">Movies</option>
-          <option value="tv">TV</option>
-        </select>
+          {(['all', 'movie', 'tv'] as const).map((t) => {
+            const active = mediaType === t
+            const label = t === 'all' ? 'All' : t === 'movie' ? 'Movies' : 'TV'
+            return (
+              <button
+                key={t}
+                onClick={() => setMediaType(t)}
+                className="whitespace-nowrap border-none cursor-pointer transition-all duration-100"
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: 'var(--rxs)',
+                  fontSize: 12,
+                  fontWeight: active ? 600 : 500,
+                  background: active ? 'var(--surface2)' : 'transparent',
+                  color: active ? 'var(--fg)' : 'var(--muted)',
+                }}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {!process.env.NEXT_PUBLIC_TMDB_API_KEY && (
-        <p className="text-red-400 text-sm">NEXT_PUBLIC_TMDB_API_KEY not set — search won't work</p>
+        <p className="mb-3" style={{ color: 'var(--red)', fontSize: 13 }}>
+          NEXT_PUBLIC_TMDB_API_KEY not set — search won&apos;t work
+        </p>
       )}
-      {loading && <p className="text-zinc-500 text-sm">Searching…</p>}
-      {error && <p className="text-red-400 text-sm">{error}</p>}
 
-      <div className="space-y-2">
+      {loading && (
+        <p style={{ color: 'var(--muted)', fontSize: 13 }}>Searching…</p>
+      )}
+      {error && (
+        <p style={{ color: 'var(--red)', fontSize: 13 }}>{error}</p>
+      )}
+
+      {!loading && !error && query && results.length === 0 && (
+        <p style={{ color: 'var(--muted2)', fontSize: 13 }}>No results for &ldquo;{query}&rdquo;</p>
+      )}
+
+      <div className="flex flex-col" style={{ gap: 8 }}>
         {results.map((r) => (
           <SearchResult key={`${r.media_type}-${r.id}`} result={r} onAdd={setPending} />
         ))}
