@@ -17,18 +17,22 @@ export async function pushPendingItems(token: string, userId: string): Promise<v
   await db.pendingPushes.where('itemId').anyOf(itemIds).delete()
 }
 
-export async function pullItems(since: string, token: string): Promise<string> {
+export async function pullItems(since: string, token: string): Promise<{ pulledAt: string; count: number }> {
   const { items: remoteItems, pulledAt } = await apiClient.sync.pull(since, token)
-  if (remoteItems.length > 0) {
-    const ids = remoteItems.map((i) => i.id)
-    const localItems = await db.watchlistItems.where('id').anyOf(ids).toArray()
-    const localMap = new Map(localItems.map((i) => [i.id, i]))
-    // Resolve LWW per item, preserving tombstones (deletedAt is not filtered out)
-    const resolved = remoteItems.map((remote) => {
-      const local = localMap.get(remote.id)
-      return local === undefined ? remote : resolveConflict(local, remote)
-    })
-    await db.watchlistItems.bulkPut(resolved)
-  }
-  return pulledAt
+  if (remoteItems.length === 0) return { pulledAt, count: 0 }
+
+  const ids = remoteItems.map((i) => i.id)
+  const localItems = await db.watchlistItems.where('id').anyOf(ids).toArray()
+  const localMap = new Map(localItems.map((i) => [i.id, i]))
+  // Resolve LWW per item, preserving tombstones (deletedAt is not filtered out)
+  const resolved = remoteItems.map((remote) => {
+    const local = localMap.get(remote.id)
+    return local === undefined ? remote : resolveConflict(local, remote)
+  })
+  const changed = resolved.filter((item) => {
+    const local = localMap.get(item.id)
+    return local === undefined || local.updatedAt !== item.updatedAt
+  })
+  await db.watchlistItems.bulkPut(resolved)
+  return { pulledAt, count: changed.length }
 }

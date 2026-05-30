@@ -78,9 +78,10 @@ describe('pullItems', () => {
     const remote = { ...baseItem, id: 'i2', status: 'watched' as const }
     mockedPull.mockResolvedValueOnce({ items: [remote], pulledAt: '2024-01-01T01:00:00Z' })
 
-    const pulledAt = await pullItems('2024-01-01T00:00:00Z', 'token123')
+    const result = await pullItems('2024-01-01T00:00:00Z', 'token123')
 
-    expect(pulledAt).toBe('2024-01-01T01:00:00Z')
+    expect(result.pulledAt).toBe('2024-01-01T01:00:00Z')
+    expect(result.count).toBe(1)
     expect((await db.watchlistItems.get('i2'))?.status).toBe('watched')
   })
 
@@ -89,9 +90,10 @@ describe('pullItems', () => {
     const newer = { ...baseItem, status: 'watched' as const, updatedAt: '2024-01-02T00:00:00Z' }
     mockedPull.mockResolvedValueOnce({ items: [newer], pulledAt: '2024-01-02T01:00:00Z' })
 
-    await pullItems('2024-01-01T00:00:00Z', 'token123')
+    const result = await pullItems('2024-01-01T00:00:00Z', 'token123')
 
     expect((await db.watchlistItems.get('i1'))?.status).toBe('watched')
+    expect(result.count).toBe(1)
   })
 
   it('last-write-wins: local newer than remote keeps local', async () => {
@@ -100,9 +102,10 @@ describe('pullItems', () => {
     const olderRemote = { ...baseItem, status: 'watched' as const, updatedAt: '2024-01-02T00:00:00Z' }
     mockedPull.mockResolvedValueOnce({ items: [olderRemote], pulledAt: '2024-01-03T01:00:00Z' })
 
-    await pullItems('2024-01-01T00:00:00Z', 'token123')
+    const result = await pullItems('2024-01-01T00:00:00Z', 'token123')
 
     expect((await db.watchlistItems.get('i1'))?.status).toBe('in_progress')
+    expect(result.count).toBe(0)
   })
 
   it('propagates remote soft-delete tombstone to local store', async () => {
@@ -110,7 +113,7 @@ describe('pullItems', () => {
     const tombstone = { ...baseItem, deletedAt: '2024-01-02T00:00:00Z', updatedAt: '2024-01-02T00:00:00Z' }
     mockedPull.mockResolvedValueOnce({ items: [tombstone], pulledAt: '2024-01-02T01:00:00Z' })
 
-    await pullItems('2024-01-01T00:00:00Z', 'token123')
+    const result = await pullItems('2024-01-01T00:00:00Z', 'token123')
 
     const stored = await db.watchlistItems.get('i1')
     expect(stored?.deletedAt).toBe('2024-01-02T00:00:00Z')
