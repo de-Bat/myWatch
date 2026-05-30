@@ -12,6 +12,7 @@ import { WatchlistItemCard } from '@/components/WatchlistItemCard'
 import { GridItemCard } from '@/components/GridItemCard'
 import { MediaPanel } from '@/components/MediaPanel'
 import { db } from '@/lib/db'
+import { fuzzyFilterItems } from '@/lib/fuzzySearch'
 
 const STATUS_TABS: Array<WatchStatus | 'all'> = ['all', 'planned', 'in_progress', 'watched', 'quit']
 const STATUS_LABELS: Record<WatchStatus | 'all', string> = {
@@ -147,6 +148,18 @@ export default function HomePage() {
     return genres.sort()
   }, [allItems?.length]) ?? []
 
+  const titleMap = useLiveQuery(async () => {
+    const keys = (allItems ?? []).map((i) => [i.tmdbId, i.mediaType] as [number, string])
+    if (!keys.length) return new Map<string, string>()
+    const entries = await db.mediaCache.bulkGet(keys)
+    const map = new Map<string, string>()
+    ;(allItems ?? []).forEach((item, idx) => {
+      const entry = entries[idx]
+      if (entry?.title) map.set(`${item.tmdbId}-${item.mediaType}`, entry.title)
+    })
+    return map
+  }, [allItems?.length]) ?? new Map<string, string>()
+
   const sortValue: SortValue = SORT_OPTIONS[sortIndex].value
 
   const filtered = (allItems ?? []).filter((item) => {
@@ -190,9 +203,13 @@ export default function HomePage() {
     })
   }, [[...genreFilter].join(','), sorted.map((i) => i.id).join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const displayed = genreFilter.size > 0 && genreFilteredIds
+  const genreFiltered = genreFilter.size > 0 && genreFilteredIds
     ? sorted.filter((i) => genreFilteredIds.has(i.id))
     : sorted
+
+  const displayed = searchOpen && searchQuery.trim()
+    ? fuzzyFilterItems(genreFiltered, titleMap, searchQuery)
+    : genreFiltered
 
   const statusCounts: Record<WatchStatus | 'all', number> = {
     all: (allItems ?? []).length,
