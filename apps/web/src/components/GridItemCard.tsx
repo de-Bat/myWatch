@@ -20,7 +20,7 @@ function isUpcoming(releaseDate: string | null): boolean {
 
 export function GridItemCard({ item }: { item: WatchlistItem }) {
   const { settings } = useSettings()
-  const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey)
+  const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey, settings.language)
   const router = useRouter()
   const upcoming = isUpcoming(meta?.releaseDate ?? null)
   const genre = meta?.genres?.[0]?.name ?? null

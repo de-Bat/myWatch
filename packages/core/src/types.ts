@@ -57,6 +57,7 @@ export interface MediaCache {
   watchProviders: WatchProvider[] | null
   watchProvidersRegion: string | null
   watchProvidersCachedAt: string | null
+  language?: string
 }
 
 export interface Playlist {

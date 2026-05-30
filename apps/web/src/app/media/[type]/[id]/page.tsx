@@ -45,7 +45,7 @@ export default function MediaDetailPage() {
   const tmdbId = parseInt(params.id as string, 10)
 
   const { settings } = useSettings()
-  const meta = useMediaMeta(tmdbId, mediaType, settings.tmdbApiKey)
+  const meta = useMediaMeta(tmdbId, mediaType, settings.tmdbApiKey, settings.language)
   const existingItem = useWatchlistItem(tmdbId, mediaType)
   const upsert = useUpsertItem()
   const softDelete = useSoftDeleteItem()

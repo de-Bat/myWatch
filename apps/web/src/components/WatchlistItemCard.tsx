@@ -30,7 +30,7 @@ function formatRuntime(minutes: number): string {
 
 export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
   const { settings } = useSettings()
-  const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey)
+  const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey, settings.language)
   const router = useRouter()
   const playlists = usePlaylists()
   const addToPlaylist = useAddToPlaylist()

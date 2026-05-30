@@ -38,6 +38,7 @@ export const mediaCacheSchema = z.object({
   seasonsCount: z.number().int().positive().nullable(),
   showStatus: z.string().nullable(),
   cachedAt: z.string().datetime(),
+  language: z.string().optional(),
 })
 
 export type WatchlistItemInput = z.input<typeof watchlistItemSchema>

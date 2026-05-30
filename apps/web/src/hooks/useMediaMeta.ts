@@ -46,7 +46,7 @@ async function fetchAndStoreProviders(
   }
 }
 
-export function useMediaMeta(tmdbId: number, mediaType: MediaType, tmdbApiKey: string) {
+export function useMediaMeta(tmdbId: number, mediaType: MediaType, tmdbApiKey: string, language: string = 'en-US') {
   const [meta, setMeta] = useState<MediaCache | null>(null)
 
   useEffect(() => {
@@ -57,7 +57,8 @@ export function useMediaMeta(tmdbId: number, mediaType: MediaType, tmdbApiKey: s
     ;(async () => {
       try {
         const cached = await db.mediaCache.get([tmdbId, mediaType])
-        if (cached && !isStale(cached)) {
+        // Invalidate if language has changed or if standard staleness applies
+        if (cached && !isStale(cached) && cached.language === language) {
           if (!cancelled) setMeta(cached)
           if (isProviderStale(cached.watchProvidersCachedAt ?? null)) {
             fetchAndStoreProviders(client, tmdbId, mediaType, region).then((providers) => {
@@ -68,12 +69,12 @@ export function useMediaMeta(tmdbId: number, mediaType: MediaType, tmdbApiKey: s
         }
         const detail =
           mediaType === 'movie'
-            ? await client.getMovie(tmdbId)
-            : await client.getTv(tmdbId)
+            ? await client.getMovie(tmdbId, language)
+            : await client.getTv(tmdbId, language)
         const normalized =
           mediaType === 'movie'
-            ? normalizeMovie(detail as TmdbMovieDetail)
-            : normalizeTv(detail as TmdbTvDetail)
+            ? normalizeMovie(detail as TmdbMovieDetail, language)
+            : normalizeTv(detail as TmdbTvDetail, language)
         await db.mediaCache.put(normalized)
         if (!cancelled) setMeta(normalized)
         fetchAndStoreProviders(client, tmdbId, mediaType, region).then((providers) => {
@@ -87,7 +88,7 @@ export function useMediaMeta(tmdbId: number, mediaType: MediaType, tmdbApiKey: s
     return () => {
       cancelled = true
     }
-  }, [tmdbId, mediaType, tmdbApiKey])
+  }, [tmdbId, mediaType, tmdbApiKey, language])
 
   return meta
 }

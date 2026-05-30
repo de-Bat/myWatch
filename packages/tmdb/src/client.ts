@@ -51,12 +51,12 @@ export class TmdbClient {
     return data.results.filter((r) => r.media_type === 'movie' || r.media_type === 'tv')
   }
 
-  async getMovie(tmdbId: number): Promise<TmdbMovieDetail> {
-    return this.get<TmdbMovieDetail>(`/movie/${tmdbId}`)
+  async getMovie(tmdbId: number, language?: string): Promise<TmdbMovieDetail> {
+    return this.get<TmdbMovieDetail>(`/movie/${tmdbId}`, language ? { language } : {})
   }
 
-  async getTv(tmdbId: number): Promise<TmdbTvDetail> {
-    return this.get<TmdbTvDetail>(`/tv/${tmdbId}`)
+  async getTv(tmdbId: number, language?: string): Promise<TmdbTvDetail> {
+    return this.get<TmdbTvDetail>(`/tv/${tmdbId}`, language ? { language } : {})
   }
 
   async getTrending(timeWindow: 'day' | 'week' = 'week'): Promise<TmdbSearchResult[]> {

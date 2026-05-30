@@ -1,7 +1,7 @@
 import type { MediaCache } from '@mywatch/core'
 import type { TmdbMovieDetail, TmdbTvDetail } from './types'
 
-export function normalizeMovie(movie: TmdbMovieDetail): MediaCache {
+export function normalizeMovie(movie: TmdbMovieDetail, language?: string): MediaCache {
   return {
     tmdbId: movie.id,
     mediaType: 'movie',
@@ -20,10 +20,11 @@ export function normalizeMovie(movie: TmdbMovieDetail): MediaCache {
     watchProviders: null,
     watchProvidersRegion: null,
     watchProvidersCachedAt: null,
+    language,
   }
 }
 
-export function normalizeTv(show: TmdbTvDetail): MediaCache {
+export function normalizeTv(show: TmdbTvDetail, language?: string): MediaCache {
   const avgRuntime =
     show.episode_run_time.length > 0
       ? Math.round(
@@ -49,5 +50,6 @@ export function normalizeTv(show: TmdbTvDetail): MediaCache {
     watchProviders: null,
     watchProvidersRegion: null,
     watchProvidersCachedAt: null,
+    language,
   }
 }
