@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -38,9 +38,13 @@ export default function HomePage() {
   const [statusFilter, setStatusFilter] = useState<WatchStatus | 'all'>('all')
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
   const [sortIndex, setSortIndex] = useState(0)
-  const [genreFilter, setGenreFilter] = useState<string | null>(null)
+  const [sortOpen, setSortOpen] = useState(false)
+  const [genreFilter, setGenreFilter] = useState<Set<string>>(new Set())
+  const [genreOpen, setGenreOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [panel, setPanel] = useState<{ tmdbId: number; mediaType: MediaType } | null>(null)
+  const sortRef = useRef<HTMLDivElement>(null)
+  const genreRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_STORAGE_KEY)
@@ -58,6 +62,22 @@ export default function HomePage() {
       window.history.replaceState({}, '', url.toString())
     }
   }, [])
+
+  useEffect(() => {
+    function close(e: MouseEvent) {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false)
+    }
+    if (sortOpen) document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [sortOpen])
+
+  useEffect(() => {
+    function close(e: MouseEvent) {
+      if (genreRef.current && !genreRef.current.contains(e.target as Node)) setGenreOpen(false)
+    }
+    if (genreOpen) document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [genreOpen])
 
   function setView(v: ViewMode) {
     setViewMode(v)
@@ -106,7 +126,7 @@ export default function HomePage() {
   const [genreFilteredIds, setGenreFilteredIds] = useState<Set<string> | null>(null)
 
   useEffect(() => {
-    if (!genreFilter) {
+    if (genreFilter.size === 0) {
       setGenreFilteredIds(null)
       return
     }
@@ -115,15 +135,15 @@ export default function HomePage() {
       const ids = new Set<string>()
       sorted.forEach((item, idx) => {
         const entry = entries[idx]
-        if (entry?.genres?.some((g) => g.name === genreFilter)) {
+        if (entry?.genres?.some((g) => genreFilter.has(g.name))) {
           ids.add(item.id)
         }
       })
       setGenreFilteredIds(ids)
     })
-  }, [genreFilter, sorted.map((i) => i.id).join(',')])
+  }, [[...genreFilter].join(','), sorted.map((i) => i.id).join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const displayed = genreFilter && genreFilteredIds
+  const displayed = genreFilter.size > 0 && genreFilteredIds
     ? sorted.filter((i) => genreFilteredIds.has(i.id))
     : sorted
 
@@ -369,29 +389,146 @@ export default function HomePage() {
             })}
           </div>
 
-          {/* Sort button */}
-          <button
-            onClick={() => setSortIndex((i) => (i + 1) % SORT_OPTIONS.length)}
-            className="flex items-center gap-[5px] whitespace-nowrap cursor-pointer transition-all duration-100"
-            style={{
-              padding: '5px 10px',
-              borderRadius: 'var(--rsm)',
-              border: '1px solid var(--border)',
-              background: 'var(--surface)',
-              color: 'var(--muted)',
-              fontSize: 12,
-              fontWeight: 500,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg2)'; e.currentTarget.style.borderColor = 'var(--muted2)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}
-          >
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <line x1="2" y1="4" x2="14" y2="4" />
-              <line x1="2" y1="8" x2="10" y2="8" />
-              <line x1="2" y1="12" x2="6" y2="12" />
-            </svg>
-            {SORT_OPTIONS[sortIndex].label}
-          </button>
+          {/* Sort dropdown */}
+          <div ref={sortRef} className="relative">
+            <button
+              onClick={() => setSortOpen((v) => !v)}
+              className="flex items-center gap-[5px] whitespace-nowrap cursor-pointer transition-all duration-100"
+              style={{
+                padding: '5px 10px',
+                borderRadius: 'var(--rsm)',
+                border: '1px solid var(--border)',
+                background: sortOpen ? 'var(--surface2)' : 'var(--surface)',
+                color: 'var(--muted)',
+                fontSize: 12,
+                fontWeight: 500,
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <line x1="2" y1="4" x2="14" y2="4" />
+                <line x1="2" y1="8" x2="10" y2="8" />
+                <line x1="2" y1="12" x2="6" y2="12" />
+              </svg>
+              {SORT_OPTIONS[sortIndex].label}
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ opacity: 0.5, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>
+                <polyline points="2 3.5 5 6.5 8 3.5" />
+              </svg>
+            </button>
+            {sortOpen && (
+              <div
+                className="absolute top-full left-0 mt-[4px] z-30 rounded-[8px] py-1 min-w-[160px]"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}
+              >
+                {SORT_OPTIONS.map((opt, i) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setSortIndex(i); setSortOpen(false) }}
+                    className="w-full text-left px-3 py-[8px] text-[12px] cursor-pointer border-none transition-all duration-100"
+                    style={{
+                      background: sortIndex === i ? 'var(--accent-bg)' : 'transparent',
+                      color: sortIndex === i ? 'var(--accent2)' : 'var(--fg2)',
+                      fontWeight: sortIndex === i ? 600 : 400,
+                    }}
+                    onMouseEnter={(e) => { if (sortIndex !== i) e.currentTarget.style.background = 'var(--surface2)' }}
+                    onMouseLeave={(e) => { if (sortIndex !== i) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Genre dropdown */}
+          {genreOptions.length > 0 && (
+            <div ref={genreRef} className="relative">
+              <button
+                onClick={() => setGenreOpen((v) => !v)}
+                className="flex items-center gap-[5px] whitespace-nowrap cursor-pointer transition-all duration-100"
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: 'var(--rsm)',
+                  border: `1px solid ${genreFilter.size > 0 ? 'var(--accent)' : 'var(--border)'}`,
+                  background: genreFilter.size > 0 ? 'var(--accent-bg)' : genreOpen ? 'var(--surface2)' : 'var(--surface)',
+                  color: genreFilter.size > 0 ? 'var(--accent2)' : 'var(--muted)',
+                  fontSize: 12,
+                  fontWeight: genreFilter.size > 0 ? 600 : 500,
+                }}
+              >
+                Genre{genreFilter.size > 0 ? ` (${genreFilter.size})` : ''}
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ opacity: 0.5, transform: genreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>
+                  <polyline points="2 3.5 5 6.5 8 3.5" />
+                </svg>
+              </button>
+              {genreOpen && (
+                <div
+                  className="absolute top-full left-0 mt-[4px] z-30 rounded-[8px] min-w-[200px]"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}
+                >
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-3 py-[8px]" style={{ borderBottom: '1px solid var(--border2)' }}>
+                    <span className="text-[10px] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+                      Filter by Genre
+                    </span>
+                    <div className="flex items-center gap-[6px]">
+                      {genreFilter.size > 0 && (
+                        <button
+                          onClick={() => setGenreFilter(new Set())}
+                          className="text-[10px] cursor-pointer border-none transition-all duration-100"
+                          style={{ background: 'transparent', color: 'var(--accent2)', fontWeight: 500 }}
+                        >
+                          Clear
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setGenreOpen(false)}
+                        className="flex items-center justify-center w-[18px] h-[18px] rounded-full cursor-pointer border-none transition-all duration-100"
+                        style={{ background: 'var(--surface2)', color: 'var(--muted)' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)' }}
+                      >
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                          <line x1="1" y1="1" x2="7" y2="7" /><line x1="7" y1="1" x2="1" y2="7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  {/* List */}
+                  <div className="py-1 max-h-[240px] overflow-y-auto">
+                    {genreOptions.map((g) => {
+                      const checked = genreFilter.has(g)
+                      return (
+                        <button
+                          key={g}
+                          onClick={() => {
+                            const next = new Set(genreFilter)
+                            if (checked) next.delete(g); else next.add(g)
+                            setGenreFilter(next)
+                          }}
+                          className="w-full flex items-center gap-[8px] px-3 py-[7px] text-[12px] cursor-pointer border-none transition-all duration-100 text-left"
+                          style={{ background: 'transparent', color: checked ? 'var(--fg)' : 'var(--fg2)', fontWeight: checked ? 500 : 400 }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface2)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                        >
+                          <span
+                            className="flex-shrink-0 flex items-center justify-center rounded-[3px]"
+                            style={{ width: 14, height: 14, border: `1.5px solid ${checked ? 'var(--accent)' : 'var(--border)'}`, background: checked ? 'var(--accent)' : 'transparent' }}
+                          >
+                            {checked && (
+                              <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="1.5 4 3.5 6 6.5 2" />
+                              </svg>
+                            )}
+                          </span>
+                          {g}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* View toggle */}
           <div
@@ -464,49 +601,6 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Genre filter chips */}
-        {genreOptions.length > 0 && (
-          <div
-            className="flex gap-[4px] flex-wrap mt-[8px]"
-          >
-            <button
-              onClick={() => setGenreFilter(null)}
-              className="inline-flex items-center whitespace-nowrap border cursor-pointer transition-all duration-[100ms]"
-              style={{
-                padding: '3px 9px',
-                borderRadius: 'var(--pill)',
-                fontSize: 11,
-                fontWeight: genreFilter === null ? 600 : 500,
-                background: genreFilter === null ? 'var(--surface2)' : 'transparent',
-                color: genreFilter === null ? 'var(--fg)' : 'var(--muted2)',
-                borderColor: genreFilter === null ? 'var(--border)' : 'var(--border2)',
-              }}
-            >
-              All genres
-            </button>
-            {genreOptions.map((g) => {
-              const active = genreFilter === g
-              return (
-                <button
-                  key={g}
-                  onClick={() => setGenreFilter(active ? null : g)}
-                  className="inline-flex items-center whitespace-nowrap border cursor-pointer transition-all duration-[100ms]"
-                  style={{
-                    padding: '3px 9px',
-                    borderRadius: 'var(--pill)',
-                    fontSize: 11,
-                    fontWeight: active ? 600 : 400,
-                    background: active ? 'var(--accent-bg)' : 'transparent',
-                    color: active ? 'var(--accent2)' : 'var(--muted2)',
-                    borderColor: active ? 'var(--accent)' : 'var(--border2)',
-                  }}
-                >
-                  {g}
-                </button>
-              )
-            })}
-          </div>
-        )}
       </div>
 
       {/* List / Grid */}

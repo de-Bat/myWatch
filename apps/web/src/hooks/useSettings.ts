@@ -19,6 +19,7 @@ export interface AppSettings {
   language: string
   font: FontFamily
   fontSize: FontSize
+  syncInterval: number // minutes; 0 = disabled
   cardMeta: CardMetaSettings
 }
 
@@ -28,6 +29,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   language: 'en-US',
   font: 'system',
   fontSize: 'md',
+  syncInterval: 5,
   cardMeta: {
     showGenres: true,
     showTmdbRating: false,

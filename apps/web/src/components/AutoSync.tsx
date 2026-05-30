@@ -2,27 +2,26 @@
 import { useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useSync } from '@/hooks/useSync'
+import { useSettings } from '@/hooks/useSettings'
 
-const INTERVAL_MS = 5 * 60 * 1000   // poll every 5 min while visible
-const MIN_GAP_MS  = 30 * 1000       // ignore if synced < 30s ago
+const MIN_GAP_MS = 30 * 1000
 
 export function AutoSync() {
   const { data: session } = useSession()
+  const { settings } = useSettings()
   const { sync, lastSyncedAt, syncing } = useSync()
   const lastSyncedAtRef = useRef<string | null>(lastSyncedAt)
+  const syncingRef = useRef(syncing)
+
+  useEffect(() => { lastSyncedAtRef.current = lastSyncedAt }, [lastSyncedAt])
+  useEffect(() => { syncingRef.current = syncing }, [syncing])
 
   useEffect(() => {
-    lastSyncedAtRef.current = lastSyncedAt
-  }, [lastSyncedAt])
-
-  useEffect(() => {
-    if (!session?.apiToken) return
+    if (!session?.apiToken || settings.syncInterval === 0) return
 
     function trySync() {
-      if (syncing) return
-      const last = lastSyncedAtRef.current
-        ? new Date(lastSyncedAtRef.current).getTime()
-        : 0
+      if (syncingRef.current) return
+      const last = lastSyncedAtRef.current ? new Date(lastSyncedAtRef.current).getTime() : 0
       if (Date.now() - last < MIN_GAP_MS) return
       sync({ silent: true })
     }
@@ -34,16 +33,15 @@ export function AutoSync() {
     document.addEventListener('visibilitychange', onVisible)
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') trySync()
-    }, INTERVAL_MS)
+    }, settings.syncInterval * 60 * 1000)
 
-    // Sync once on mount (initial load)
     trySync()
 
     return () => {
       document.removeEventListener('visibilitychange', onVisible)
       clearInterval(interval)
     }
-  }, [session?.apiToken]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session?.apiToken, settings.syncInterval]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return null
 }

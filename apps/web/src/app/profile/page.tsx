@@ -93,6 +93,15 @@ const FONT_SIZE_OPTIONS: Array<{ value: FontSize; label: string }> = [
   { value: 'xl', label: 'XL' },
 ]
 
+const SYNC_INTERVAL_OPTIONS: Array<{ value: number; label: string }> = [
+  { value: 0,  label: 'Never' },
+  { value: 1,  label: '1 min' },
+  { value: 5,  label: '5 min' },
+  { value: 15, label: '15 min' },
+  { value: 30, label: '30 min' },
+  { value: 60, label: '1 hour' },
+]
+
 export default function SettingsPage() {
   const { data: session } = useSession()
   const router = useRouter()
@@ -192,6 +201,30 @@ export default function SettingsPage() {
           {error && (
             <div className="px-4 py-2 text-[12px]" style={{ color: 'var(--red)' }}>{error}</div>
           )}
+          <Row label="Auto Sync">
+            <div
+              className="flex"
+              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
+            >
+              {SYNC_INTERVAL_OPTIONS.map((o) => {
+                const active = settings.syncInterval === o.value
+                return (
+                  <button
+                    key={o.value}
+                    onClick={() => update({ syncInterval: o.value })}
+                    className="px-3 py-[4px] text-[12px] rounded-[4px] transition-all duration-100 cursor-pointer border-none whitespace-nowrap"
+                    style={{
+                      background: active ? 'var(--surface2)' : 'transparent',
+                      color: active ? 'var(--fg)' : 'var(--muted)',
+                      fontWeight: active ? 600 : 500,
+                    }}
+                  >
+                    {o.label}
+                  </button>
+                )
+              })}
+            </div>
+          </Row>
           <div className="px-4 py-3">
             {session ? (
               <button
