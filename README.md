@@ -5,10 +5,15 @@ A local-first media watchlist app. Track movies and TV shows across devices with
 ## Features
 
 - **My List** — watchlist with status (Planned / In Progress / Watched / Quit), rating, notes, TV season+episode progress
+- **Views** — toggle between List (enhanced row cards) and Grid (poster grid); preference persisted
+- **Genre filter** — horizontal scrollable genre chips derived from cached media; ANDs with status/type filters
+- **Release dates** — full date + UPCOMING badge on items with future release dates
+- **Where to Watch** — TMDB streaming providers (flatrate, auto by region) + custom platforms (Jellyfin, Cellcom, FreTV, Plex, Emby, or free text)
+- **Playlists** — Manual collections (drag to reorder, right-click to add) + Smart playlists (auto-populated by rules: status, type, genre, min rating)
 - **Search** — real-time TMDB search with inline add
 - **Discover** — trending, top rated, personalized recommendations based on what you've watched
-- **Media Detail** — full metadata, status controls, rating 1–10, notes, soft delete
-- **Sync** — push/pull sync to PostgreSQL backend; works offline, syncs when online
+- **Media Detail** — full metadata, genre chips, status controls, rating 1–10, notes, soft delete
+- **Sync** — push/pull sync to PostgreSQL backend (watchlist + playlists); works offline, syncs when online
 - **Auth** — email/password, Google OAuth, Apple Sign-In
 - **Guest mode** — use the app without an account; sign in later to sync
 
@@ -52,8 +57,8 @@ myWatch/
 | GET | `/auth/me` | Bearer | Current user |
 | POST | `/auth/oauth/google` | — | Google Sign-In |
 | POST | `/auth/oauth/apple` | — | Apple Sign-In |
-| POST | `/sync/push` | Bearer | Push local changes |
-| GET | `/sync/pull?since=<ISO>` | Bearer | Pull remote changes |
+| POST | `/sync/push` | Bearer | Push watchlist items + playlists + playlist items |
+| GET | `/sync/pull?since=<ISO>` | Bearer | Pull watchlist items + playlists + playlist items |
 
 ## Quick Start
 
@@ -153,6 +158,7 @@ cd apps/web && pnpm dev   # http://localhost:3000
   progressEpisode: number | null  // TV only
   rating: number | null  // 1–10
   notes: string | null
+  customPlatforms: string[]       // user-added streaming platforms (e.g. ["Jellyfin", "Cellcom"])
   addedAt: string        // ISO timestamp
   startedAt: string | null
   finishedAt: string | null
@@ -160,6 +166,30 @@ cd apps/web && pnpm dev   # http://localhost:3000
   updatedAt: string      // used for LWW conflict resolution
   deviceId: string       // source device
   deletedAt: string | null  // soft delete
+}
+```
+
+### Playlist
+
+```typescript
+{
+  id: string
+  userId: string
+  name: string
+  description: string | null
+  type: 'manual' | 'smart'
+  smartRules: {
+    statuses?: ('planned' | 'in_progress' | 'watched' | 'quit')[]
+    mediaTypes?: ('movie' | 'tv')[]
+    genres?: string[]
+    minRating?: number
+    maxRating?: number
+  } | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+  deviceId: string
+  deletedAt: string | null
 }
 ```
 

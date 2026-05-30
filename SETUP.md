@@ -256,7 +256,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ### Step 5 — Run database migrations
 
-Creates the tables: `users`, `oauth_accounts`, `watchlist_items`, `media_cache`.
+Creates all tables: `users`, `oauth_accounts`, `watchlist_items`, `media_cache`, `playlists`, `playlist_items`.
 
 ```bash
 cd apps/api
@@ -267,6 +267,8 @@ Expected:
 
 ```
   apply 001_initial
+  apply 002_watch_providers
+  apply 003_playlists
 Migrations complete.
 ```
 
@@ -281,7 +283,7 @@ psql -U postgres -d mywatch -c "\dt"
 Expected:
 
 ```
- media_cache | oauth_accounts | schema_migrations | users | watchlist_items
+ media_cache | oauth_accounts | playlist_items | playlists | schema_migrations | users | watchlist_items
 ```
 
 ---
@@ -396,12 +398,21 @@ Open http://localhost:3000 (or the port set in `PORT`).
 1. Home screen shows your list
 2. Filter by status using the tabs at the top
 3. Filter by type (Movies / TV) and sort using the dropdowns
+4. Use the **List / Grid** toggle (top-right of filter bar) to switch views
+5. Genre chips appear below the controls row once items with genre data are cached — click a genre to filter
 
 **Media detail:**
 1. Click any item in your list, search results, or discover cards
 2. Change status, rate 1–10, add notes
 3. For TV shows set to **In Progress**: season + episode tracker appears
-4. Click **Save** to persist
+4. **WHERE TO WATCH** section: TMDB streaming providers load automatically; add custom platforms (Jellyfin, Cellcom, FreTV, etc.) via the preset buttons or free-text input
+5. Items with future release dates show an **UPCOMING** badge and full release date
+
+**Playlists:**
+1. Click the playlist icon in the nav header
+2. Click **New Playlist** → choose Manual or Smart
+3. **Manual**: right-click any card in My List → **Add to Playlist**; drag items to reorder in the playlist detail view
+4. **Smart**: set rules (statuses, media type, min rating) — items populate automatically
 
 **Discover:**
 - Browse Trending This Week, Top Rated
@@ -409,7 +420,7 @@ Open http://localhost:3000 (or the port set in `PORT`).
 
 **Sync:**
 - Click **Sync** (top-right of My List) or **Profile → Sync Now**
-- Pushes local changes to Postgres, pulls any changes from other devices
+- Pushes local changes (watchlist + playlists) to Postgres, pulls any changes from other devices
 - Works across devices logged into the same account
 
 ---
