@@ -130,11 +130,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 620, width: '100%', padding: '0 0 80px', margin: '0 auto' }}>
+    <div className="page-root">
       {/* Header */}
       <header
-        className="flex items-center gap-[10px]"
-        style={{ padding: '18px 20px 14px', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 20 }}
+        className="flex items-center gap-[10px] page-header page-sticky-shell"
       >
         <button
           onClick={() => router.push('/')}
@@ -149,7 +148,7 @@ export default function SettingsPage() {
         </h1>
       </header>
 
-      <div className="flex flex-col gap-4 px-5">
+      <div className="flex flex-col gap-4 content-area">
         {/* Account */}
         <Section title="Account">
           {session ? (
@@ -203,8 +202,8 @@ export default function SettingsPage() {
           )}
           <Row label="Auto Sync">
             <div
-              className="flex"
-              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
+              className="flex controls-row"
+              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1, flexShrink: 1, minWidth: 0 }}
             >
               {SYNC_INTERVAL_OPTIONS.map((o) => {
                 const active = settings.syncInterval === o.value

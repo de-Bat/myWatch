@@ -11,17 +11,10 @@ export default function PlaylistsPage() {
   const [showCreate, setShowCreate] = useState(false)
 
   return (
-    <div style={{ maxWidth: 620, width: '100%', padding: '0 0 80px', margin: '0 auto' }}>
+    <div className="page-root">
       {/* Header */}
       <header
-        className="flex items-center justify-between gap-3"
-        style={{
-          padding: '18px 20px 14px',
-          position: 'sticky',
-          top: 0,
-          background: 'var(--bg)',
-          zIndex: 20,
-        }}
+        className="flex items-center justify-between gap-3 page-header page-sticky-shell"
       >
         <div className="flex items-center gap-[10px] min-w-0">
           <button
@@ -74,7 +67,7 @@ export default function PlaylistsPage() {
         </button>
       </header>
 
-      <div style={{ padding: '0 20px' }}>
+      <div className="content-area">
         {playlists === undefined ? (
           <p style={{ color: 'var(--muted)', fontSize: 13 }}>Loading…</p>
         ) : playlists.length === 0 ? (

@@ -33,7 +33,7 @@ export default function PlaylistDetailPage() {
 
   if (!playlist) {
     return (
-      <div style={{ maxWidth: 620, margin: '0 auto', padding: '40px 20px' }}>
+      <div className="subpage-root">
         <p style={{ color: 'var(--muted)', fontSize: 13 }}>Playlist not found.</p>
       </div>
     )
@@ -56,11 +56,10 @@ export default function PlaylistDetailPage() {
   const resolvedItems = watchlistItems.filter((x) => x.watchlistItem != null)
 
   return (
-    <div style={{ maxWidth: 620, width: '100%', padding: '0 0 80px', margin: '0 auto' }}>
+    <div className="page-root">
       {/* Header */}
       <header
-        className="flex items-center justify-between gap-3"
-        style={{ padding: '18px 20px 14px', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 20 }}
+        className="flex items-center justify-between gap-3 page-header page-sticky-shell"
       >
         <div className="flex items-center gap-[10px] min-w-0">
           <button
@@ -135,8 +134,8 @@ export default function PlaylistDetailPage() {
       {/* Smart rules summary */}
       {isSmart && rules && (
         <div
-          className="mx-5 mb-3 px-3 py-2 rounded-[8px] flex flex-wrap gap-[5px] items-center"
-          style={{ background: 'var(--surface)', border: '1px solid var(--border2)' }}
+          className="mb-3 px-3 py-2 rounded-[8px] flex flex-wrap gap-[5px] items-center"
+          style={{ background: 'var(--surface)', border: '1px solid var(--border2)', marginLeft: 'max(20px, env(safe-area-inset-left))', marginRight: 'max(20px, env(safe-area-inset-right))' }}
         >
           <span className="text-[10px] font-bold tracking-[0.06em] uppercase" style={{ color: 'var(--muted2)', marginRight: 2 }}>Rules:</span>
           {rules.statuses?.map((s) => (
@@ -159,7 +158,7 @@ export default function PlaylistDetailPage() {
       )}
 
       {/* Items */}
-      <div style={{ padding: '0 20px' }}>
+      <div className="content-area">
         {resolvedItems.length === 0 ? (
           <div className="flex flex-col items-center gap-3 text-center" style={{ padding: '64px 16px 48px' }}>
             <p className="font-semibold" style={{ fontSize: 15, color: 'var(--fg2)', letterSpacing: '-0.02em' }}>
