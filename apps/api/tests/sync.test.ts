@@ -4,7 +4,7 @@ import type { UserRepo, UserRecord } from '../src/repos/user-repo.js'
 import type { WatchlistRepo } from '../src/repos/watchlist-repo.js'
 import type { PlaylistRepo } from '../src/repos/playlist-repo.js'
 import type { WatchlistItem } from '@mywatch/core'
-import { SseBus } from '../src/utils/sse-bus.js'
+import { SseBus, sseBus } from '../src/utils/sse-bus.js'
 
 const mockUser: UserRecord = {
   id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
@@ -187,6 +187,10 @@ describe('GET /sync/events', () => {
     expect(res.headers['content-type']).toContain('text/event-stream')
     expect(res.body).toContain('event: connected')
     expect(res.body).toContain('"connId"')
+
+    // Parse connId and clean up the bus subscription that test-mode close never fires
+    const body = JSON.parse(res.body.split('data: ')[1])
+    sseBus.unsubscribe(mockUser.id, body.connId)
   })
 })
 

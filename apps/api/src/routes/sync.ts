@@ -110,21 +110,27 @@ export function registerSyncRoutes(
       reply.raw.setHeader('Connection', 'keep-alive')
       reply.raw.flushHeaders()
 
+      reply.hijack()
+
       const send = (data: string) => reply.raw.write(data)
 
       send(`event: connected\ndata: ${JSON.stringify({ connId })}\n\n`)
-      sseBus.subscribe(userId, connId, send)
 
-      const keepalive = setInterval(() => {
-        try { reply.raw.write(': keepalive\n\n') } catch { clearInterval(keepalive) }
-      }, 30_000)
+      let keepalive: ReturnType<typeof setInterval>
 
-      req.raw.on('close', () => {
+      const cleanup = () => {
         clearInterval(keepalive)
         sseBus.unsubscribe(userId, connId)
-      })
+      }
 
-      reply.hijack()
+      req.raw.on('close', cleanup)
+      reply.raw.on('error', cleanup)
+
+      sseBus.subscribe(userId, connId, send)
+
+      keepalive = setInterval(() => {
+        reply.raw.write(': keepalive\n\n')
+      }, 30_000)
 
       // In inject/test mode the socket is synchronously readable — detect and close immediately.
       // In production (real TCP socket) the response stays open until the client disconnects.
