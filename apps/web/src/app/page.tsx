@@ -51,6 +51,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const sortRef = useRef<HTMLDivElement>(null)
   const genreRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_STORAGE_KEY)
@@ -92,6 +93,23 @@ export default function HomePage() {
     if (genreOpen) document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [genreOpen])
+
+  useEffect(() => {
+    if (searchOpen) {
+      searchInputRef.current?.focus()
+    }
+  }, [searchOpen])
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape' && searchOpen) {
+        setSearchOpen(false)
+        setSearchQuery('')
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [searchOpen])
 
   function setView(v: ViewMode) {
     setViewMode(v)
@@ -321,6 +339,46 @@ export default function HomePage() {
           </button>
         </nav>
       </header>
+
+      {/* Inline search bar */}
+      {searchOpen && (
+        <div style={{ padding: '0 0 10px' }}>
+          <div
+            className="flex items-center gap-2"
+            style={{
+              padding: '8px 12px',
+              borderRadius: 'var(--rsm)',
+              border: '1px solid var(--border)',
+              background: 'var(--surface)',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink: 0, color: 'var(--muted)' }}>
+              <circle cx="8.5" cy="8.5" r="5.5" />
+              <line x1="13" y1="13" x2="17.5" y2="17.5" />
+            </svg>
+            <input
+              ref={searchInputRef}
+              type="search"
+              placeholder="Search your list…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 focus:outline-none"
+              style={{ background: 'transparent', border: 'none', color: 'var(--fg)', fontSize: 14 }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 0, lineHeight: 1 }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="3" y1="3" x2="13" y2="13" />
+                  <line x1="13" y1="3" x2="3" y2="13" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Import local data banner */}
       {importBanner && (
