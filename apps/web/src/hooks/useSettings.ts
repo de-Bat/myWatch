@@ -84,13 +84,18 @@ export function useSettings(): SettingsCtx {
 }
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
-
-  useEffect(() => {
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    // Lazily initialise from localStorage so there's no async gap where
+    // the wrong defaults flash before the useEffect fires.
     const loaded = loadSettings()
-    setSettings(loaded)
-    applyTheme(loaded.theme)
-  }, [])
+    if (typeof window !== 'undefined') applyTheme(loaded.theme)
+    return loaded
+  })
+
+  // Sync theme on server-side render (loadSettings returns DEFAULT_SETTINGS SSR-side)
+  useEffect(() => {
+    applyTheme(settings.theme)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function update(patch: Partial<AppSettings>) {
     setSettings((prev) => {
