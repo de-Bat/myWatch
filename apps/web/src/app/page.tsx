@@ -47,6 +47,8 @@ export default function HomePage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [panel, setPanel] = useState<{ tmdbId: number; mediaType: MediaType } | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const sortRef = useRef<HTMLDivElement>(null)
   const genreRef = useRef<HTMLDivElement>(null)
 
@@ -244,14 +246,35 @@ export default function HomePage() {
         </div>
 
         <nav className="flex items-center gap-[2px] flex-shrink-0">
-          {/* Search */}
+          {/* Add (navigate to /search to add new content) */}
           <button
             onClick={() => router.push('/search')}
-            title="Search"
+            title="Add"
             className="flex items-center justify-center w-[34px] h-[34px] border-none cursor-pointer transition-all duration-100"
             style={{ color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface)' }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
+          >
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="10" y1="3" x2="10" y2="17" />
+              <line x1="3" y1="10" x2="17" y2="10" />
+            </svg>
+          </button>
+          {/* Search — toggles inline search bar */}
+          <button
+            onClick={() => { setSearchOpen((o) => !o); setSearchQuery('') }}
+            title="Search"
+            className="flex items-center justify-center w-[34px] h-[34px] border-none cursor-pointer transition-all duration-100"
+            style={{
+              color: searchOpen ? 'var(--fg)' : 'var(--muted)',
+              background: searchOpen ? 'var(--surface)' : 'transparent',
+              borderRadius: 'var(--rsm)',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface)' }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = searchOpen ? 'var(--fg)' : 'var(--muted)'
+              e.currentTarget.style.background = searchOpen ? 'var(--surface)' : 'transparent'
+            }}
           >
             <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
               <circle cx="8.5" cy="8.5" r="5.5" />
