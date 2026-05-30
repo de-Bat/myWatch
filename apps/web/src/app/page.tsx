@@ -192,7 +192,7 @@ export default function HomePage() {
     : 'var(--muted2)'
 
   return (
-    <div style={{ maxWidth: 620, width: '100%', padding: '0 0 80px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '75vw', width: '100%', padding: '0 0 80px', margin: '0 auto' }}>
       {/* Header */}
       <header
         className="flex items-center justify-between gap-3"
@@ -616,7 +616,7 @@ export default function HomePage() {
                 gap: 1,
               }}
             >
-              {(['auto', 2, 3, 4] as GridColumns[]).map((c) => {
+              {(['auto', 2, 3, 4, 5] as GridColumns[]).map((c) => {
                 const active = gridCols === c
                 return (
                   <button

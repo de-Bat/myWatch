@@ -12,7 +12,7 @@ export interface CardMetaSettings {
 
 export type FontFamily = 'system' | 'serif' | 'mono'
 export type FontSize = 'sm' | 'md' | 'lg' | 'xl'
-export type GridColumns = 2 | 3 | 4 | 'auto'
+export type GridColumns = 2 | 3 | 4 | 5 | 'auto'
 
 export interface AppSettings {
   theme: 'dark' | 'light'
