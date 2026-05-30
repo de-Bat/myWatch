@@ -336,107 +336,72 @@ export default function HomePage() {
               <line x1="3" y1="10" x2="17" y2="10" />
             </svg>
           </button>
-          {/* Search — toggles inline search bar */}
-          <button
-            onClick={() => { setSearchOpen((o) => !o); setSearchQuery('') }}
-            title="Search"
-            className="flex items-center justify-center w-[34px] h-[34px] border-none cursor-pointer transition-all duration-100"
-            style={{
-              color: searchOpen ? 'var(--fg)' : 'var(--muted)',
-              background: searchOpen ? 'var(--surface)' : 'transparent',
-              borderRadius: 'var(--rsm)',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface)' }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = searchOpen ? 'var(--fg)' : 'var(--muted)'
-              e.currentTarget.style.background = searchOpen ? 'var(--surface)' : 'transparent'
-            }}
-          >
-            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <circle cx="8.5" cy="8.5" r="5.5" />
-              <line x1="13" y1="13" x2="17.5" y2="17.5" />
-            </svg>
-          </button>
-          {/* Discover */}
-          <button
-            onClick={() => router.push('/discover')}
-            title="Discover"
-            className="flex items-center justify-center w-[34px] h-[34px] border-none cursor-pointer transition-all duration-100"
-            style={{ color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
-          >
-            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="10" cy="10" r="8" />
-              <polygon points="8.5,7.5 13.5,10 8.5,12.5 6,10" fill="currentColor" stroke="none" />
-            </svg>
-          </button>
-          {/* Playlists */}
-          <button
-            onClick={() => router.push('/playlists')}
-            title="Playlists"
-            className="flex items-center justify-center w-[34px] h-[34px] border-none cursor-pointer transition-all duration-100"
-            style={{ color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
-          >
-            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <line x1="3" y1="5" x2="17" y2="5" />
-              <line x1="3" y1="10" x2="13" y2="10" />
-              <line x1="3" y1="15" x2="10" y2="15" />
-              <circle cx="16" cy="14" r="3" />
-            </svg>
-          </button>
-          {/* Avatar */}
-          <button
-            onClick={() => router.push('/profile')}
-            className="flex items-center justify-center w-[30px] h-[30px] rounded-full border-none cursor-pointer ml-[6px] flex-shrink-0 text-[11px] font-bold"
-            style={{ background: 'var(--accent-bg)', border: '1.5px solid var(--accent)', color: 'var(--accent2)' }}
-          >
-            {userInitial}
-          </button>
-        </nav>
-      </header>
-
-      {/* Inline search bar */}
-      {searchOpen && (
-        <div style={{ padding: '0 0 10px' }}>
+          {/* Search — expandable inline search */}
           <div
-            className="flex items-center gap-2"
+            className={`flex items-center transition-all duration-300 ease-in-out ${searchOpen ? 'w-48 px-2' : 'w-[34px] justify-center'}`}
             style={{
-              padding: '8px 12px',
+              background: searchOpen ? 'var(--surface)' : 'transparent',
+              border: searchOpen ? '1px solid var(--border)' : '1px solid transparent',
               borderRadius: 'var(--rsm)',
-              border: '1px solid var(--border)',
-              background: 'var(--surface)',
+              height: 34,
             }}
+            onMouseEnter={(e) => { if (!searchOpen) { e.currentTarget.style.background = 'var(--surface)' } }}
+            onMouseLeave={(e) => { if (!searchOpen) { e.currentTarget.style.background = 'transparent' } }}
           >
-            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink: 0, color: 'var(--muted)' }}>
-              <circle cx="8.5" cy="8.5" r="5.5" />
-              <line x1="13" y1="13" x2="17.5" y2="17.5" />
-            </svg>
-            <input
-              ref={searchInputRef}
-              type="search"
-              placeholder="Search your list…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 focus:outline-none"
-              style={{ background: 'transparent', border: 'none', color: 'var(--fg)', fontSize: 14 }}
-            />
-            {searchQuery && (
+            <button
+              onClick={() => {
+                if (!searchOpen) {
+                  setSearchOpen(true)
+                } else {
+                  setSearchOpen(false)
+                  setSearchQuery('')
+                }
+              }}
+              title="Search"
+              className="flex items-center justify-center border-none cursor-pointer flex-shrink-0 bg-transparent"
+              style={{
+                color: searchOpen ? 'var(--fg)' : 'var(--muted)',
+                width: searchOpen ? 24 : 34,
+                height: searchOpen ? 24 : 34,
+                padding: 0,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = searchOpen ? 'var(--fg)' : 'var(--muted)' }}
+            >
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <circle cx="8.5" cy="8.5" r="5.5" />
+                <line x1="13" y1="13" x2="17.5" y2="17.5" />
+              </svg>
+            </button>
+            
+            {searchOpen && (
+              <input
+                ref={searchInputRef}
+                type="search"
+                placeholder="Search…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 focus:outline-none bg-transparent border-none min-w-0"
+                style={{ color: 'var(--fg)', fontSize: 13, paddingLeft: 6 }}
+                autoFocus
+              />
+            )}
+            
+            {searchOpen && searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 0, lineHeight: 1 }}
+                className="flex items-center justify-center flex-shrink-0 border-none cursor-pointer bg-transparent p-1 ml-1"
+                style={{ color: 'var(--muted)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)' }}
               >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <line x1="3" y1="3" x2="13" y2="13" />
                   <line x1="13" y1="3" x2="3" y2="13" />
                 </svg>
               </button>
             )}
           </div>
-        </div>
-      )}
 
       {/* Import local data banner */}
       {importBanner && (
