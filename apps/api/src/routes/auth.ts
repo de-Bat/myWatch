@@ -105,4 +105,56 @@ export function registerAuthRoutes(app: FastifyInstance, userRepo: UserRepo) {
       return reply.send({ user: userResponse(user) })
     },
   )
+
+  interface ForgotPasswordBody { email: string }
+  interface ResetPasswordBody { token: string; newPassword: string }
+
+  app.post<{ Body: ForgotPasswordBody }>(
+    '/auth/forgot-password',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['email'],
+          properties: { email: { type: 'string', format: 'email' } },
+        },
+      },
+    },
+    async (req, reply) => {
+      const { email } = req.body
+      const user = await userRepo.findByEmail(email)
+      if (!user || !user.passwordHash) {
+        return reply.send({ resetUrl: null })
+      }
+      const token = await userRepo.createResetToken(user.id)
+      return reply.send({ resetUrl: `/auth/reset-password?token=${token}` })
+    },
+  )
+
+  app.post<{ Body: ResetPasswordBody }>(
+    '/auth/reset-password',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['token', 'newPassword'],
+          properties: {
+            token: { type: 'string' },
+            newPassword: { type: 'string', minLength: 8 },
+          },
+        },
+      },
+    },
+    async (req, reply) => {
+      const { token, newPassword } = req.body
+      const record = await userRepo.findResetToken(token)
+      if (!record || record.usedAt || new Date(record.expiresAt) < new Date()) {
+        return reply.status(400).send({ error: 'Invalid or expired reset token' })
+      }
+      const passwordHash = await hashPassword(newPassword)
+      await userRepo.updatePassword(record.userId, passwordHash)
+      await userRepo.markResetTokenUsed(token)
+      return reply.send({ ok: true })
+    },
+  )
 }
