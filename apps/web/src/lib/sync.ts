@@ -2,14 +2,18 @@ import { resolveConflict } from '@mywatch/sync'
 import { db } from './db'
 import { apiClient } from './api-client'
 
-export async function pushPendingItems(token: string): Promise<void> {
+export async function pushPendingItems(token: string, userId: string): Promise<void> {
   const pending = await db.pendingPushes.toArray()
   if (pending.length === 0) return
 
   const itemIds = [...new Set(pending.map((p) => p.itemId))]
   const items = await db.watchlistItems.where('id').anyOf(itemIds).toArray()
 
-  await apiClient.sync.push(items, token)
+  // Claim items for the authenticated user (handles guest → auth migration)
+  const claimed = items.map((item) => ({ ...item, userId }))
+  await db.watchlistItems.bulkPut(claimed)
+
+  await apiClient.sync.push(claimed, token)
   await db.pendingPushes.where('itemId').anyOf(itemIds).delete()
 }
 

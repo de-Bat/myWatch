@@ -49,14 +49,14 @@ describe('pushPendingItems', () => {
     await db.pendingPushes.add({ itemId: 'i1', queuedAt: '2024-01-01T00:00:00Z' })
     mockedPush.mockResolvedValueOnce({ pushedAt: '2024-01-01T01:00:00Z' })
 
-    await pushPendingItems('token123')
+    await pushPendingItems('token123', 'u1')
 
     expect(mockedPush).toHaveBeenCalledWith([baseItem], 'token123')
     expect(await db.pendingPushes.count()).toBe(0)
   })
 
   it('does nothing when queue is empty', async () => {
-    await pushPendingItems('token123')
+    await pushPendingItems('token123', 'u1')
     expect(mockedPush).not.toHaveBeenCalled()
   })
 
@@ -66,7 +66,7 @@ describe('pushPendingItems', () => {
     await db.pendingPushes.add({ itemId: 'i1', queuedAt: '2024-01-01T00:01:00Z' })
     mockedPush.mockResolvedValueOnce({ pushedAt: '2024-01-01T01:00:00Z' })
 
-    await pushPendingItems('token123')
+    await pushPendingItems('token123', 'u1')
 
     expect(mockedPush).toHaveBeenCalledWith([baseItem], 'token123')
     expect(await db.pendingPushes.count()).toBe(0)

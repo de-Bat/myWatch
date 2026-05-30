@@ -22,7 +22,7 @@ export function useSync() {
       if (!session?.apiToken) return
       setState((s) => ({ ...s, syncing: true, error: null }))
       try {
-        await pushPendingItems(session.apiToken)
+        await pushPendingItems(session.apiToken, session.user?.id ?? '')
         const pulledAt = await pullItems(
           since ?? new Date(0).toISOString(),
           session.apiToken,
