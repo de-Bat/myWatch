@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { createApp } from '../src/app.js'
 import type { UserRepo, UserRecord } from '../src/repos/user-repo.js'
 import type { WatchlistRepo } from '../src/repos/watchlist-repo.js'
+import type { PlaylistRepo } from '../src/repos/playlist-repo.js'
 import type { WatchlistItem } from '@mywatch/core'
 
 const mockUser: UserRecord = {
@@ -32,6 +33,7 @@ const mockItem: WatchlistItem = {
   updatedAt: '2024-01-01T00:00:00.000Z',
   deviceId: 'device-abc',
   deletedAt: null,
+  customPlatforms: [],
 }
 
 function makeUserRepo(): UserRepo {
@@ -50,6 +52,15 @@ function makeWatchlistRepo(): WatchlistRepo {
   }
 }
 
+function makePlaylistRepo(): PlaylistRepo {
+  return {
+    upsertPlaylists: vi.fn().mockResolvedValue(undefined),
+    upsertPlaylistItems: vi.fn().mockResolvedValue(undefined),
+    findPlaylistsSince: vi.fn().mockResolvedValue([]),
+    findPlaylistItemsSince: vi.fn().mockResolvedValue([]),
+  }
+}
+
 function getAuthToken(app: Awaited<ReturnType<typeof createApp>>) {
   return app.jwt.sign({ sub: mockUser.id, email: mockUser.email, isGuest: false })
 }
@@ -57,7 +68,7 @@ function getAuthToken(app: Awaited<ReturnType<typeof createApp>>) {
 describe('POST /sync/push', () => {
   it('upserts items and returns pushedAt', async () => {
     const watchlistRepo = makeWatchlistRepo()
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo })
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
     const token = getAuthToken(app)
 
     const res = await app.inject({
@@ -75,7 +86,7 @@ describe('POST /sync/push', () => {
   })
 
   it('returns 401 without token', async () => {
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo() })
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo(), playlistRepo: makePlaylistRepo() })
     const res = await app.inject({
       method: 'POST',
       url: '/sync/push',
@@ -86,7 +97,7 @@ describe('POST /sync/push', () => {
 
   it('rejects items belonging to a different user', async () => {
     const watchlistRepo = makeWatchlistRepo()
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo })
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
     const token = getAuthToken(app)
 
     const foreignItem: WatchlistItem = { ...mockItem, userId: 'ffffffff-ffff-ffff-ffff-ffffffffffff' }
@@ -101,7 +112,7 @@ describe('POST /sync/push', () => {
 
   it('accepts empty items array', async () => {
     const watchlistRepo = makeWatchlistRepo()
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo })
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
     const token = getAuthToken(app)
 
     const res = await app.inject({
@@ -117,7 +128,7 @@ describe('POST /sync/push', () => {
 describe('GET /sync/pull', () => {
   it('returns items updated since given timestamp', async () => {
     const watchlistRepo = makeWatchlistRepo()
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo })
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
     const token = getAuthToken(app)
     const since = '2024-01-01T00:00:00.000Z'
 
@@ -136,7 +147,7 @@ describe('GET /sync/pull', () => {
   })
 
   it('returns 401 without token', async () => {
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo() })
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo(), playlistRepo: makePlaylistRepo() })
     const res = await app.inject({
       method: 'GET',
       url: '/sync/pull?since=2024-01-01T00:00:00.000Z',
@@ -145,7 +156,7 @@ describe('GET /sync/pull', () => {
   })
 
   it('returns 400 when since param is missing', async () => {
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo() })
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo(), playlistRepo: makePlaylistRepo() })
     const token = getAuthToken(app)
     const res = await app.inject({
       method: 'GET',
@@ -157,7 +168,7 @@ describe('GET /sync/pull', () => {
 
   it('uses epoch (1970) when since=0 to pull all items', async () => {
     const watchlistRepo = makeWatchlistRepo()
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo })
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
     const token = getAuthToken(app)
 
     const res = await app.inject({

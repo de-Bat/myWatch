@@ -16,6 +16,7 @@ interface WatchlistRow {
   progress_season: number | null
   rating: number | null
   notes: string | null
+  custom_platforms: string[]
   added_at: Date
   started_at: Date | null
   finished_at: Date | null
@@ -36,6 +37,7 @@ function mapRow(row: WatchlistRow): WatchlistItem {
     progressSeason: row.progress_season,
     rating: row.rating,
     notes: row.notes,
+    customPlatforms: row.custom_platforms ?? [],
     addedAt: row.added_at.toISOString(),
     startedAt: row.started_at?.toISOString() ?? null,
     finishedAt: row.finished_at?.toISOString() ?? null,
@@ -55,12 +57,13 @@ export function createWatchlistRepo(sql: Sql): WatchlistRepo {
         await sql`
           INSERT INTO watchlist_items (
             id, user_id, tmdb_id, media_type, status,
-            progress_episode, progress_season, rating, notes,
+            progress_episode, progress_season, rating, notes, custom_platforms,
             added_at, started_at, finished_at, quit_at,
             updated_at, device_id, deleted_at
           ) VALUES (
             ${item.id}, ${userId}, ${item.tmdbId}, ${item.mediaType}, ${item.status},
             ${item.progressEpisode}, ${item.progressSeason}, ${item.rating}, ${item.notes},
+            ${item.customPlatforms},
             ${item.addedAt}, ${item.startedAt}, ${item.finishedAt}, ${item.quitAt},
             ${item.updatedAt}, ${item.deviceId}, ${item.deletedAt}
           )
@@ -71,6 +74,7 @@ export function createWatchlistRepo(sql: Sql): WatchlistRepo {
             progress_season = EXCLUDED.progress_season,
             rating = EXCLUDED.rating,
             notes = EXCLUDED.notes,
+            custom_platforms = EXCLUDED.custom_platforms,
             started_at = EXCLUDED.started_at,
             finished_at = EXCLUDED.finished_at,
             quit_at = EXCLUDED.quit_at,
@@ -85,7 +89,7 @@ export function createWatchlistRepo(sql: Sql): WatchlistRepo {
     async findSince(userId, since) {
       const rows = await sql<WatchlistRow[]>`
         SELECT id, user_id, tmdb_id, media_type, status,
-               progress_episode, progress_season, rating, notes,
+               progress_episode, progress_season, rating, notes, custom_platforms,
                added_at, started_at, finished_at, quit_at,
                updated_at, device_id, deleted_at
         FROM watchlist_items

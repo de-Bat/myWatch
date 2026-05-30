@@ -1,10 +1,28 @@
 import type { FastifyInstance } from 'fastify'
-import type { WatchlistItem } from '@mywatch/core'
+import type { WatchlistItem, Playlist, PlaylistItem } from '@mywatch/core'
 import type { WatchlistRepo } from '../repos/watchlist-repo.js'
+import type { PlaylistRepo } from '../repos/playlist-repo.js'
 import { authenticate } from '../middleware/authenticate.js'
 
-export function registerSyncRoutes(app: FastifyInstance, watchlistRepo: WatchlistRepo) {
-  app.post<{ Body: { items: WatchlistItem[] } }>(
+interface PushBody {
+  items: WatchlistItem[]
+  playlists?: Playlist[]
+  playlistItems?: PlaylistItem[]
+}
+
+interface PullResponse {
+  items: WatchlistItem[]
+  playlists: Playlist[]
+  playlistItems: PlaylistItem[]
+  pulledAt: string
+}
+
+export function registerSyncRoutes(
+  app: FastifyInstance,
+  watchlistRepo: WatchlistRepo,
+  playlistRepo: PlaylistRepo,
+) {
+  app.post<{ Body: PushBody }>(
     '/sync/push',
     {
       preHandler: [authenticate],
@@ -14,12 +32,14 @@ export function registerSyncRoutes(app: FastifyInstance, watchlistRepo: Watchlis
           required: ['items'],
           properties: {
             items: { type: 'array' },
+            playlists: { type: 'array' },
+            playlistItems: { type: 'array' },
           },
         },
       },
     },
     async (req, reply) => {
-      const { items } = req.body
+      const { items, playlists = [], playlistItems = [] } = req.body
       const userId = req.user.sub
 
       const foreign = items.find((item) => item.userId !== userId)
@@ -27,7 +47,15 @@ export function registerSyncRoutes(app: FastifyInstance, watchlistRepo: Watchlis
         return reply.status(403).send({ error: 'Cannot push items for another user' })
       }
 
+      const foreignPlaylist = playlists.find((p) => p.userId !== userId)
+      if (foreignPlaylist) {
+        return reply.status(403).send({ error: 'Cannot push playlists for another user' })
+      }
+
       await watchlistRepo.upsertItems(userId, items)
+      await playlistRepo.upsertPlaylists(userId, playlists)
+      await playlistRepo.upsertPlaylistItems(playlistItems)
+
       return reply.send({ pushedAt: new Date().toISOString() })
     },
   )
@@ -47,10 +75,14 @@ export function registerSyncRoutes(app: FastifyInstance, watchlistRepo: Watchlis
       }
 
       const userId = req.user.sub
-      const items = await watchlistRepo.findSince(userId, since)
+      const [items, playlists, playlistItems] = await Promise.all([
+        watchlistRepo.findSince(userId, since),
+        playlistRepo.findPlaylistsSince(userId, since),
+        playlistRepo.findPlaylistItemsSince(userId, since),
+      ])
       const pulledAt = new Date().toISOString()
 
-      return reply.send({ items, pulledAt })
+      return reply.send({ items, playlists, playlistItems, pulledAt } satisfies PullResponse)
     },
   )
 }

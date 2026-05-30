@@ -84,40 +84,70 @@ Two levels only:
 
 ## 2. Data Model
 
-Each watchlist item carries:
+> The actual production data model uses TMDB for rich media data; poster art is fetched from TMDB image CDN. The prototype's procedural SVG posters and static cast/director fields are replaced by live TMDB data.
 
-```ts
-interface WatchItem {
-  id: number
-  title: string
-  type: 'movie' | 'tv'
-  year: number
-  status: 'planned' | 'in_progress' | 'watched' | 'quit'
-  rating?: number           // 1–10 user rating, optional
-  updatedAt: string         // ISO date string YYYY-MM-DD
-  
-  // Poster generation
-  c1: string                // gradient start hex (unique per title)
-  c2: string                // gradient end hex (dark, near black)
-  motif: PosterMotif        // see §4
+### `watchlist_items`
 
-  // Rich info (detail view)
-  director: string
-  cast: Array<{ n: string; r: string; a: string }> // name, role, avatar color
-  genres: string[]
-  synopsis: string
-  runtime: string           // e.g. "166 min" or "~50 min"
-  platform: string          // streaming platform name
-  imdb: number              // IMDb rating
+| Field | Type | Notes |
+|---|---|---|
+| id | uuid | |
+| user_id | uuid | → users |
+| tmdb_id | integer | TMDB item ID |
+| media_type | 'movie' \| 'tv' | |
+| status | 'planned' \| 'in_progress' \| 'watched' \| 'quit' | |
+| progress_episode | integer nullable | TV: last watched episode |
+| progress_season | integer nullable | TV: last watched season |
+| rating | integer nullable | 1–10 user rating |
+| notes | text nullable | |
+| custom_platforms | text[] | user-added streaming platforms (Jellyfin, Cellcom, FreTV, etc.) |
+| added_at / started_at / finished_at / quit_at | timestamptz | lifecycle timestamps |
+| updated_at | timestamptz | sync key (last-write-wins) |
+| device_id | text | last write origin |
+| deleted_at | timestamptz nullable | soft delete |
 
-  // TV only
-  season?: number
-  episode?: number
-  episodes?: number         // total episodes in current season
-}
+### `media_cache`
 
-type PosterMotif = 'waves' | 'spores' | 'radial' | 'grid' | 'bokeh' | 'diamond' | 'rain' | 'swirl'
-```
+Rich TMDB data cached locally; stale if >7 days.
+
+| Field | Type | Notes |
+|---|---|---|
+| tmdb_id + media_type | composite PK | |
+| title / overview / poster_path / backdrop_path | text | |
+| release_date | date nullable | used for UPCOMING badge |
+| genres | jsonb | [{id, name}] |
+| vote_average / vote_count | numeric | |
+| runtime | integer nullable | minutes |
+| seasons_count | integer nullable | TV only |
+| status | text nullable | 'Ended', 'Returning Series', etc. |
+| cached_at | timestamptz | |
+| watch_providers | jsonb nullable | [{providerId, providerName, logoPath, displayPriority}] flatrate |
+| watch_providers_region | text nullable | ISO 3166-1 alpha-2 |
+| watch_providers_cached_at | timestamptz nullable | stale if >7 days |
+
+### `playlists`
+
+| Field | Type | Notes |
+|---|---|---|
+| id | uuid | |
+| user_id | uuid | |
+| name | text | |
+| description | text nullable | |
+| type | 'manual' \| 'smart' | |
+| smart_rules | jsonb nullable | {statuses, mediaTypes, genres, minRating, maxRating} |
+| sort_order | int | display order |
+| created_at / updated_at | timestamptz | |
+| device_id | text | sync key |
+| deleted_at | timestamptz nullable | soft delete |
+
+### `playlist_items`
+
+| Field | Type | Notes |
+|---|---|---|
+| id | uuid | |
+| playlist_id | uuid | → playlists ON DELETE CASCADE |
+| tmdb_id / media_type | | |
+| position | int | ordering within manual playlist |
+| added_at | timestamptz | |
 
 Status display:
 
@@ -136,7 +166,7 @@ Status display:
 
 **Header** (sticky, sits on `--bg`):
 - Left: `myWatch` wordmark badge + `My List` title + visible-count pill
-- Right: Search icon button + Discover icon button + Avatar circle (user initial, accent border)
+- Right: Search icon button + Discover icon button + Playlists icon button + Avatar circle (user initial, accent border)
 - Height: ~58px
 
 **Filter bar** (sticky below header):
@@ -144,11 +174,14 @@ Status display:
 - Row 2 — Controls row:
   - Segmented type control: All / Movies / TV
   - Sort button (cycles: Recently Updated → Top Rated → A–Z)
+  - View toggle: List / Grid icon buttons (preference persisted in localStorage)
   - Sync indicator (green dot + timestamp)
+- Row 3 — Genre chips (scrollable horizontal, derived from cached media): "All" + one chip per unique genre. Active chip fills with `--accent`.
 - Divider line at bottom: `1px solid --border2`
 
 **List body:**
-- Vertical stack of cards, `gap: 5px`
+- **List view:** vertical stack of cards, `gap: 5px`
+- **Grid view:** `grid-template-columns: repeat(auto-fill, minmax(110px, 1fr))`, `gap: 10px`, poster cards
 - Empty state when no items match filters
 
 **Empty state:**
@@ -156,23 +189,38 @@ Status display:
 - Title + subtitle text
 - CTA button: "Search something to watch"
 
-### 3.2 Card component
+### 3.2 Card components
+
+#### List card (`WatchlistItemCard`)
 
 Layout: `flex row, gap 12px, padding 11×12px`
 
 ```
 [Poster 52×78] [Body: flex-col]           [Rating col]
                Title (truncate)           ★ 9
-               Year · TYPE-BADGE
+               Year · TYPE-BADGE · UPCOMING
+               [release date if upcoming]
                [Status badge] [Progress pill]
+               [Genre chip] [Genre chip]
 ```
 
-- **Poster:** SVG procedural art, 52×78px, `border-radius: 6px`
+- **Poster:** TMDB image (w92), 52×78px, `border-radius: 6px`; placeholder gradient if no poster
 - **Type badge:** MOVIE (orange tint) / TV (purple tint), 9.5px all-caps, 3px radius
+- **UPCOMING badge:** amber tint, shown when `releaseDate > today`
+- **Release date:** full formatted date shown below year row when upcoming
 - **Status badge:** colored dot + label, pill shape
 - **Progress pill** (TV in-progress only): `S1·E6` format, outlined pill
+- **Genre chips:** first 2 genres from MediaCache, small outlined chips
 - **Rating:** amber `★N`, floated right column, hidden when no rating set
 - **Hover:** `translateY(-1px)` lift, surface2 bg, stronger border
+- **Right-click context menu:** "Add to Playlist" → submenu of manual playlists
+
+#### Grid card (`GridItemCard`)
+
+- 2:3 aspect ratio poster (TMDB w185)
+- Gradient overlay at bottom: title (1-line truncated) + status dot + first genre
+- UPCOMING badge at top-left if future release date
+- Click → navigate to detail
 
 ### 3.3 Detail view — platform variants
 
@@ -209,29 +257,29 @@ The same content is shown in three different containers depending on platform.
 
 [Detail body]
   Title
-  Year · runtime · platform badge
+  Type · Year range · Seasons (TV) · Runtime
+  TMDB score badge
+  [Genre chip] [Genre chip] ...
+  Release date + UPCOMING badge (if future)
 
-  [if rated] ★★★★☆  N/10  [IMDb badge]
+  Overview paragraph
 
-  Synopsis paragraph
+  WHERE TO WATCH
+  [Provider logo + name pill] ...   ← TMDB flatrate providers (auto, region-detected)
+  [Custom platform pill] ...         ← user-added (Jellyfin, Cellcom, FreTV, etc.)
+  [Preset buttons: Jellyfin | Cellcom | FreTV | Plex | Emby]
+  [+ Add custom platform text input]
 
-  GENRES
-  [chip] [chip] [chip]
-
-  DIRECTOR
-  Name
-
-  CAST
-  [avatar] Name / Role    ← all cast on web/iOS, top 3 on ATV
-  ...
+  STATUS
+  [Planned] [In Progress] [Watched] [Quit]  ← always visible selector
 
   [if TV in_progress]
-  PROGRESS — Season N, Episode N
-  [====progress bar====]
-  XX% complete
+  PROGRESS
+  Season selector + Episode selector
 
-  [Primary action button]  ← "Start Watching" / "Continue S1 E6" / "Watch Again"
-  [Edit Status]  [Remove]
+  User rating (1–10)
+  Notes field
+  Timestamps: added / started / finished or quit
 ```
 
 ATV detail uses a horizontal layout:
@@ -239,11 +287,35 @@ ATV detail uses a horizontal layout:
 - Right column: all fields above except hero (hero is the poster card)
 - Action: primary button (flex 2) + Close button (flex 1) in a row
 
+### 3.5 Playlists
+
+**`/playlists` — Playlist list:**
+- Header: "Playlists" + "New Playlist" button
+- `PlaylistCard` per playlist: stacked poster preview (3 posters, offset 7px), name, type badge (Manual / Smart), item count, description
+- Empty state with CTA
+- Click → `/playlists/[id]`
+
+**`/playlists/[id]` — Playlist detail:**
+- Back button, playlist name + type badge + count
+- Smart playlists: active rules shown as chips (statuses, types, min rating)
+- Same list/grid view toggle as home screen
+- Manual playlists: drag-to-reorder (HTML5 drag, position persisted on drop), remove button on hover
+- Delete playlist button
+
+**`CreatePlaylistModal`:**
+- Name + description inputs
+- Type toggle: Manual / Smart
+- Smart mode rule builder: status multi-select, media type toggles, min rating number input
+
 ---
 
-## 4. Poster Generation
+## 4. Poster Art
 
-Each item gets a procedural SVG poster using two colors and a motif. The SVG is inline (no external images).
+> **Production:** Posters are fetched from the TMDB image CDN (`https://image.tmdb.org/t/p/{size}{posterPath}`). The procedural SVG system below was used in the initial prototype and is retained as a fallback when no TMDB poster is available.
+
+### Fallback: Procedural SVG Poster
+
+Each item without a TMDB poster gets a procedural SVG using two colors and a motif. The SVG is inline (no external images).
 
 ### Structure
 
@@ -295,10 +367,11 @@ Each item gets a procedural SVG poster using two colors and a motif. The SVG is 
 ## 5. Filtering & Sorting
 
 ### Filter state
-Three independent filters, ANDed together:
+Four independent filters, ANDed together:
 1. `statusFilter`: `'all' | 'planned' | 'in_progress' | 'watched' | 'quit'`
 2. `typeFilter`: `'all' | 'movie' | 'tv'`
-3. `sortIndex`: cycles through `['updated', 'rating', 'title']`
+3. `genreFilter`: genre name string or `null` (all) — derived from MediaCache genres
+4. `sortIndex`: cycles through `['updated', 'rating', 'title']`
 
 ### Sort logic
 | Sort | Key |

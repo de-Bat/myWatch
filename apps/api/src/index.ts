@@ -1,11 +1,13 @@
 import { sql } from './db/client.js'
 import { createUserRepo } from './repos/user-repo.js'
 import { createWatchlistRepo } from './repos/watchlist-repo.js'
+import { createPlaylistRepo } from './repos/playlist-repo.js'
 import { createApp } from './app.js'
 
 const app = await createApp({
   userRepo: createUserRepo(sql),
   watchlistRepo: createWatchlistRepo(sql),
+  playlistRepo: createPlaylistRepo(sql),
 })
 
 const port = parseInt(process.env.PORT ?? '3001', 10)
