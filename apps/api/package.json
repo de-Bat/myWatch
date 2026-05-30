@@ -12,6 +12,7 @@
     "migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
+    "@fastify/cors": "^11.2.0",
     "@fastify/jwt": "^9.0.0",
     "@mywatch/core": "workspace:*",
     "@mywatch/sync": "workspace:*",

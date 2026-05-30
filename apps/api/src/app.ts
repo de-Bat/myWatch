@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import jwt from '@fastify/jwt'
+import cors from '@fastify/cors'
 import type { FastifyInstance } from 'fastify'
 import type { UserRepo } from './repos/user-repo.js'
 import type { WatchlistRepo } from './repos/watchlist-repo.js'
@@ -16,6 +17,11 @@ export interface AppDeps {
 
 export async function createApp(deps?: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({ logger: false })
+
+  await app.register(cors, {
+    origin: true,
+    credentials: true,
+  })
 
   await app.register(jwt, {
     secret: process.env.JWT_SECRET ?? 'dev-secret-change-in-production',
