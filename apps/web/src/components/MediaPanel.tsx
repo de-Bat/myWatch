@@ -6,6 +6,7 @@ import type { MediaType, WatchStatus } from '@mywatch/core'
 import { useWatchlistItem, useUpsertItem, useSoftDeleteItem, getLocalDeviceId } from '@/hooks/useWatchlist'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { useSettings } from '@/hooks/useSettings'
+import type { JellyfinProgress } from '@/lib/jellyfin'
 import { StatusBadge } from './StatusBadge'
 import { ProgressTracker } from './ProgressTracker'
 
@@ -39,9 +40,10 @@ interface Props {
   tmdbId: number
   mediaType: MediaType
   onClose: () => void
+  jellyfinProgress?: JellyfinProgress
 }
 
-export function MediaPanel({ tmdbId, mediaType, onClose }: Props) {
+export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Props) {
   const { data: session } = useSession()
   const { settings } = useSettings()
   const meta = useMediaMeta(tmdbId, mediaType, settings.tmdbApiKey, settings.language)
@@ -304,6 +306,43 @@ export function MediaPanel({ tmdbId, mediaType, onClose }: Props) {
             </div>
             {existingItem && <div className="mt-[2px]"><StatusBadge status={existingItem.status} /></div>}
           </div>
+
+          {/* Jellyfin progress */}
+          {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (() => {
+            const pct = jellyfinProgress.jellyfinStatus === 'watched' ? 100
+              : jellyfinProgress.mediaType === 'movie' ? (jellyfinProgress.moviePercent ?? 0)
+              : (jellyfinProgress.episodePercent ?? 40)
+            const fill = jellyfinProgress.jellyfinStatus === 'watched'
+              ? 'rgba(134,239,172,.8)'
+              : 'rgba(251,191,36,.9)'
+            return (
+              <div className="flex flex-col gap-[8px]">
+                <SectionLabel>On Jellyfin</SectionLabel>
+                <div className="flex items-center gap-[8px] flex-wrap">
+                  <span
+                    className="text-[9.5px] font-extrabold tracking-[0.04em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+                    style={{ background: 'rgba(251,191,36,.15)', color: 'var(--amber)' }}
+                  >
+                    {jellyfinProgress.jellyfinStatus === 'watched' ? 'Watched' : 'Watching'}
+                  </span>
+                  {jellyfinProgress.jellyfinStatus === 'watching' && jellyfinProgress.mediaType === 'movie' && (
+                    <span style={{ fontSize: 12, color: 'var(--fg2)' }}>
+                      {jellyfinProgress.moviePercent ?? 0}% watched
+                    </span>
+                  )}
+                  {jellyfinProgress.jellyfinStatus === 'watching' && jellyfinProgress.mediaType === 'tv' && jellyfinProgress.season != null && (
+                    <span style={{ fontSize: 12, color: 'var(--fg2)' }}>
+                      S{jellyfinProgress.season} · E{jellyfinProgress.episode ?? '?'}
+                      {jellyfinProgress.episodePercent != null && ` · ${jellyfinProgress.episodePercent}% through ep.`}
+                    </span>
+                  )}
+                </div>
+                <div style={{ height: 4, background: 'var(--surface2)', borderRadius: 99 }}>
+                  <div style={{ width: `${pct}%`, height: '100%', background: fill, borderRadius: 99, transition: 'width 300ms' }} />
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Progress (TV in_progress) */}
           {mediaType === 'tv' && existingItem?.status === 'in_progress' && (

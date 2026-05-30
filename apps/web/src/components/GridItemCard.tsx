@@ -1,6 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import type { WatchlistItem } from '@mywatch/core'
+import type { JellyfinProgress } from '@/lib/jellyfin'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { useSettings } from '@/hooks/useSettings'
 
@@ -17,7 +18,7 @@ function formatRuntime(minutes: number): string {
   return `${Math.floor(minutes / 60)}h ${minutes % 60}m`
 }
 
-export function GridItemCard({ item, onSelect }: { item: WatchlistItem; onSelect?: () => void }) {
+export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: WatchlistItem; onSelect?: () => void; jellyfinProgress?: JellyfinProgress }) {
   const { settings } = useSettings()
   const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey, settings.language)
   const router = useRouter()
@@ -149,6 +150,22 @@ export function GridItemCard({ item, onSelect }: { item: WatchlistItem; onSelect
             </div>
           )}
         </div>
+
+        {/* Jellyfin progress bar */}
+        {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (() => {
+          const pct = jellyfinProgress.jellyfinStatus === 'watched' ? 100
+            : jellyfinProgress.mediaType === 'movie' ? (jellyfinProgress.moviePercent ?? 0)
+            : (jellyfinProgress.episodePercent ?? 40)
+          const fill = jellyfinProgress.jellyfinStatus === 'watched'
+            ? 'rgba(134,239,172,.9)'
+            : 'rgba(251,191,36,.95)'
+          return (
+            <>
+              <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: 'rgba(0,0,0,.35)' }} />
+              <div className="absolute bottom-0 left-0" style={{ width: `${pct}%`, height: 3, background: fill }} />
+            </>
+          )
+        })()}
       </div>
     </div>
   )

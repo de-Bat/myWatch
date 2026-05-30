@@ -66,7 +66,7 @@ export function WatchlistItemCard({
     <div
       onClick={() => onSelect ? onSelect() : router.push(`/media/${item.mediaType}/${item.tmdbId}`)}
       onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY }) }}
-      className="flex gap-3 rounded-[var(--r)] border cursor-pointer transition-all duration-[120ms]
+      className="relative overflow-hidden flex gap-3 rounded-[var(--r)] border cursor-pointer transition-all duration-[120ms]
         hover:-translate-y-px hover:shadow-[0_2px_10px_rgba(0,0,0,.25)]"
       style={{
         padding: '14px 16px',
@@ -133,36 +133,6 @@ export function WatchlistItemCard({
           style={{ color: 'var(--muted2)', fontSize: 11.5 }}
         >
           <StatusBadge status={item.status} />
-          {jellyfinProgress && (
-            <>
-              <span
-                className="text-[9.5px] font-extrabold tracking-[0.04em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
-                style={{ background: 'rgba(251,191,36,.15)', color: 'var(--amber)' }}
-              >
-                J
-              </span>
-              {jellyfinProgress.jellyfinStatus === 'watching' && (
-                <span
-                  className="text-[10.5px] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
-                  style={{ color: 'var(--amber)', background: 'rgba(251,191,36,.07)', borderColor: 'rgba(251,191,36,.25)' }}
-                >
-                  {jellyfinProgress.mediaType === 'movie'
-                    ? `${jellyfinProgress.moviePercent ?? 0}%`
-                    : jellyfinProgress.season != null
-                    ? `S${jellyfinProgress.season}·E${jellyfinProgress.episode ?? '?'}${jellyfinProgress.episodePercent != null ? ` · ${jellyfinProgress.episodePercent}%` : ''}`
-                    : null}
-                </span>
-              )}
-              {jellyfinProgress.jellyfinStatus === 'watched' && item.status === 'planned' && (
-                <span
-                  className="text-[10px]"
-                  style={{ color: 'var(--muted2)', fontStyle: 'italic' }}
-                >
-                  seen on Jellyfin
-                </span>
-              )}
-            </>
-          )}
           {item.mediaType === 'tv' && item.progressSeason != null && (
             <span
               className="text-[10.5px] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
@@ -230,6 +200,22 @@ export function WatchlistItemCard({
           </div>
         </div>
       )}
+
+      {/* Jellyfin progress bar */}
+      {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (() => {
+        const pct = jellyfinProgress.jellyfinStatus === 'watched' ? 100
+          : jellyfinProgress.mediaType === 'movie' ? (jellyfinProgress.moviePercent ?? 0)
+          : (jellyfinProgress.episodePercent ?? 40)
+        const fill = jellyfinProgress.jellyfinStatus === 'watched'
+          ? 'rgba(134,239,172,.75)'
+          : 'rgba(251,191,36,.9)'
+        return (
+          <>
+            <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: 'rgba(0,0,0,.12)' }} />
+            <div className="absolute bottom-0 left-0" style={{ width: `${pct}%`, height: 3, background: fill }} />
+          </>
+        )
+      })()}
     </div>
 
     {/* Context menu */}

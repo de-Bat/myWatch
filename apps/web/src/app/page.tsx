@@ -931,6 +931,7 @@ export default function HomePage() {
               <GridItemCard
                 key={item.id}
                 item={item}
+                jellyfinProgress={progressMap?.get(`${item.tmdbId}-${item.mediaType}`) ?? undefined}
                 onSelect={() => setPanel({ tmdbId: item.tmdbId, mediaType: item.mediaType as MediaType })}
               />
             ))}
@@ -942,6 +943,7 @@ export default function HomePage() {
         <MediaPanel
           tmdbId={panel.tmdbId}
           mediaType={panel.mediaType}
+          jellyfinProgress={progressMap?.get(`${panel.tmdbId}-${panel.mediaType}`) ?? undefined}
           onClose={() => setPanel(null)}
         />
       )}
