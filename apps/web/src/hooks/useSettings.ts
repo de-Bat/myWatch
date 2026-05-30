@@ -23,6 +23,9 @@ export interface AppSettings {
   syncInterval: number // minutes; 0 = disabled
   gridColumns: GridColumns
   cardMeta: CardMetaSettings
+  jellyfinUrl: string
+  jellyfinApiKey: string
+  jellyfinUserId: string
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -40,6 +43,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     showProviders: false,
     showOverview: false,
   },
+  jellyfinUrl: '',
+  jellyfinApiKey: '',
+  jellyfinUserId: '',
 }
 
 const FONT_SIZES: Record<FontSize, string> = {
