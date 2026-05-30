@@ -46,8 +46,18 @@ html,
 body {
   background: var(--bg);
   color: var(--fg);
-  font-family: var(--font-family, -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif);
-  font-size: var(--font-size, 14px);
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+html[data-font="serif"],
+html[data-font="serif"] body {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+html[data-font="mono"],
+html[data-font="mono"] body {
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
 }

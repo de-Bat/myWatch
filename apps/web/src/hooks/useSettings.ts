@@ -37,12 +37,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
 }
 
-const FONT_FAMILIES: Record<FontFamily, string> = {
-  system: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif",
-  serif: "Georgia, 'Times New Roman', serif",
-  mono: "ui-monospace, 'SF Mono', 'Cascadia Code', 'Fira Code', monospace",
-}
-
 const FONT_SIZES: Record<FontSize, string> = {
   sm: '13px',
   md: '14px',
@@ -91,8 +85,10 @@ function applyTheme(theme: 'dark' | 'light') {
 
 function applyFont(font: FontFamily, fontSize: FontSize) {
   if (typeof document === 'undefined') return
-  document.documentElement.style.setProperty('--font-family', FONT_FAMILIES[font])
-  document.documentElement.style.setProperty('--font-size', FONT_SIZES[fontSize])
+  const el = document.documentElement
+  if (font === 'system') el.removeAttribute('data-font')
+  else el.setAttribute('data-font', font)
+  el.style.fontSize = FONT_SIZES[fontSize]
 }
 
 type SettingsCtx = {
