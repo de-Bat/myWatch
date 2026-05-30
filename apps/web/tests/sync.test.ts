@@ -51,7 +51,7 @@ describe('pushPendingItems', () => {
 
     await pushPendingItems('token123', 'u1')
 
-    expect(mockedPush).toHaveBeenCalledWith([baseItem], 'token123')
+    expect(mockedPush).toHaveBeenCalledWith([baseItem], 'token123', undefined)
     expect(await db.pendingPushes.count()).toBe(0)
   })
 
@@ -68,7 +68,7 @@ describe('pushPendingItems', () => {
 
     await pushPendingItems('token123', 'u1')
 
-    expect(mockedPush).toHaveBeenCalledWith([baseItem], 'token123')
+    expect(mockedPush).toHaveBeenCalledWith([baseItem], 'token123', undefined)
     expect(await db.pendingPushes.count()).toBe(0)
   })
 })

@@ -68,11 +68,12 @@ export const apiClient = {
     },
   },
   sync: {
-    push(items: WatchlistItem[], token: string) {
+    push(items: WatchlistItem[], token: string, connId?: string) {
       return apiFetch<{ pushedAt: string }>('/sync/push', {
         method: 'POST',
         body: JSON.stringify({ items }),
         token,
+        headers: connId ? { 'X-Conn-Id': connId } : undefined,
       })
     },
     pull(since: string, token: string) {
