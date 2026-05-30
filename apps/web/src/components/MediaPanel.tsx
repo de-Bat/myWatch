@@ -163,7 +163,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose }: Props) {
       {/* Panel */}
       <div
         ref={panelRef}
-        className="fixed top-0 right-0 bottom-0 z-50 overflow-y-auto"
+        className="fixed top-0 right-0 bottom-0 z-50 flex flex-col"
         style={{
           width: 'min(480px, 100vw)',
           background: 'var(--bg)',
@@ -173,37 +173,43 @@ export function MediaPanel({ tmdbId, mediaType, onClose }: Props) {
           transition: 'transform 260ms cubic-bezier(0.32, 0, 0.15, 1)',
         }}
       >
-        {/* Backdrop image */}
-        {meta?.backdropPath && (
-          <div className="relative h-40 overflow-hidden flex-shrink-0">
-            <img src={`${TMDB_BACKDROP}${meta.backdropPath}`} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, var(--bg) 0%, transparent 60%)' }} />
-          </div>
-        )}
+        {/* Sticky top: backdrop + close button */}
+        <div className="flex-shrink-0 relative">
+          {meta?.backdropPath ? (
+            <>
+              <div className="relative h-36 overflow-hidden">
+                <img src={`${TMDB_BACKDROP}${meta.backdropPath}`} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, var(--bg) 0%, transparent 55%)' }} />
+              </div>
+            </>
+          ) : (
+            <div style={{ height: 52 }} />
+          )}
+          {/* Close button always in top-right of this zone */}
+          <button
+            onClick={handleClose}
+            className="absolute top-[12px] right-[12px] flex items-center justify-center w-[30px] h-[30px] rounded-full transition-all duration-100"
+            style={{
+              background: meta?.backdropPath ? 'rgba(0,0,0,.45)' : 'var(--surface)',
+              border: `1px solid ${meta?.backdropPath ? 'rgba(255,255,255,.12)' : 'var(--border)'}`,
+              color: meta?.backdropPath ? '#fff' : 'var(--muted)',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <line x1="1" y1="1" x2="11" y2="11" />
+              <line x1="11" y1="1" x2="1" y2="11" />
+            </svg>
+          </button>
+        </div>
 
-        {/* Close button */}
-        <button
-          onClick={handleClose}
-          className="absolute top-[12px] right-[12px] flex items-center justify-center w-[30px] h-[30px] rounded-full transition-all duration-100"
-          style={{
-            background: 'rgba(0,0,0,.45)',
-            border: '1px solid rgba(255,255,255,.12)',
-            color: '#fff',
-            cursor: 'pointer',
-            zIndex: 10,
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,.7)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,.45)' }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            <line x1="1" y1="1" x2="11" y2="11" />
-            <line x1="11" y1="1" x2="1" y2="11" />
-          </svg>
-        </button>
-
-        <div style={{ padding: meta?.backdropPath ? '0 20px 40px' : '52px 20px 40px' }} className="flex flex-col gap-5">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto">
+        <div style={{ padding: '0 20px 40px' }} className="flex flex-col gap-5">
           {/* Header: poster + title */}
-          <div className="flex gap-4 items-start" style={{ marginTop: meta?.backdropPath ? -40 : 0 }}>
+          <div className="flex gap-4 items-start">
             {meta?.posterPath && (
               <img
                 src={`${TMDB_POSTER}${meta.posterPath}`}
@@ -212,7 +218,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose }: Props) {
                 style={{ width: 88, boxShadow: '0 4px 20px rgba(0,0,0,.5)', border: '2px solid var(--border)' }}
               />
             )}
-            <div className="flex flex-col gap-[5px] pt-[4px] min-w-0" style={{ paddingTop: meta?.posterPath ? 'max(0px, 40px - 88px * 1.5 + 88px)' : 0 }}>
+            <div className="flex flex-col gap-[5px] pt-[4px] min-w-0">
               <h2
                 className="font-bold leading-[1.2]"
                 style={{ fontSize: 18, letterSpacing: '-0.025em', color: 'var(--fg)' }}
@@ -471,6 +477,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose }: Props) {
             </>
           )}
         </div>
+        </div>{/* end scrollable */}
       </div>
     </>
   )

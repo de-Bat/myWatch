@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { pushPendingItems, pullItems } from '@/lib/sync'
 import { useToast } from '@/components/Toast'
@@ -13,6 +13,7 @@ export interface SyncState {
 export function useSync() {
   const { data: session } = useSession()
   const { toast } = useToast()
+  const syncingRef = useRef(false)
   const [state, setState] = useState<SyncState>({
     syncing: false,
     lastSyncedAt: null,
@@ -20,21 +21,25 @@ export function useSync() {
   })
 
   const sync = useCallback(
-    async (since?: string) => {
+    async (options?: { silent?: boolean; since?: string }) => {
       if (!session?.apiToken) return
+      if (syncingRef.current) return
+      syncingRef.current = true
       setState((s) => ({ ...s, syncing: true, error: null }))
       try {
         await pushPendingItems(session.apiToken, session.user?.id ?? '')
         const pulledAt = await pullItems(
-          since ?? new Date(0).toISOString(),
+          options?.since ?? new Date(0).toISOString(),
           session.apiToken,
         )
         setState({ syncing: false, lastSyncedAt: pulledAt, error: null })
-        toast('Synced', 'success')
+        if (!options?.silent) toast('Synced', 'success')
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Sync failed'
         setState((s) => ({ ...s, syncing: false, error: message }))
-        toast(message, 'error')
+        if (!options?.silent) toast(message, 'error')
+      } finally {
+        syncingRef.current = false
       }
     },
     [session?.apiToken, toast],

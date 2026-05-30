@@ -3,6 +3,7 @@ import { SessionProvider } from 'next-auth/react'
 import { auth } from '@/auth'
 import { SettingsProvider } from '@/hooks/useSettings'
 import { ToastProvider } from '@/components/Toast'
+import { AutoSync } from '@/components/AutoSync'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SessionProvider session={session}>
           <SettingsProvider>
             <ToastProvider>
+              <AutoSync />
               {children}
             </ToastProvider>
           </SettingsProvider>
