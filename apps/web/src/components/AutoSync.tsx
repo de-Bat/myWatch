@@ -3,18 +3,23 @@ import { useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useSync } from '@/hooks/useSync'
 import { useSettings } from '@/hooks/useSettings'
+import { useSyncEvents } from '@/hooks/useSyncEvents'
 
 const MIN_GAP_MS = 30 * 1000
 
 export function AutoSync() {
   const { data: session } = useSession()
   const { settings } = useSettings()
-  const { sync, lastSyncedAt, syncing } = useSync()
+  const { sync, lastSyncedAt, syncing, setConnId } = useSync()
   const lastSyncedAtRef = useRef<string | null>(lastSyncedAt)
   const syncingRef = useRef(syncing)
 
   useEffect(() => { lastSyncedAtRef.current = lastSyncedAt }, [lastSyncedAt])
   useEffect(() => { syncingRef.current = syncing }, [syncing])
+
+  const { connId } = useSyncEvents(session?.apiToken ?? undefined, lastSyncedAt, sync)
+
+  useEffect(() => { setConnId(connId) }, [connId, setConnId])
 
   useEffect(() => {
     if (!session?.apiToken || settings.syncInterval === 0) return
