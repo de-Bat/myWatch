@@ -205,7 +205,9 @@ export function WatchlistItemCard({
       {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (() => {
         const pct = jellyfinProgress.jellyfinStatus === 'watched' ? 100
           : jellyfinProgress.mediaType === 'movie' ? (jellyfinProgress.moviePercent ?? 0)
-          : (jellyfinProgress.episodePercent ?? 40)
+          : jellyfinProgress.totalEpisodes
+            ? Math.round(((jellyfinProgress.watchedEpisodes ?? 0) / jellyfinProgress.totalEpisodes) * 100)
+            : 0
         const fill = jellyfinProgress.jellyfinStatus === 'watched'
           ? 'rgba(134,239,172,.75)'
           : 'rgba(251,191,36,.9)'

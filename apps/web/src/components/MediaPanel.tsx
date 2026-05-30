@@ -311,7 +311,9 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
           {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (() => {
             const pct = jellyfinProgress.jellyfinStatus === 'watched' ? 100
               : jellyfinProgress.mediaType === 'movie' ? (jellyfinProgress.moviePercent ?? 0)
-              : (jellyfinProgress.episodePercent ?? 40)
+              : jellyfinProgress.totalEpisodes
+                ? Math.round(((jellyfinProgress.watchedEpisodes ?? 0) / jellyfinProgress.totalEpisodes) * 100)
+                : 0
             const fill = jellyfinProgress.jellyfinStatus === 'watched'
               ? 'rgba(134,239,172,.8)'
               : 'rgba(251,191,36,.9)'
@@ -330,10 +332,12 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                       {jellyfinProgress.moviePercent ?? 0}% watched
                     </span>
                   )}
-                  {jellyfinProgress.jellyfinStatus === 'watching' && jellyfinProgress.mediaType === 'tv' && jellyfinProgress.season != null && (
+                  {jellyfinProgress.jellyfinStatus === 'watching' && jellyfinProgress.mediaType === 'tv' && (
                     <span style={{ fontSize: 12, color: 'var(--fg2)' }}>
-                      S{jellyfinProgress.season} · E{jellyfinProgress.episode ?? '?'}
-                      {jellyfinProgress.episodePercent != null && ` · ${jellyfinProgress.episodePercent}% through ep.`}
+                      {jellyfinProgress.season != null && `S${jellyfinProgress.season} · E${jellyfinProgress.episode ?? '?'}`}
+                      {jellyfinProgress.totalEpisodes
+                        ? ` · ${jellyfinProgress.watchedEpisodes ?? 0} of ${jellyfinProgress.totalEpisodes} ep.`
+                        : jellyfinProgress.episodePercent != null ? ` · ${jellyfinProgress.episodePercent}% through ep.` : ''}
                     </span>
                   )}
                 </div>

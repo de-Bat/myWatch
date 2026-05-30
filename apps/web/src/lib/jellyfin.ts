@@ -8,6 +8,8 @@ export interface JellyfinProgress {
   season?: number            // tv in-progress only
   episode?: number           // tv in-progress only
   episodePercent?: number    // tv in-progress only, 0–100
+  watchedEpisodes?: number   // tv: episodes fully played
+  totalEpisodes?: number     // tv: total episode count
 }
 
 interface JellyfinUserData {
@@ -72,7 +74,7 @@ export function mapSeries(
   }
 
   return {
-    progress: { tmdbId, mediaType: 'tv', jellyfinStatus },
+    progress: { tmdbId, mediaType: 'tv', jellyfinStatus, watchedEpisodes: played, totalEpisodes: total },
     jellyfinId: item.Id,
   }
 }

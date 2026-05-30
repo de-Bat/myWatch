@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { WatchStatus, MediaType } from '@mywatch/core'
-import { useWatchlistItems } from '@/hooks/useWatchlist'
+import { useWatchlistItems, useUpsertItem } from '@/hooks/useWatchlist'
 import { useSync } from '@/hooks/useSync'
 import { useSettings } from '@/hooks/useSettings'
 import { useJellyfinProgress } from '@/hooks/useJellyfinProgress'
@@ -131,7 +131,28 @@ export default function HomePage() {
   const { settings, update: updateSettings } = useSettings()
   const { progressMap } = useJellyfinProgress(settings)
   const allItems = useWatchlistItems()
+  const upsert = useUpsertItem()
   const { syncing, lastSyncedAt, error: syncError, sync } = useSync()
+
+  // Auto-apply Jellyfin detections: add platform tag + upgrade planned→in_progress when watching
+  useEffect(() => {
+    if (!progressMap || !allItems) return
+    for (const item of allItems) {
+      const progress = progressMap.get(`${item.tmdbId}-${item.mediaType}`)
+      if (!progress) continue
+      const needsPlatform = !(item.customPlatforms ?? []).includes('Jellyfin')
+      const needsStatus = progress.jellyfinStatus === 'watching' && item.status === 'planned'
+      if (!needsPlatform && !needsStatus) continue
+      void upsert({
+        ...item,
+        customPlatforms: needsPlatform
+          ? [...(item.customPlatforms ?? []), 'Jellyfin']
+          : (item.customPlatforms ?? []),
+        status: needsStatus ? 'in_progress' : item.status,
+        startedAt: needsStatus && !item.startedAt ? new Date().toISOString() : item.startedAt,
+      })
+    }
+  }, [progressMap]) // eslint-disable-line react-hooks/exhaustive-deps
   const pendingCount = useLiveQuery(() => db.pendingPushes.count()) ?? 0
 
   const gridCols: GridColumns = isMobile
