@@ -14,6 +14,7 @@
     "@mywatch/core": "workspace:*",
     "@mywatch/sync": "workspace:*",
     "@mywatch/tmdb": "workspace:*",
+    "@serwist/next": "^9.5.11",
     "dexie": "^4.0.10",
     "dexie-react-hooks": "^1.1.7",
     "fuse.js": "^7.3.0",
@@ -21,6 +22,7 @@
     "next-auth": "^5.0.0-beta.25",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "serwist": "^9.5.11",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

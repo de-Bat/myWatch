@@ -4,17 +4,28 @@ import { auth } from '@/auth'
 import { SettingsProvider } from '@/hooks/useSettings'
 import { ToastProvider } from '@/components/Toast'
 import { AutoSync } from '@/components/AutoSync'
+import { OfflineIndicator } from '@/components/OfflineIndicator'
 import './globals.css'
 
 export const metadata: Metadata = {
   title: 'myWatch',
   description: 'Your media watchlist',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'myWatch',
+  },
+  formatDetection: {
+    telephone: false,
+  },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  themeColor: '#000000',
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -26,6 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <SettingsProvider>
             <ToastProvider>
               <AutoSync />
+              <OfflineIndicator />
               {children}
             </ToastProvider>
           </SettingsProvider>
