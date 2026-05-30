@@ -332,23 +332,8 @@ export default function HomePage() {
 
       {/* Filter bar */}
       <div className="filter-bar">
-        {/* Status tabs / dropdown */}
-        {isMobile ? (
-          <div style={{ paddingBottom: 10 }}>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as WatchStatus | 'all')}
-              className="mobile-select"
-              style={{ width: '100%' }}
-            >
-              {STATUS_TABS.map((s) => (
-                <option key={s} value={s}>
-                  {STATUS_LABELS[s]} ({statusCounts[s]})
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : (
+        {/* Status tabs (desktop) */}
+        {!isMobile && (
           <div
             className="flex gap-[5px] overflow-x-auto"
             style={{ scrollbarWidth: 'none', padding: '2px 0 10px' }}
@@ -396,25 +381,86 @@ export default function HomePage() {
         <div className="flex items-center gap-2 controls-row">
           {isMobile ? (
             <>
-              {/* Mobile: native select dropdowns */}
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as MediaType | 'all')}
-                className="mobile-select"
-              >
-                <option value="all">All</option>
-                <option value="movie">Movies</option>
-                <option value="tv">TV</option>
-              </select>
-              <select
-                value={SORT_OPTIONS[sortIndex].value}
-                onChange={(e) => setSortIndex(SORT_OPTIONS.findIndex((o) => o.value === e.target.value))}
-                className="mobile-select"
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
+              {/* Status icon + hidden select */}
+              <div className="mobile-filter-btn" style={{ color: statusFilter !== 'all' ? 'var(--accent2)' : undefined, borderColor: statusFilter !== 'all' ? 'var(--accent)' : undefined, background: statusFilter !== 'all' ? 'var(--accent-bg)' : undefined }}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="8" cy="8" r="6" />
+                  <line x1="8" y1="5" x2="8" y2="8" />
+                  <line x1="8" y1="8" x2="10.5" y2="10.5" />
+                </svg>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as WatchStatus | 'all')}
+                  className="mobile-select-overlay"
+                >
+                  {STATUS_TABS.map((s) => (
+                    <option key={s} value={s}>{STATUS_LABELS[s]} ({statusCounts[s]})</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Type icon + hidden select */}
+              <div className="mobile-filter-btn" style={{ color: typeFilter !== 'all' ? 'var(--accent2)' : undefined, borderColor: typeFilter !== 'all' ? 'var(--accent)' : undefined, background: typeFilter !== 'all' ? 'var(--accent-bg)' : undefined }}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="1" y="3" width="14" height="10" rx="2" />
+                  <polygon points="6.5,6 6.5,10 10.5,8" fill="currentColor" stroke="none" />
+                </svg>
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value as MediaType | 'all')}
+                  className="mobile-select-overlay"
+                >
+                  <option value="all">All Types</option>
+                  <option value="movie">Movies</option>
+                  <option value="tv">TV Shows</option>
+                </select>
+              </div>
+
+              {/* Sort icon + hidden select */}
+              <div className="mobile-filter-btn" style={{ color: sortIndex !== 0 ? 'var(--accent2)' : undefined, borderColor: sortIndex !== 0 ? 'var(--accent)' : undefined, background: sortIndex !== 0 ? 'var(--accent-bg)' : undefined }}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <line x1="2" y1="4" x2="14" y2="4" />
+                  <line x1="2" y1="8" x2="10" y2="8" />
+                  <line x1="2" y1="12" x2="6" y2="12" />
+                </svg>
+                <select
+                  value={SORT_OPTIONS[sortIndex].value}
+                  onChange={(e) => setSortIndex(SORT_OPTIONS.findIndex((o) => o.value === e.target.value))}
+                  className="mobile-select-overlay"
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Genre icon + hidden select (if genres available) */}
+              {genreOptions.length > 0 && (
+                <div className="mobile-filter-btn" style={{ color: genreFilter.size > 0 ? 'var(--accent2)' : undefined, borderColor: genreFilter.size > 0 ? 'var(--accent)' : undefined, background: genreFilter.size > 0 ? 'var(--accent-bg)' : undefined }}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="2" y1="4" x2="14" y2="4" />
+                    <line x1="4" y1="8" x2="12" y2="8" />
+                    <line x1="6" y1="12" x2="10" y2="12" />
+                  </svg>
+                  <select
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (val === '__clear__') { setGenreFilter(new Set()); return }
+                      const next = new Set(genreFilter)
+                      if (next.has(val)) next.delete(val); else next.add(val)
+                      setGenreFilter(next)
+                    }}
+                    value=""
+                    className="mobile-select-overlay"
+                  >
+                    <option value="" disabled>Genre{genreFilter.size > 0 ? ` (${genreFilter.size})` : ''}</option>
+                    {genreFilter.size > 0 && <option value="__clear__">Clear genre filter</option>}
+                    {genreOptions.map((g) => (
+                      <option key={g} value={g}>{genreFilter.has(g) ? '✓ ' : ''}{g}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </>
           ) : (
             <>
@@ -506,8 +552,8 @@ export default function HomePage() {
             </>
           )}
 
-          {/* Genre dropdown */}
-          {genreOptions.length > 0 && (
+          {/* Genre dropdown (desktop only — mobile uses icon overlay) */}
+          {!isMobile && genreOptions.length > 0 && (
             <div ref={genreRef} className="relative">
               <button
                 onClick={() => setGenreOpen((v) => !v)}
