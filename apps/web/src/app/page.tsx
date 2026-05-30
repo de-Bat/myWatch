@@ -89,7 +89,8 @@ export default function HomePage() {
 
   const { settings, update: updateSettings } = useSettings()
   const allItems = useWatchlistItems()
-  const { syncing, lastSyncedAt, sync } = useSync()
+  const { syncing, lastSyncedAt, error: syncError, sync } = useSync()
+  const pendingCount = useLiveQuery(() => db.pendingPushes.count()) ?? 0
 
   const gridCols = settings.gridColumns
   const gridTemplateColumns = gridCols === 'auto'
@@ -174,9 +175,21 @@ export default function HomePage() {
 
   const syncLabel = syncing
     ? 'Syncing…'
+    : syncError
+    ? 'Failed'
+    : pendingCount > 0
+    ? `${pendingCount} pending`
     : lastSyncedAt
-      ? `Synced ${new Date(lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-      : 'Sync'
+    ? `Synced ${new Date(lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    : 'Sync'
+
+  const syncDotColor = syncError
+    ? 'var(--red)'
+    : pendingCount > 0
+    ? 'var(--amber)'
+    : lastSyncedAt
+    ? 'var(--green)'
+    : 'var(--muted2)'
 
   return (
     <div style={{ maxWidth: 620, width: '100%', padding: '0 0 80px', margin: '0 auto' }}>
@@ -631,22 +644,36 @@ export default function HomePage() {
             <button
               onClick={() => sync()}
               disabled={syncing}
-              className="inline-flex items-center gap-[5px] whitespace-nowrap cursor-pointer transition-all duration-100 disabled:opacity-50"
+              title={syncError ?? undefined}
+              className="inline-flex items-center gap-[5px] whitespace-nowrap cursor-pointer transition-all duration-150 disabled:opacity-60"
               style={{
                 padding: '5px 9px',
                 borderRadius: 'var(--rsm)',
-                border: '1px solid transparent',
-                background: 'transparent',
-                color: 'var(--muted2)',
+                border: `1px solid ${pendingCount > 0 ? 'rgba(251,191,36,.35)' : syncError ? 'rgba(248,113,113,.35)' : 'transparent'}`,
+                background: pendingCount > 0 ? 'rgba(251,191,36,.07)' : syncError ? 'rgba(248,113,113,.07)' : 'transparent',
+                color: pendingCount > 0 ? 'var(--amber)' : syncError ? 'var(--red)' : 'var(--muted2)',
                 fontSize: 11,
+                fontWeight: pendingCount > 0 ? 600 : 400,
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--border2)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted2)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent' }}
+              onMouseEnter={(e) => { if (!pendingCount && !syncError) { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--border2)' } }}
+              onMouseLeave={(e) => { if (!pendingCount && !syncError) { e.currentTarget.style.color = 'var(--muted2)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent' } }}
             >
-              {!syncing && (
-                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: 'var(--green)' }} />
+              {syncing ? (
+                <svg className="animate-spin" width="7" height="7" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.7 }}>
+                  <path d="M7 1.5A5.5 5.5 0 0 1 12.5 7" />
+                </svg>
+              ) : (
+                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: syncDotColor }} />
               )}
               {syncLabel}
+              {pendingCount > 0 && !syncing && (
+                <span
+                  className="rounded-full tabular-nums font-bold"
+                  style={{ fontSize: 9, padding: '1px 5px', background: 'rgba(251,191,36,.25)', color: 'var(--amber)' }}
+                >
+                  {pendingCount}
+                </span>
+              )}
             </button>
           )}
         </div>
