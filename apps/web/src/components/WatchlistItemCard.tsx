@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { WatchlistItem } from '@mywatch/core'
+import type { JellyfinProgress } from '@/lib/jellyfin'
 import { StatusBadge } from './StatusBadge'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { usePlaylists, useAddToPlaylist } from '@/hooks/usePlaylists'
@@ -28,7 +29,15 @@ function formatRuntime(minutes: number): string {
   return `${Math.floor(minutes / 60)}h ${minutes % 60}m`
 }
 
-export function WatchlistItemCard({ item, onSelect }: { item: WatchlistItem; onSelect?: () => void }) {
+export function WatchlistItemCard({
+  item,
+  onSelect,
+  jellyfinProgress,
+}: {
+  item: WatchlistItem
+  onSelect?: () => void
+  jellyfinProgress?: JellyfinProgress
+}) {
   const { settings } = useSettings()
   const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey, settings.language)
   const router = useRouter()
@@ -124,6 +133,36 @@ export function WatchlistItemCard({ item, onSelect }: { item: WatchlistItem; onS
           style={{ color: 'var(--muted2)', fontSize: 11.5 }}
         >
           <StatusBadge status={item.status} />
+          {jellyfinProgress && (
+            <>
+              <span
+                className="text-[9.5px] font-extrabold tracking-[0.04em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+                style={{ background: 'rgba(251,191,36,.15)', color: 'var(--amber)' }}
+              >
+                J
+              </span>
+              {jellyfinProgress.jellyfinStatus === 'watching' && (
+                <span
+                  className="text-[10.5px] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
+                  style={{ color: 'var(--amber)', background: 'rgba(251,191,36,.07)', borderColor: 'rgba(251,191,36,.25)' }}
+                >
+                  {jellyfinProgress.mediaType === 'movie'
+                    ? `${jellyfinProgress.moviePercent ?? 0}%`
+                    : jellyfinProgress.season != null
+                    ? `S${jellyfinProgress.season}·E${jellyfinProgress.episode ?? '?'}${jellyfinProgress.episodePercent != null ? ` · ${jellyfinProgress.episodePercent}%` : ''}`
+                    : null}
+                </span>
+              )}
+              {jellyfinProgress.jellyfinStatus === 'watched' && item.status === 'planned' && (
+                <span
+                  className="text-[10px]"
+                  style={{ color: 'var(--muted2)', fontStyle: 'italic' }}
+                >
+                  seen on Jellyfin
+                </span>
+              )}
+            </>
+          )}
           {item.mediaType === 'tv' && item.progressSeason != null && (
             <span
               className="text-[10.5px] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
