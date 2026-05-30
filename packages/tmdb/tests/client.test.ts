@@ -34,9 +34,11 @@ describe('TmdbClient.search', () => {
     await client.search('matrix')
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/search/multi'),
+      expect.anything(),
     )
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('query=matrix'),
+      expect.anything(),
     )
   })
 
@@ -57,6 +59,7 @@ describe('TmdbClient.search', () => {
     await client.search('matrix', 'movie')
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/search/movie'),
+      expect.anything(),
     )
   })
 
@@ -65,6 +68,7 @@ describe('TmdbClient.search', () => {
     await client.search('breaking', 'tv')
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/search/tv'),
+      expect.anything(),
     )
   })
 })
@@ -73,7 +77,7 @@ describe('TmdbClient.getMovie', () => {
   it('calls /movie/:id', async () => {
     mockOk({ id: 603, title: 'The Matrix', overview: '', poster_path: null, backdrop_path: null, release_date: '', genres: [], vote_average: 0, vote_count: 0, runtime: 136, status: 'Released' })
     await client.getMovie(603)
-    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/movie/603'))
+    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/movie/603'), expect.anything())
   })
 
   it('throws on non-ok response', async () => {
@@ -86,6 +90,6 @@ describe('TmdbClient.getTrending', () => {
   it('defaults to week window', async () => {
     mockOk({ results: [] })
     await client.getTrending()
-    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/trending/all/week'))
+    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/trending/all/week'), expect.anything())
   })
 })
