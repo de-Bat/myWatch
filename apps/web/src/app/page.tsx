@@ -534,7 +534,7 @@ export default function HomePage() {
             </p>
           </div>
         ) : viewMode === 'list' ? (
-          <div className="flex flex-col" style={{ gap: 5 }}>
+          <div className="flex flex-col" style={{ gap: 8 }}>
             {displayed.map((item) => (
               <WatchlistItemCard
                 key={item.id}

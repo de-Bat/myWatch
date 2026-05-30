@@ -60,7 +60,7 @@ export function WatchlistItemCard({ item, onSelect }: { item: WatchlistItem; onS
       className="flex gap-3 rounded-[var(--r)] border cursor-pointer transition-all duration-[120ms]
         hover:-translate-y-px hover:shadow-[0_2px_10px_rgba(0,0,0,.25)]"
       style={{
-        padding: '11px 12px',
+        padding: '14px 14px',
         background: 'var(--surface)',
         borderColor: 'var(--border2)',
         alignItems: 'flex-start',
@@ -78,7 +78,7 @@ export function WatchlistItemCard({ item, onSelect }: { item: WatchlistItem; onS
     >
       {/* Poster */}
       <div
-        className="flex-shrink-0 w-[52px] h-[78px] rounded-[6px] overflow-hidden"
+        className="flex-shrink-0 w-[72px] h-[108px] rounded-[7px] overflow-hidden"
         style={{ background: 'var(--surface2)' }}
       >
         {meta?.posterPath ? (
@@ -96,23 +96,22 @@ export function WatchlistItemCard({ item, onSelect }: { item: WatchlistItem; onS
       </div>
 
       {/* Body */}
-      <div className="flex-1 min-w-0 flex flex-col gap-[3px] pt-[1px] overflow-visible">
+      <div className="flex-1 min-w-0 flex flex-col gap-[5px] pt-[1px] overflow-visible">
+        {/* Title */}
         <div
-          className="text-[14px] font-semibold tracking-[-0.015em] truncate leading-[1.25]"
+          className="text-[15px] font-semibold tracking-[-0.018em] truncate leading-[1.25]"
           style={{ color: 'var(--fg)' }}
         >
           {meta?.title ?? `#${item.tmdbId}`}
         </div>
 
-        {/* Year + type badge + upcoming + TMDB rating + runtime */}
+        {/* Row 1: type · year · upcoming · rating · runtime */}
         <div
-          className="flex items-center gap-[5px] flex-wrap text-[11.5px] leading-none mb-[1px]"
-          style={{ color: 'var(--muted2)' }}
+          className="flex items-center gap-[5px] flex-wrap leading-none"
+          style={{ color: 'var(--muted2)', fontSize: 11.5 }}
         >
-          {year && <span>{year}</span>}
-          {year && <span style={{ opacity: 0.4 }}>·</span>}
           <span
-            className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase leading-[1.3] px-[5px] py-[1.5px] rounded-[3px]"
+            className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
             style={
               item.mediaType === 'movie'
                 ? { background: 'rgba(251,146,60,.13)', color: 'var(--orange)' }
@@ -121,97 +120,79 @@ export function WatchlistItemCard({ item, onSelect }: { item: WatchlistItem; onS
           >
             {item.mediaType === 'movie' ? 'Movie' : 'TV'}
           </span>
+          {year && <><span style={{ opacity: 0.4 }}>·</span><span>{year}</span></>}
           {upcoming && (
-            <span
-              className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase leading-[1.3] px-[5px] py-[1.5px] rounded-[3px]"
-              style={{ background: 'rgba(251,191,36,.15)', color: 'var(--amber)' }}
-            >
-              Upcoming
-            </span>
+            <>
+              <span style={{ opacity: 0.4 }}>·</span>
+              <span
+                className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+                style={{ background: 'rgba(251,191,36,.15)', color: 'var(--amber)' }}
+              >
+                Upcoming
+              </span>
+            </>
+          )}
+          {upcoming && meta?.releaseDate && (
+            <span style={{ fontSize: 10.5 }}>{formatDate(meta.releaseDate)}</span>
           )}
           {cardMeta.showTmdbRating && meta?.voteAverage != null && meta.voteAverage > 0 && (
-            <>
-              <span style={{ opacity: 0.4 }}>·</span>
-              <span style={{ color: 'var(--amber)' }}>★ {meta.voteAverage.toFixed(1)}</span>
-            </>
+            <><span style={{ opacity: 0.4 }}>·</span><span style={{ color: 'var(--amber)' }}>★ {meta.voteAverage.toFixed(1)}</span></>
           )}
           {cardMeta.showRuntime && meta?.runtime != null && meta.runtime > 0 && (
-            <>
-              <span style={{ opacity: 0.4 }}>·</span>
-              <span>{formatRuntime(meta.runtime)}</span>
-            </>
+            <><span style={{ opacity: 0.4 }}>·</span><span>{formatRuntime(meta.runtime)}</span></>
           )}
         </div>
 
-        {/* Release date (full) when upcoming */}
-        {upcoming && meta?.releaseDate && (
-          <div className="text-[10.5px] leading-none mb-[1px]" style={{ color: 'var(--muted2)' }}>
-            {formatDate(meta.releaseDate)}
-          </div>
-        )}
-
-        {/* Status + progress */}
-        <div className="flex items-center gap-[5px] flex-wrap mt-[1px]">
+        {/* Row 2: status · progress · genres · providers */}
+        <div className="flex items-center gap-[5px] flex-wrap leading-none">
           <StatusBadge status={item.status} />
           {item.mediaType === 'tv' && item.progressSeason != null && (
             <span
-              className="text-[11px] font-medium rounded-full px-[7px] py-[1.5px] border leading-[1.4] tabular-nums"
+              className="text-[10.5px] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
               style={{ color: 'var(--muted2)', background: 'var(--bg)', borderColor: 'var(--border2)' }}
             >
               S{item.progressSeason}·E{item.progressEpisode ?? '?'}
             </span>
           )}
+          {cardMeta.showGenres && genres.map((g) => (
+            <span
+              key={g.id}
+              className="text-[10px] font-medium px-[6px] py-[1px] rounded-[4px] whitespace-nowrap"
+              style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+            >
+              {g.name}
+            </span>
+          ))}
+          {cardMeta.showProviders && providers.map((p) =>
+            p.logoPath ? (
+              <img
+                key={p.providerId}
+                src={`${PROVIDER_IMG}${p.logoPath}`}
+                alt={p.providerName}
+                title={p.providerName}
+                className="rounded-[3px]"
+                style={{ width: 16, height: 16, objectFit: 'cover' }}
+              />
+            ) : (
+              <span
+                key={p.providerId}
+                className="text-[9px] font-medium px-[4px] py-[1px] rounded-[3px]"
+                style={{ background: 'var(--surface2)', color: 'var(--muted2)' }}
+              >
+                {p.providerName}
+              </span>
+            )
+          )}
         </div>
 
-        {/* Genres */}
-        {cardMeta.showGenres && genres.length > 0 && (
-          <div className="flex items-start gap-[4px] flex-wrap mt-[2px]">
-            {genres.map((g) => (
-              <span
-                key={g.id}
-                className="text-[10px] font-medium px-[6px] py-[1px] rounded-[4px] leading-[1.4] whitespace-nowrap"
-                style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
-              >
-                {g.name}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Overview */}
+        {/* Overview (optional, own row) */}
         {cardMeta.showOverview && meta?.overview && (
           <p
-            className="text-[11px] leading-[1.45] mt-[3px]"
+            className="text-[11.5px] leading-[1.5] mt-[1px]"
             style={{ color: 'var(--muted2)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
           >
             {meta.overview}
           </p>
-        )}
-
-        {/* Streaming providers */}
-        {cardMeta.showProviders && providers.length > 0 && (
-          <div className="flex items-center gap-[4px] mt-[3px]">
-            {providers.map((p) => (
-              p.logoPath ? (
-                <img
-                  key={p.providerId}
-                  src={`${PROVIDER_IMG}${p.logoPath}`}
-                  alt={p.providerName}
-                  title={p.providerName}
-                  className="rounded-[4px]"
-                  style={{ width: 18, height: 18, objectFit: 'cover' }}
-                />
-              ) : (
-                <span
-                  key={p.providerId}
-                  className="text-[9px] font-medium px-[4px] py-[1px] rounded-[3px]"
-                  style={{ background: 'var(--surface2)', color: 'var(--muted2)' }}
-                >
-                  {p.providerName}
-                </span>
-              )
-            ))}
-          </div>
         )}
       </div>
 
