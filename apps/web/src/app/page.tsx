@@ -46,12 +46,21 @@ export default function HomePage() {
   const [genreOpen, setGenreOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [panel, setPanel] = useState<{ tmdbId: number; mediaType: MediaType } | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
   const sortRef = useRef<HTMLDivElement>(null)
   const genreRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_STORAGE_KEY)
     if (saved === 'grid' || saved === 'list') setViewMode(saved)
+  }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
   }, [])
 
   useEffect(() => {
@@ -92,7 +101,9 @@ export default function HomePage() {
   const { syncing, lastSyncedAt, error: syncError, sync } = useSync()
   const pendingCount = useLiveQuery(() => db.pendingPushes.count()) ?? 0
 
-  const gridCols = settings.gridColumns
+  const gridCols: GridColumns = isMobile
+    ? (settings.gridColumns === 2 || settings.gridColumns === 3 ? settings.gridColumns : 2)
+    : settings.gridColumns
   const gridTemplateColumns = gridCols === 'auto'
     ? 'repeat(auto-fill, minmax(150px, 1fr))'
     : `repeat(${gridCols}, 1fr)`
@@ -321,136 +332,179 @@ export default function HomePage() {
 
       {/* Filter bar */}
       <div className="filter-bar">
-        {/* Status tabs */}
-        <div
-          className="flex gap-[5px] overflow-x-auto"
-          style={{ scrollbarWidth: 'none', padding: '2px 0 10px' }}
-        >
-          {STATUS_TABS.map((s) => {
-            const active = statusFilter === s
-            return (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className="inline-flex items-center gap-[5px] whitespace-nowrap border cursor-pointer transition-all duration-[120ms]"
-                style={{
-                  padding: '5px 11px',
-                  borderRadius: 'var(--pill)',
-                  fontSize: 13,
-                  fontWeight: active ? 600 : 500,
-                  background: active ? 'var(--accent)' : 'var(--surface)',
-                  color: active ? '#fff' : 'var(--muted)',
-                  borderColor: 'transparent',
-                }}
-                onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = 'var(--fg2)'; e.currentTarget.style.borderColor = 'var(--border)' } }}
-                onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'transparent' } }}
-              >
-                {STATUS_LABELS[s]}
-                <span
-                  className="text-[10px] font-bold tabular-nums text-center"
-                  style={{
-                    padding: '1px 5px',
-                    borderRadius: 'var(--pill)',
-                    minWidth: 18,
-                    lineHeight: 1.5,
-                    background: active ? 'rgba(255,255,255,.15)' : 'var(--border2)',
-                    color: active ? 'inherit' : 'var(--muted2)',
-                  }}
-                >
-                  {statusCounts[s]}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Controls row */}
-        <div className="flex items-center gap-2 controls-row">
-          {/* Type segmented control */}
+        {/* Status tabs / dropdown */}
+        {isMobile ? (
+          <div style={{ paddingBottom: 10 }}>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as WatchStatus | 'all')}
+              className="mobile-select"
+              style={{ width: '100%' }}
+            >
+              {STATUS_TABS.map((s) => (
+                <option key={s} value={s}>
+                  {STATUS_LABELS[s]} ({statusCounts[s]})
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
           <div
-            className="flex"
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--rsm)',
-              padding: 2,
-              gap: 1,
-            }}
+            className="flex gap-[5px] overflow-x-auto"
+            style={{ scrollbarWidth: 'none', padding: '2px 0 10px' }}
           >
-            {(['all', 'movie', 'tv'] as const).map((t) => {
-              const active = typeFilter === t
-              const label = t === 'all' ? 'All' : t === 'movie' ? 'Movies' : 'TV'
+            {STATUS_TABS.map((s) => {
+              const active = statusFilter === s
               return (
                 <button
-                  key={t}
-                  onClick={() => setTypeFilter(t)}
-                  className="whitespace-nowrap border-none cursor-pointer transition-all duration-100"
+                  key={s}
+                  onClick={() => setStatusFilter(s)}
+                  className="inline-flex items-center gap-[5px] whitespace-nowrap border cursor-pointer transition-all duration-[120ms]"
                   style={{
-                    padding: '4px 10px',
-                    borderRadius: 'var(--rxs)',
-                    fontSize: 12,
+                    padding: '5px 11px',
+                    borderRadius: 'var(--pill)',
+                    fontSize: 13,
                     fontWeight: active ? 600 : 500,
-                    background: active ? 'var(--surface2)' : 'transparent',
-                    color: active ? 'var(--fg)' : 'var(--muted)',
+                    background: active ? 'var(--accent)' : 'var(--surface)',
+                    color: active ? '#fff' : 'var(--muted)',
+                    borderColor: 'transparent',
                   }}
-                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = 'var(--fg2)' }}
-                  onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = 'var(--muted)' }}
+                  onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = 'var(--fg2)'; e.currentTarget.style.borderColor = 'var(--border)' } }}
+                  onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'transparent' } }}
                 >
-                  {label}
+                  {STATUS_LABELS[s]}
+                  <span
+                    className="text-[10px] font-bold tabular-nums text-center"
+                    style={{
+                      padding: '1px 5px',
+                      borderRadius: 'var(--pill)',
+                      minWidth: 18,
+                      lineHeight: 1.5,
+                      background: active ? 'rgba(255,255,255,.15)' : 'var(--border2)',
+                      color: active ? 'inherit' : 'var(--muted2)',
+                    }}
+                  >
+                    {statusCounts[s]}
+                  </span>
                 </button>
               )
             })}
           </div>
+        )}
 
-          {/* Sort dropdown */}
-          <div ref={sortRef} className="relative">
-            <button
-              onClick={() => setSortOpen((v) => !v)}
-              className="flex items-center gap-[5px] whitespace-nowrap cursor-pointer transition-all duration-100"
-              style={{
-                padding: '5px 10px',
-                borderRadius: 'var(--rsm)',
-                border: '1px solid var(--border)',
-                background: sortOpen ? 'var(--surface2)' : 'var(--surface)',
-                color: 'var(--muted)',
-                fontSize: 12,
-                fontWeight: 500,
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                <line x1="2" y1="4" x2="14" y2="4" />
-                <line x1="2" y1="8" x2="10" y2="8" />
-                <line x1="2" y1="12" x2="6" y2="12" />
-              </svg>
-              {SORT_OPTIONS[sortIndex].label}
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ opacity: 0.5, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>
-                <polyline points="2 3.5 5 6.5 8 3.5" />
-              </svg>
-            </button>
-            {sortOpen && (
-              <div
-                className="absolute top-full left-0 mt-[4px] z-30 rounded-[8px] py-1 min-w-[160px]"
-                style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}
+        {/* Controls row */}
+        <div className="flex items-center gap-2 controls-row">
+          {isMobile ? (
+            <>
+              {/* Mobile: native select dropdowns */}
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value as MediaType | 'all')}
+                className="mobile-select"
               >
-                {SORT_OPTIONS.map((opt, i) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => { setSortIndex(i); setSortOpen(false) }}
-                    className="w-full text-left px-3 py-[8px] text-[12px] cursor-pointer border-none transition-all duration-100"
-                    style={{
-                      background: sortIndex === i ? 'var(--accent-bg)' : 'transparent',
-                      color: sortIndex === i ? 'var(--accent2)' : 'var(--fg2)',
-                      fontWeight: sortIndex === i ? 600 : 400,
-                    }}
-                    onMouseEnter={(e) => { if (sortIndex !== i) e.currentTarget.style.background = 'var(--surface2)' }}
-                    onMouseLeave={(e) => { if (sortIndex !== i) e.currentTarget.style.background = 'transparent' }}
-                  >
-                    {opt.label}
-                  </button>
+                <option value="all">All</option>
+                <option value="movie">Movies</option>
+                <option value="tv">TV</option>
+              </select>
+              <select
+                value={SORT_OPTIONS[sortIndex].value}
+                onChange={(e) => setSortIndex(SORT_OPTIONS.findIndex((o) => o.value === e.target.value))}
+                className="mobile-select"
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
+              </select>
+            </>
+          ) : (
+            <>
+              {/* Desktop: Type segmented control */}
+              <div
+                className="flex"
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--rsm)',
+                  padding: 2,
+                  gap: 1,
+                }}
+              >
+                {(['all', 'movie', 'tv'] as const).map((t) => {
+                  const active = typeFilter === t
+                  const label = t === 'all' ? 'All' : t === 'movie' ? 'Movies' : 'TV'
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => setTypeFilter(t)}
+                      className="whitespace-nowrap border-none cursor-pointer transition-all duration-100"
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 'var(--rxs)',
+                        fontSize: 12,
+                        fontWeight: active ? 600 : 500,
+                        background: active ? 'var(--surface2)' : 'transparent',
+                        color: active ? 'var(--fg)' : 'var(--muted)',
+                      }}
+                      onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = 'var(--fg2)' }}
+                      onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = 'var(--muted)' }}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
               </div>
-            )}
-          </div>
+
+              {/* Desktop: Sort dropdown */}
+              <div ref={sortRef} className="relative">
+                <button
+                  onClick={() => setSortOpen((v) => !v)}
+                  className="flex items-center gap-[5px] whitespace-nowrap cursor-pointer transition-all duration-100"
+                  style={{
+                    padding: '5px 10px',
+                    borderRadius: 'var(--rsm)',
+                    border: '1px solid var(--border)',
+                    background: sortOpen ? 'var(--surface2)' : 'var(--surface)',
+                    color: 'var(--muted)',
+                    fontSize: 12,
+                    fontWeight: 500,
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                    <line x1="2" y1="4" x2="14" y2="4" />
+                    <line x1="2" y1="8" x2="10" y2="8" />
+                    <line x1="2" y1="12" x2="6" y2="12" />
+                  </svg>
+                  {SORT_OPTIONS[sortIndex].label}
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ opacity: 0.5, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>
+                    <polyline points="2 3.5 5 6.5 8 3.5" />
+                  </svg>
+                </button>
+                {sortOpen && (
+                  <div
+                    className="absolute top-full left-0 mt-[4px] z-30 rounded-[8px] py-1 min-w-[160px]"
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}
+                  >
+                    {SORT_OPTIONS.map((opt, i) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => { setSortIndex(i); setSortOpen(false) }}
+                        className="w-full text-left px-3 py-[8px] text-[12px] cursor-pointer border-none transition-all duration-100"
+                        style={{
+                          background: sortIndex === i ? 'var(--accent-bg)' : 'transparent',
+                          color: sortIndex === i ? 'var(--accent2)' : 'var(--fg2)',
+                          fontWeight: sortIndex === i ? 600 : 400,
+                        }}
+                        onMouseEnter={(e) => { if (sortIndex !== i) e.currentTarget.style.background = 'var(--surface2)' }}
+                        onMouseLeave={(e) => { if (sortIndex !== i) e.currentTarget.style.background = 'transparent' }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Genre dropdown */}
           {genreOptions.length > 0 && (
@@ -601,7 +655,7 @@ export default function HomePage() {
                 gap: 1,
               }}
             >
-              {(['auto', 2, 3, 4, 5] as GridColumns[]).map((c) => {
+              {(isMobile ? [2, 3] as GridColumns[] : ['auto', 2, 3, 4, 5] as GridColumns[]).map((c) => {
                 const active = gridCols === c
                 return (
                   <button
