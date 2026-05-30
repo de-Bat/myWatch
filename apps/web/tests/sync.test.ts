@@ -117,5 +117,6 @@ describe('pullItems', () => {
 
     const stored = await db.watchlistItems.get('i1')
     expect(stored?.deletedAt).toBe('2024-01-02T00:00:00Z')
+    expect(result.count).toBe(1)
   })
 })
