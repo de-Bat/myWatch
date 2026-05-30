@@ -26,6 +26,10 @@ export interface UserRepo {
     displayName: string
     avatarUrl: string | null
   }): Promise<UserRecord>
+  createResetToken(userId: string): Promise<string>
+  findResetToken(token: string): Promise<{ token: string; userId: string; expiresAt: string; usedAt: string | null } | null>
+  updatePassword(userId: string, passwordHash: string): Promise<void>
+  markResetTokenUsed(token: string): Promise<void>
 }
 
 interface UserRow {
@@ -119,6 +123,50 @@ export function createUserRepo(sql: Sql): UserRepo {
 
         return user
       })
+    },
+
+    async createResetToken(userId) {
+      const rows = await sql<{ token: string }[]>`
+        INSERT INTO password_reset_tokens (user_id, expires_at)
+        VALUES (${userId}, NOW() + INTERVAL '1 hour')
+        RETURNING token::text
+      `
+      return rows[0].token
+    },
+
+    async findResetToken(token) {
+      const rows = await sql<{
+        token: string
+        user_id: string
+        expires_at: Date
+        used_at: Date | null
+      }[]>`
+        SELECT token::text, user_id, expires_at, used_at
+        FROM password_reset_tokens
+        WHERE token = ${token}::uuid
+        LIMIT 1
+      `
+      if (!rows[0]) return null
+      return {
+        token: rows[0].token,
+        userId: rows[0].user_id,
+        expiresAt: rows[0].expires_at.toISOString(),
+        usedAt: rows[0].used_at?.toISOString() ?? null,
+      }
+    },
+
+    async updatePassword(userId, passwordHash) {
+      await sql`
+        UPDATE users SET password_hash = ${passwordHash}, updated_at = NOW()
+        WHERE id = ${userId}
+      `
+    },
+
+    async markResetTokenUsed(token) {
+      await sql`
+        UPDATE password_reset_tokens SET used_at = NOW()
+        WHERE token = ${token}::uuid
+      `
     },
   }
 }
