@@ -95,6 +95,16 @@ describe('SseBus', () => {
     bus.emit('u1', 'conn-b', { pushedAt: '2024-01-01T00:00:00Z' })
     expect(sent).toHaveLength(0)
   })
+
+  it('continues emitting to remaining connections after one throws', () => {
+    const bus = new SseBus()
+    const sent: string[] = []
+    bus.subscribe('u1', 'conn-broken', () => { throw new Error('gone') })
+    bus.subscribe('u1', 'conn-ok', (data) => { sent.push(data) })
+
+    expect(() => bus.emit('u1', 'conn-x', { pushedAt: '2024-01-01T00:00:00Z' })).not.toThrow()
+    expect(sent).toHaveLength(1)
+  })
 })
 
 describe('POST /sync/push', () => {

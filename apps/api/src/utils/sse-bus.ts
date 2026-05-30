@@ -11,7 +11,12 @@ export class SseBus {
   }
 
   unsubscribe(userId: string, connId: string): void {
-    this.connections.get(userId)?.delete(connId)
+    const userMap = this.connections.get(userId)
+    if (!userMap) return
+    userMap.delete(connId)
+    if (userMap.size === 0) {
+      this.connections.delete(userId)
+    }
   }
 
   emit(userId: string, excludeConnId: string, data: { pushedAt: string }): void {
