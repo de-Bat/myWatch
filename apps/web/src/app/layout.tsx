@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { SessionProvider } from 'next-auth/react'
 import { auth } from '@/auth'
 import { SettingsProvider } from '@/hooks/useSettings'
@@ -9,6 +9,12 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'myWatch',
   description: 'Your media watchlist',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

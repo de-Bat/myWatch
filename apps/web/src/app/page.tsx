@@ -192,17 +192,12 @@ export default function HomePage() {
     : 'var(--muted2)'
 
   return (
-    <div style={{ maxWidth: '75vw', width: '100%', padding: '0 0 80px', margin: '0 auto' }}>
+    <div className="page-root">
+      {/* Sticky shell: header + filter bar scroll together */}
+      <div className="page-sticky-shell">
       {/* Header */}
       <header
-        className="flex items-center justify-between gap-3"
-        style={{
-          padding: '18px 20px 14px',
-          position: 'sticky',
-          top: 0,
-          background: 'var(--bg)',
-          zIndex: 20,
-        }}
+        className="flex items-center justify-between gap-3 page-header"
       >
         <div className="flex items-center gap-[10px] min-w-0">
           <span
@@ -325,17 +320,7 @@ export default function HomePage() {
       )}
 
       {/* Filter bar */}
-      <div
-        style={{
-          position: 'sticky',
-          top: 58,
-          background: 'var(--bg)',
-          zIndex: 10,
-          padding: '0 20px 12px',
-          borderBottom: '1px solid var(--border2)',
-          marginBottom: 14,
-        }}
-      >
+      <div className="filter-bar">
         {/* Status tabs */}
         <div
           className="flex gap-[5px] overflow-x-auto"
@@ -380,7 +365,7 @@ export default function HomePage() {
         </div>
 
         {/* Controls row */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 controls-row">
           {/* Type segmented control */}
           <div
             className="flex"
@@ -679,9 +664,10 @@ export default function HomePage() {
         </div>
 
       </div>
+      </div>{/* /page-sticky-shell */}
 
       {/* List / Grid */}
-      <div style={{ padding: '0 20px' }}>
+      <div className="content-area">
         {allItems === undefined ? (
           <p style={{ color: 'var(--muted)', fontSize: 13 }}>Loading…</p>
         ) : displayed.length === 0 ? (
