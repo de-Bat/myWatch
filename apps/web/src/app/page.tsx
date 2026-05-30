@@ -50,6 +50,7 @@ export default function HomePage() {
   const [isMobile, setIsMobile] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isOnline, setIsOnline] = useState(true)
   const sortRef = useRef<HTMLDivElement>(null)
   const genreRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -65,6 +66,15 @@ export default function HomePage() {
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine)
+    const on = () => setIsOnline(true)
+    const off = () => setIsOnline(false)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
   }, [])
 
   useEffect(() => {
@@ -265,6 +275,14 @@ export default function HomePage() {
             style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}
           >
             My List
+            {isMobile && !isOnline && (
+              <span
+                className="text-[9px] font-bold tracking-[0.06em] uppercase px-[6px] py-[2px] rounded-[4px]"
+                style={{ background: 'rgba(239,68,68,.15)', color: 'var(--red)', letterSpacing: '0.05em' }}
+              >
+                Offline
+              </span>
+            )}
             <span
               className="text-[11px] font-semibold tabular-nums"
               style={{
