@@ -5,6 +5,7 @@ import Apple from 'next-auth/providers/apple'
 import { apiClient } from './lib/api-client'
 
 const result: NextAuthResult = NextAuth({
+  trustHost: true,
   providers: [
     Credentials({
       credentials: {
