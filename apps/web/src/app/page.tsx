@@ -402,6 +402,47 @@ export default function HomePage() {
               </button>
             )}
           </div>
+          {/* Discover */}
+          <button
+            onClick={() => router.push('/discover')}
+            title="Discover"
+            className="flex items-center justify-center w-[34px] h-[34px] border-none cursor-pointer transition-all duration-100"
+            style={{ color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
+          >
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="10" cy="10" r="8" />
+              <polygon points="8.5,7.5 13.5,10 8.5,12.5 6,10" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+          {/* Playlists */}
+          <button
+            onClick={() => router.push('/playlists')}
+            title="Playlists"
+            className="flex items-center justify-center w-[34px] h-[34px] border-none cursor-pointer transition-all duration-100"
+            style={{ color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
+          >
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <line x1="3" y1="5" x2="17" y2="5" />
+              <line x1="3" y1="10" x2="13" y2="10" />
+              <line x1="3" y1="15" x2="10" y2="15" />
+              <circle cx="16" cy="14" r="3" />
+            </svg>
+          </button>
+          {/* Avatar */}
+          <button
+            onClick={() => router.push('/profile')}
+            className="flex items-center justify-center w-[30px] h-[30px] rounded-full border-none cursor-pointer ml-[6px] flex-shrink-0 text-[11px] font-bold"
+            style={{ background: 'var(--accent-bg)', border: '1.5px solid var(--accent)', color: 'var(--accent2)' }}
+          >
+            {userInitial}
+          </button>
+        </nav>
+      </header>
+
 
       {/* Import local data banner */}
       {importBanner && (
