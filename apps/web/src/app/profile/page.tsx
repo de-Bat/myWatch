@@ -109,6 +109,11 @@ export default function SettingsPage() {
   const { settings, update, updateCardMeta } = useSettings()
   const { toast } = useToast()
   const [tmdbKeyInput, setTmdbKeyInput] = useState('')
+  const [jellyfinUrlInput, setJellyfinUrlInput] = useState('')
+  const [jellyfinUserIdInput, setJellyfinUserIdInput] = useState('')
+  const [jellyfinApiKeyInput, setJellyfinApiKeyInput] = useState('')
+  const [jellyfinTestResult, setJellyfinTestResult] = useState<'ok' | 'error' | null>(null)
+  const [jellyfinTesting, setJellyfinTesting] = useState(false)
 
   const pendingCount = useLiveQuery(() => db.pendingPushes.count())
   const itemCount = useLiveQuery(() =>
@@ -119,9 +124,44 @@ export default function SettingsPage() {
     setTmdbKeyInput(settings.tmdbApiKey)
   }, [settings.tmdbApiKey])
 
+  useEffect(() => {
+    setJellyfinUrlInput(settings.jellyfinUrl)
+    setJellyfinUserIdInput(settings.jellyfinUserId)
+    setJellyfinApiKeyInput(settings.jellyfinApiKey)
+  }, [settings.jellyfinUrl, settings.jellyfinUserId, settings.jellyfinApiKey])
+
   function saveTmdbKey() {
     update({ tmdbApiKey: tmdbKeyInput.trim() })
     toast('API key saved', 'success')
+  }
+
+  function saveJellyfin() {
+    update({
+      jellyfinUrl: jellyfinUrlInput.trim(),
+      jellyfinUserId: jellyfinUserIdInput.trim(),
+      jellyfinApiKey: jellyfinApiKeyInput.trim(),
+    })
+    toast('Jellyfin settings saved', 'success')
+  }
+
+  async function testJellyfin() {
+    const url = jellyfinUrlInput.trim().replace(/\/$/, '')
+    const userId = jellyfinUserIdInput.trim()
+    const apiKey = jellyfinApiKeyInput.trim()
+    if (!url || !userId || !apiKey) return
+    setJellyfinTesting(true)
+    setJellyfinTestResult(null)
+    try {
+      const res = await fetch(
+        `${url}/Users/${encodeURIComponent(userId)}/Items?Limit=1`,
+        { headers: { 'X-Emby-Token': apiKey } },
+      )
+      setJellyfinTestResult(res.ok ? 'ok' : 'error')
+    } catch {
+      setJellyfinTestResult('error')
+    } finally {
+      setJellyfinTesting(false)
+    }
   }
 
   async function handleClearCache() {
@@ -369,6 +409,70 @@ export default function SettingsPage() {
                 Save
               </button>
             </div>
+          </div>
+        </Section>
+
+        {/* Jellyfin */}
+        <Section title="Jellyfin">
+          <div className="px-4 py-3 space-y-3">
+            <p className="text-[12px]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
+              Connect to your Jellyfin server to overlay watch progress on cards. Requires CORS enabled in Jellyfin → Networking.
+            </p>
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                value={jellyfinUrlInput}
+                onChange={(e) => setJellyfinUrlInput(e.target.value)}
+                placeholder="Server URL (e.g. http://jellyfin.local:8096)"
+                className="w-full px-3 py-2 rounded-[6px] text-[13px] focus:outline-none"
+                style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+              />
+              <input
+                type="text"
+                value={jellyfinUserIdInput}
+                onChange={(e) => setJellyfinUserIdInput(e.target.value)}
+                placeholder="User ID"
+                className="w-full px-3 py-2 rounded-[6px] text-[13px] focus:outline-none"
+                style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+              />
+              <input
+                type="password"
+                value={jellyfinApiKeyInput}
+                onChange={(e) => setJellyfinApiKeyInput(e.target.value)}
+                placeholder="API Key"
+                className="w-full px-3 py-2 rounded-[6px] text-[13px] focus:outline-none"
+                style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={testJellyfin}
+                disabled={jellyfinTesting || !jellyfinUrlInput || !jellyfinUserIdInput || !jellyfinApiKeyInput}
+                className="px-3 py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none flex-shrink-0 transition-all duration-100 disabled:opacity-50"
+                style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+              >
+                {jellyfinTesting ? 'Testing…' : 'Test'}
+              </button>
+              <button
+                onClick={saveJellyfin}
+                className="flex-1 py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none transition-all duration-100"
+                style={{ background: 'var(--accent)', color: '#fff' }}
+              >
+                Save
+              </button>
+            </div>
+            {jellyfinTestResult === 'ok' && (
+              <p className="text-[12px]" style={{ color: 'var(--green)' }}>✓ Connected successfully</p>
+            )}
+            {jellyfinTestResult === 'error' && (
+              <p className="text-[12px]" style={{ color: 'var(--red)' }}>Connection failed — check URL, user ID, API key, and CORS settings</p>
+            )}
           </div>
         </Section>
 
