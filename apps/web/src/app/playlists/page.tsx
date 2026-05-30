@@ -1,11 +1,13 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { usePlaylists } from '@/hooks/usePlaylists'
 import { PlaylistCard } from '@/components/PlaylistCard'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 
 export default function PlaylistsPage() {
   const playlists = usePlaylists()
+  const router = useRouter()
   const [showCreate, setShowCreate] = useState(false)
 
   return (
@@ -21,6 +23,16 @@ export default function PlaylistsPage() {
           zIndex: 20,
         }}
       >
+        <div className="flex items-center gap-[10px] min-w-0">
+          <button
+            onClick={() => router.push('/')}
+            className="flex-shrink-0"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 0 }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="10 4 6 8 10 12" />
+            </svg>
+          </button>
         <h1
           className="flex items-center gap-[7px]"
           style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}
@@ -41,6 +53,7 @@ export default function PlaylistsPage() {
             </span>
           )}
         </h1>
+        </div>
 
         <button
           onClick={() => setShowCreate(true)}

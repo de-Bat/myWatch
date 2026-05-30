@@ -27,6 +27,21 @@
   --orange: #fb923c;
 }
 
+html.light {
+  --bg: #f4f4f5;
+  --surface: #ffffff;
+  --surface2: #e4e4e7;
+  --border: #d4d4d8;
+  --border2: #e4e4e7;
+  --fg: #18181b;
+  --fg2: #27272a;
+  --muted: #52525b;
+  --muted2: #71717a;
+  --accent: #6366f1;
+  --accent2: #4f46e5;
+  --accent-bg: rgba(99, 102, 241, 0.12);
+}
+
 html,
 body {
   background: var(--bg);

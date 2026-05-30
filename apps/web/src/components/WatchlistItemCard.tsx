@@ -5,8 +5,10 @@ import type { WatchlistItem } from '@mywatch/core'
 import { StatusBadge } from './StatusBadge'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { usePlaylists, useAddToPlaylist } from '@/hooks/usePlaylists'
+import { useSettings } from '@/hooks/useSettings'
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w92'
+const PROVIDER_IMG = 'https://image.tmdb.org/t/p/w45'
 
 function isUpcoming(releaseDate: string | null): boolean {
   if (!releaseDate) return false
@@ -21,11 +23,18 @@ function formatDate(releaseDate: string): string {
   })
 }
 
+function formatRuntime(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`
+}
+
 export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
   const meta = useMediaMeta(item.tmdbId, item.mediaType)
   const router = useRouter()
   const playlists = usePlaylists()
   const addToPlaylist = useAddToPlaylist()
+  const { settings } = useSettings()
+  const { cardMeta } = settings
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -41,6 +50,7 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
   const year = meta?.releaseDate?.slice(0, 4) ?? null
   const upcoming = isUpcoming(meta?.releaseDate ?? null)
   const genres = meta?.genres?.slice(0, 2) ?? []
+  const providers = (meta?.watchProviders ?? []).slice(0, 3)
 
   return (
     <div className="relative">
@@ -94,9 +104,9 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
           {meta?.title ?? `#${item.tmdbId}`}
         </div>
 
-        {/* Year + type badge + upcoming */}
+        {/* Year + type badge + upcoming + TMDB rating + runtime */}
         <div
-          className="flex items-center gap-[5px] text-[11.5px] leading-none mb-[1px]"
+          className="flex items-center gap-[5px] flex-wrap text-[11.5px] leading-none mb-[1px]"
           style={{ color: 'var(--muted2)' }}
         >
           {year && <span>{year}</span>}
@@ -118,6 +128,18 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
             >
               Upcoming
             </span>
+          )}
+          {cardMeta.showTmdbRating && meta?.voteAverage != null && meta.voteAverage > 0 && (
+            <>
+              <span style={{ opacity: 0.4 }}>·</span>
+              <span style={{ color: 'var(--amber)' }}>★ {meta.voteAverage.toFixed(1)}</span>
+            </>
+          )}
+          {cardMeta.showRuntime && meta?.runtime != null && meta.runtime > 0 && (
+            <>
+              <span style={{ opacity: 0.4 }}>·</span>
+              <span>{formatRuntime(meta.runtime)}</span>
+            </>
           )}
         </div>
 
@@ -142,7 +164,7 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
         </div>
 
         {/* Genres */}
-        {genres.length > 0 && (
+        {cardMeta.showGenres && genres.length > 0 && (
           <div className="flex items-center gap-[4px] flex-wrap mt-[2px]">
             {genres.map((g) => (
               <span
@@ -152,6 +174,42 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
               >
                 {g.name}
               </span>
+            ))}
+          </div>
+        )}
+
+        {/* Overview */}
+        {cardMeta.showOverview && meta?.overview && (
+          <p
+            className="text-[11px] leading-[1.45] mt-[3px]"
+            style={{ color: 'var(--muted2)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+          >
+            {meta.overview}
+          </p>
+        )}
+
+        {/* Streaming providers */}
+        {cardMeta.showProviders && providers.length > 0 && (
+          <div className="flex items-center gap-[4px] mt-[3px]">
+            {providers.map((p) => (
+              p.logoPath ? (
+                <img
+                  key={p.providerId}
+                  src={`${PROVIDER_IMG}${p.logoPath}`}
+                  alt={p.providerName}
+                  title={p.providerName}
+                  className="rounded-[4px]"
+                  style={{ width: 18, height: 18, objectFit: 'cover' }}
+                />
+              ) : (
+                <span
+                  key={p.providerId}
+                  className="text-[9px] font-medium px-[4px] py-[1px] rounded-[3px]"
+                  style={{ background: 'var(--surface2)', color: 'var(--muted2)' }}
+                >
+                  {p.providerName}
+                </span>
+              )
             ))}
           </div>
         )}

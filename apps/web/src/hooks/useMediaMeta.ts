@@ -2,13 +2,16 @@
 import { useEffect, useState } from 'react'
 import type { MediaCache, MediaType, WatchProvider } from '@mywatch/core'
 import { TmdbClient, normalizeMovie, normalizeTv, isStale } from '@mywatch/tmdb'
+import { getTmdbApiKey } from './useSettings'
 import type { TmdbMovieDetail, TmdbTvDetail } from '@mywatch/tmdb'
 import { db } from '@/lib/db'
 
 const PROVIDERS_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
 function getClient() {
-  return new TmdbClient({ apiKey: process.env.NEXT_PUBLIC_TMDB_API_KEY ?? '' })
+  const storedKey = getTmdbApiKey()
+  const key = storedKey || (process.env.NEXT_PUBLIC_TMDB_API_KEY ?? '')
+  return new TmdbClient({ apiKey: key })
 }
 
 function isProviderStale(cachedAt: string | null): boolean {

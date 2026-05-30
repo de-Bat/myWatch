@@ -1,15 +1,91 @@
 'use client'
 import { useSession, signOut } from 'next-auth/react'
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useSync } from '@/hooks/useSync'
+import { useSettings } from '@/hooks/useSettings'
+import type { CardMetaSettings } from '@/hooks/useSettings'
 import { db } from '@/lib/db'
 
-export default function ProfilePage() {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section
+      className="rounded-[10px] overflow-hidden"
+      style={{ border: '1px solid var(--border2)', background: 'var(--surface)' }}
+    >
+      <div
+        className="px-4 py-2"
+        style={{ borderBottom: '1px solid var(--border2)', background: 'var(--surface2)' }}
+      >
+        <span className="text-[10px] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+          {title}
+        </span>
+      </div>
+      <div className="divide-y" style={{ borderColor: 'var(--border2)' }}>
+        {children}
+      </div>
+    </section>
+  )
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3 gap-3">
+      <span className="text-[13px]" style={{ color: 'var(--fg2)' }}>{label}</span>
+      {children}
+    </div>
+  )
+}
+
+function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      aria-label="toggle"
+      className="flex-shrink-0 relative transition-colors duration-150"
+      style={{
+        width: 40,
+        height: 22,
+        borderRadius: 'var(--pill)',
+        background: on ? 'var(--accent)' : 'var(--border)',
+        border: 'none',
+        cursor: 'pointer',
+        padding: 0,
+      }}
+    >
+      <span
+        className="absolute top-[2px] transition-transform duration-150"
+        style={{
+          left: 2,
+          width: 18,
+          height: 18,
+          borderRadius: '50%',
+          background: '#fff',
+          display: 'block',
+          transform: on ? 'translateX(18px)' : 'translateX(0)',
+          boxShadow: '0 1px 3px rgba(0,0,0,.3)',
+        }}
+      />
+    </button>
+  )
+}
+
+const CARD_META_LABELS: Record<keyof CardMetaSettings, string> = {
+  showGenres: 'Genres',
+  showTmdbRating: 'TMDB Rating',
+  showRuntime: 'Runtime',
+  showProviders: 'Streaming Providers',
+  showOverview: 'Plot Overview',
+}
+
+export default function SettingsPage() {
   const { data: session } = useSession()
+  const router = useRouter()
   const { syncing, lastSyncedAt, error, sync } = useSync()
-  const [darkMode, setDarkMode] = useState(true)
+  const { settings, update, updateCardMeta } = useSettings()
+  const [tmdbKeyInput, setTmdbKeyInput] = useState('')
+  const [tmdbKeySaved, setTmdbKeySaved] = useState(false)
 
   const pendingCount = useLiveQuery(() => db.pendingPushes.count())
   const itemCount = useLiveQuery(() =>
@@ -17,15 +93,13 @@ export default function ProfilePage() {
   )
 
   useEffect(() => {
-    const stored = localStorage.getItem('mywatch-dark-mode')
-    if (stored !== null) setDarkMode(stored !== 'false')
-  }, [])
+    setTmdbKeyInput(settings.tmdbApiKey)
+  }, [settings.tmdbApiKey])
 
-  function toggleDarkMode() {
-    const next = !darkMode
-    setDarkMode(next)
-    localStorage.setItem('mywatch-dark-mode', String(next))
-    document.documentElement.classList.toggle('dark', next)
+  function saveTmdbKey() {
+    update({ tmdbApiKey: tmdbKeyInput.trim() })
+    setTmdbKeySaved(true)
+    setTimeout(() => setTmdbKeySaved(false), 1800)
   }
 
   async function handleClearCache() {
@@ -33,98 +107,172 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-      <header className="flex items-center gap-3">
-        <Link href="/" className="text-zinc-400 hover:text-zinc-200 text-sm">
-          ← Back
-        </Link>
-        <h1 className="text-xl font-bold">Profile</h1>
+    <div style={{ maxWidth: 620, width: '100%', padding: '0 0 80px', margin: '0 auto' }}>
+      {/* Header */}
+      <header
+        className="flex items-center gap-[10px]"
+        style={{ padding: '18px 20px 14px', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 20 }}
+      >
+        <button
+          onClick={() => router.push('/')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 0 }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="10 4 6 8 10 12" />
+          </svg>
+        </button>
+        <h1 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}>
+          Settings
+        </h1>
       </header>
 
-      <section className="bg-zinc-800 rounded-xl p-4 space-y-3">
-        <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Account</h2>
-        {session ? (
-          <>
-            <div>
-              <p className="font-medium">{session.user?.name}</p>
-              <p className="text-sm text-zinc-400">{session.user?.email}</p>
+      <div className="flex flex-col gap-4 px-5">
+        {/* Account */}
+        <Section title="Account">
+          {session ? (
+            <>
+              <Row label={session.user?.name ?? 'User'}>
+                <span className="text-[12px]" style={{ color: 'var(--muted2)' }}>{session.user?.email}</span>
+              </Row>
+              <div className="px-4 py-3">
+                <button
+                  onClick={() => signOut({ callbackUrl: '/auth/login' })}
+                  className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none transition-all duration-100"
+                  style={{ background: 'rgba(248,113,113,.12)', color: 'var(--red)' }}
+                >
+                  Sign Out
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="px-4 py-3">
+              <button
+                onClick={() => router.push('/auth/login')}
+                className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none"
+                style={{ background: 'var(--accent)', color: '#fff' }}
+              >
+                Sign In to Sync
+              </button>
             </div>
-            <button
-              onClick={() => signOut({ callbackUrl: '/auth/login' })}
-              className="w-full py-2 rounded bg-zinc-700 hover:bg-zinc-600 text-sm text-red-400"
-            >
-              Sign Out
-            </button>
-          </>
-        ) : (
-          <Link
-            href="/auth/login"
-            className="block w-full py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-sm text-center font-medium"
-          >
-            Sign In to Sync
-          </Link>
-        )}
-      </section>
+          )}
+        </Section>
 
-      <section className="bg-zinc-800 rounded-xl p-4 space-y-3">
-        <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Sync</h2>
-        <div className="flex justify-between text-sm">
-          <span className="text-zinc-400">Items in list</span>
-          <span>{itemCount ?? '–'}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-zinc-400">Pending changes</span>
-          <span>{pendingCount ?? '–'}</span>
-        </div>
-        {lastSyncedAt && (
-          <div className="flex justify-between text-sm">
-            <span className="text-zinc-400">Last synced</span>
-            <span>{new Date(lastSyncedAt).toLocaleString()}</span>
+        {/* Sync */}
+        <Section title="Sync">
+          <Row label="Items in list">
+            <span className="text-[13px] tabular-nums" style={{ color: 'var(--muted2)' }}>{itemCount ?? '–'}</span>
+          </Row>
+          <Row label="Pending changes">
+            <span className="text-[13px] tabular-nums" style={{ color: 'var(--muted2)' }}>{pendingCount ?? '–'}</span>
+          </Row>
+          {lastSyncedAt && (
+            <Row label="Last synced">
+              <span className="text-[12px]" style={{ color: 'var(--muted2)' }}>
+                {new Date(lastSyncedAt).toLocaleString()}
+              </span>
+            </Row>
+          )}
+          {error && (
+            <div className="px-4 py-2 text-[12px]" style={{ color: 'var(--red)' }}>{error}</div>
+          )}
+          <div className="px-4 py-3">
+            {session ? (
+              <button
+                onClick={() => sync()}
+                disabled={syncing}
+                className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none disabled:opacity-50 transition-all duration-100"
+                style={{ background: 'var(--accent)', color: '#fff' }}
+              >
+                {syncing ? 'Syncing…' : 'Sync Now'}
+              </button>
+            ) : (
+              <p className="text-[12px]" style={{ color: 'var(--muted2)' }}>Sign in to enable sync.</p>
+            )}
           </div>
-        )}
-        {error && <p className="text-red-400 text-xs">{error}</p>}
-        {session ? (
-          <button
-            onClick={() => sync()}
-            disabled={syncing}
-            className="w-full py-2 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-sm font-medium"
-          >
-            {syncing ? 'Syncing…' : 'Sync Now'}
-          </button>
-        ) : (
-          <p className="text-xs text-zinc-500">Sign in to enable sync.</p>
-        )}
-      </section>
+        </Section>
 
-      <section className="bg-zinc-800 rounded-xl p-4 space-y-3">
-        <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-          Appearance
-        </h2>
-        <div className="flex items-center justify-between">
-          <span className="text-sm">Dark Mode</span>
-          <button
-            onClick={toggleDarkMode}
-            aria-label="Toggle dark mode"
-            className={`w-12 h-6 rounded-full transition-colors ${darkMode ? 'bg-indigo-600' : 'bg-zinc-600'}`}
-          >
-            <span
-              className={`block w-5 h-5 rounded-full bg-white shadow transition-transform mx-0.5 ${
-                darkMode ? 'translate-x-6' : 'translate-x-0'
-              }`}
-            />
-          </button>
-        </div>
-      </section>
+        {/* Appearance */}
+        <Section title="Appearance">
+          <Row label="Theme">
+            <div
+              className="flex"
+              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
+            >
+              {(['dark', 'light'] as const).map((t) => {
+                const active = settings.theme === t
+                return (
+                  <button
+                    key={t}
+                    onClick={() => update({ theme: t })}
+                    className="px-3 py-[4px] text-[12px] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none capitalize"
+                    style={{
+                      background: active ? 'var(--surface2)' : 'transparent',
+                      color: active ? 'var(--fg)' : 'var(--muted)',
+                      fontWeight: active ? 600 : 500,
+                    }}
+                  >
+                    {t}
+                  </button>
+                )
+              })}
+            </div>
+          </Row>
+        </Section>
 
-      <section className="bg-zinc-800 rounded-xl p-4 space-y-3">
-        <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Data</h2>
-        <button
-          onClick={handleClearCache}
-          className="w-full py-2 rounded bg-zinc-700 hover:bg-zinc-600 text-sm text-zinc-300"
-        >
-          Clear Media Cache
-        </button>
-      </section>
+        {/* TMDB */}
+        <Section title="TMDB API">
+          <div className="px-4 py-3 space-y-2">
+            <p className="text-[12px]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
+              Override the server TMDB key. Stored locally, never sent to the server.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="password"
+                value={tmdbKeyInput}
+                onChange={(e) => setTmdbKeyInput(e.target.value)}
+                placeholder="Enter API key…"
+                className="flex-1 px-3 py-2 rounded-[6px] text-[13px] focus:outline-none"
+                style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                onKeyDown={(e) => { if (e.key === 'Enter') saveTmdbKey() }}
+              />
+              <button
+                onClick={saveTmdbKey}
+                className="px-3 py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none flex-shrink-0 transition-all duration-100"
+                style={{ background: tmdbKeySaved ? 'var(--green)' : 'var(--accent)', color: '#fff' }}
+              >
+                {tmdbKeySaved ? '✓ Saved' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </Section>
+
+        {/* Card Display */}
+        <Section title="Card Display">
+          {(Object.keys(CARD_META_LABELS) as Array<keyof CardMetaSettings>).map((key) => (
+            <Row key={key} label={CARD_META_LABELS[key]}>
+              <Toggle
+                on={settings.cardMeta[key]}
+                onToggle={() => updateCardMeta({ [key]: !settings.cardMeta[key] })}
+              />
+            </Row>
+          ))}
+        </Section>
+
+        {/* Data */}
+        <Section title="Data">
+          <div className="px-4 py-3">
+            <button
+              onClick={handleClearCache}
+              className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none transition-all duration-100"
+              style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+            >
+              Clear Media Cache
+            </button>
+          </div>
+        </Section>
+      </div>
     </div>
   )
 }
