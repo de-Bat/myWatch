@@ -11,17 +11,17 @@
 | # | Task | Status | Commit |
 |---|------|--------|--------|
 | 1 | Create Toast component | ✅ DONE | `b7d1162` |
-| 2 | Wire ToastProvider into layout | ⬜ pending | — |
-| 3 | Wire toast to sync hook | ⬜ pending | — |
-| 4 | Wire toast to profile page | ⬜ pending | — |
-| 5 | Fix useMediaMeta reactivity + genres wrap | ⬜ pending | — |
-| 6 | DB migration — password_reset_tokens | ⬜ pending | — |
-| 7 | UserRepo password reset methods | ⬜ pending | — |
-| 8 | API routes — forgot/reset password | ⬜ pending | — |
-| 9 | API client — forgotPassword/resetPassword | ⬜ pending | — |
-| 10 | Frontend — forgot-password page | ⬜ pending | — |
-| 11 | Frontend — reset-password page | ⬜ pending | — |
-| 12 | Login page — forgot password link | ⬜ pending | — |
+| 2 | Wire ToastProvider into layout | ✅ DONE | `d61da77` |
+| 3 | Wire toast to sync hook | ✅ DONE | `d61da77` |
+| 4 | Wire toast to profile page | ✅ DONE | `fdbf982` |
+| 5 | Fix useMediaMeta reactivity + genres wrap | ✅ DONE | `b956b72` |
+| 6 | DB migration — password_reset_tokens | ✅ DONE | `ec1b2c9` |
+| 7 | UserRepo password reset methods | ✅ DONE | `09fc5f2` |
+| 8 | API routes — forgot/reset password | ✅ DONE | `261736f` |
+| 9 | API client — forgotPassword/resetPassword | ✅ DONE | `d9474d4` |
+| 10 | Frontend — forgot-password page | ✅ DONE | `31ff657` |
+| 11 | Frontend — reset-password page | ✅ DONE | `ad83639` |
+| 12 | Login page — forgot password link | ✅ DONE | `f1f3d6e` |
 
 ---
 
