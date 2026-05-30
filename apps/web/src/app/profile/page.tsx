@@ -137,7 +137,10 @@ export default function SettingsPage() {
               </Row>
               <div className="px-4 py-3">
                 <button
-                  onClick={() => signOut({ callbackUrl: '/' })}
+                  onClick={async () => {
+                    await signOut({ redirect: false })
+                    router.push('/')
+                  }}
                   className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none transition-all duration-100"
                   style={{ background: 'rgba(248,113,113,.12)', color: 'var(--red)' }}
                 >

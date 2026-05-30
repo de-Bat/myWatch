@@ -52,11 +52,31 @@ export class TmdbClient {
   }
 
   async getMovie(tmdbId: number, language?: string): Promise<TmdbMovieDetail> {
-    return this.get<TmdbMovieDetail>(`/movie/${tmdbId}`, language ? { language } : {})
+    const data = await this.get<TmdbMovieDetail>(`/movie/${tmdbId}`, language ? { language } : {})
+    if (language && language !== 'en-US' && (!data.overview || !data.title)) {
+      try {
+        const fallback = await this.get<TmdbMovieDetail>(`/movie/${tmdbId}`, { language: 'en-US' })
+        data.overview = data.overview || fallback.overview
+        data.title = data.title || fallback.title
+      } catch (e) {
+        // ignore fallback errors
+      }
+    }
+    return data
   }
 
   async getTv(tmdbId: number, language?: string): Promise<TmdbTvDetail> {
-    return this.get<TmdbTvDetail>(`/tv/${tmdbId}`, language ? { language } : {})
+    const data = await this.get<TmdbTvDetail>(`/tv/${tmdbId}`, language ? { language } : {})
+    if (language && language !== 'en-US' && (!data.overview || !data.name)) {
+      try {
+        const fallback = await this.get<TmdbTvDetail>(`/tv/${tmdbId}`, { language: 'en-US' })
+        data.overview = data.overview || fallback.overview
+        data.name = data.name || fallback.name
+      } catch (e) {
+        // ignore fallback errors
+      }
+    }
+    return data
   }
 
   async getTrending(timeWindow: 'day' | 'week' = 'week'): Promise<TmdbSearchResult[]> {

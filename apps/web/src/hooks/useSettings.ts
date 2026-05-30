@@ -92,6 +92,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const loaded = loadSettings()
     setSettings(loaded)
     applyTheme(loaded.theme)
+
+    function onStorage(e: StorageEvent) {
+      if (e.key === 'mywatch_settings') {
+        const fresh = loadSettings()
+        setSettings(fresh)
+        applyTheme(fresh.theme)
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function update(patch: Partial<AppSettings>) {
