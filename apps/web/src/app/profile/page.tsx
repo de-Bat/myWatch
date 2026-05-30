@@ -137,7 +137,7 @@ export default function SettingsPage() {
               </Row>
               <div className="px-4 py-3">
                 <button
-                  onClick={() => signOut({ callbackUrl: '/auth/login' })}
+                  onClick={() => signOut({ callbackUrl: '/' })}
                   className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none transition-all duration-100"
                   style={{ background: 'rgba(248,113,113,.12)', color: 'var(--red)' }}
                 >
@@ -194,6 +194,33 @@ export default function SettingsPage() {
 
         {/* Appearance */}
         <Section title="Appearance">
+          <Row label="Language">
+            <div
+              className="flex"
+              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
+            >
+              {[
+                { value: 'en-US', label: 'English' },
+                { value: 'he-IL', label: 'Hebrew' },
+              ].map((lang) => {
+                const active = settings.language === lang.value
+                return (
+                  <button
+                    key={lang.value}
+                    onClick={() => update({ language: lang.value })}
+                    className="px-3 py-[4px] text-[12px] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                    style={{
+                      background: active ? 'var(--surface2)' : 'transparent',
+                      color: active ? 'var(--fg)' : 'var(--muted)',
+                      fontWeight: active ? 600 : 500,
+                    }}
+                  >
+                    {lang.label}
+                  </button>
+                )
+              })}
+            </div>
+          </Row>
           <Row label="Theme">
             <div
               className="flex"

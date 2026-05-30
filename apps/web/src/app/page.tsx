@@ -465,8 +465,7 @@ export default function HomePage() {
         {/* Genre filter chips */}
         {genreOptions.length > 0 && (
           <div
-            className="flex gap-[4px] overflow-x-auto mt-[8px]"
-            style={{ scrollbarWidth: 'none' }}
+            className="flex gap-[4px] flex-wrap mt-[8px]"
           >
             <button
               onClick={() => setGenreFilter(null)}

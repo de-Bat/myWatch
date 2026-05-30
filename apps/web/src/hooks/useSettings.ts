@@ -13,12 +13,14 @@ export interface CardMetaSettings {
 export interface AppSettings {
   theme: 'dark' | 'light'
   tmdbApiKey: string
+  language: string
   cardMeta: CardMetaSettings
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
   tmdbApiKey: '',
+  language: 'en-US',
   cardMeta: {
     showGenres: true,
     showTmdbRating: false,
@@ -84,17 +86,12 @@ export function useSettings(): SettingsCtx {
 }
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<AppSettings>(() => {
-    // Lazily initialise from localStorage so there's no async gap where
-    // the wrong defaults flash before the useEffect fires.
-    const loaded = loadSettings()
-    if (typeof window !== 'undefined') applyTheme(loaded.theme)
-    return loaded
-  })
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
 
-  // Sync theme on server-side render (loadSettings returns DEFAULT_SETTINGS SSR-side)
   useEffect(() => {
-    applyTheme(settings.theme)
+    const loaded = loadSettings()
+    setSettings(loaded)
+    applyTheme(loaded.theme)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function update(patch: Partial<AppSettings>) {
