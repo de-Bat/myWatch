@@ -6,6 +6,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import type { WatchStatus, MediaType } from '@mywatch/core'
 import { useWatchlistItems } from '@/hooks/useWatchlist'
 import { useSync } from '@/hooks/useSync'
+import { useSettings } from '@/hooks/useSettings'
+import type { GridColumns } from '@/hooks/useSettings'
 import { WatchlistItemCard } from '@/components/WatchlistItemCard'
 import { GridItemCard } from '@/components/GridItemCard'
 import { MediaPanel } from '@/components/MediaPanel'
@@ -24,6 +26,7 @@ const SORT_OPTIONS = [
   { value: 'updated', label: 'Recently Updated' },
   { value: 'rating', label: 'Top Rated' },
   { value: 'title', label: 'A – Z' },
+  { value: 'type', label: 'Movie / TV' },
 ] as const
 type SortValue = (typeof SORT_OPTIONS)[number]['value']
 type ViewMode = 'list' | 'grid'
@@ -84,8 +87,14 @@ export default function HomePage() {
     localStorage.setItem(VIEW_STORAGE_KEY, v)
   }
 
+  const { settings, update: updateSettings } = useSettings()
   const allItems = useWatchlistItems()
   const { syncing, lastSyncedAt, sync } = useSync()
+
+  const gridCols = settings.gridColumns
+  const gridTemplateColumns = gridCols === 'auto'
+    ? 'repeat(auto-fill, minmax(150px, 1fr))'
+    : `repeat(${gridCols}, 1fr)`
 
   // Derive available genres from media cache for items currently in list
   const tmdbKeys = (allItems ?? []).map((i) => [i.tmdbId, i.mediaType] as [number, string])
@@ -117,6 +126,12 @@ export default function HomePage() {
   const sorted = [...filtered].sort((a, b) => {
     if (sortValue === 'rating') return (b.rating ?? 0) - (a.rating ?? 0)
     if (sortValue === 'title') return a.tmdbId - b.tmdbId
+    if (sortValue === 'type') {
+      const order = { movie: 0, tv: 1 }
+      const diff = (order[a.mediaType as keyof typeof order] ?? 0) - (order[b.mediaType as keyof typeof order] ?? 0)
+      if (diff !== 0) return diff
+      return b.updatedAt.localeCompare(a.updatedAt)
+    }
     return b.updatedAt.localeCompare(a.updatedAt)
   })
 
@@ -576,6 +591,41 @@ export default function HomePage() {
             </button>
           </div>
 
+          {/* Grid column picker — only in grid mode */}
+          {viewMode === 'grid' && (
+            <div
+              className="flex"
+              style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--rsm)',
+                padding: 2,
+                gap: 1,
+              }}
+            >
+              {(['auto', 2, 3, 4] as GridColumns[]).map((c) => {
+                const active = gridCols === c
+                return (
+                  <button
+                    key={c}
+                    onClick={() => updateSettings({ gridColumns: c })}
+                    className="whitespace-nowrap border-none cursor-pointer transition-all duration-100"
+                    style={{
+                      padding: '3px 7px',
+                      borderRadius: 'var(--rxs)',
+                      fontSize: 11,
+                      fontWeight: active ? 600 : 400,
+                      background: active ? 'var(--surface2)' : 'transparent',
+                      color: active ? 'var(--fg)' : 'var(--muted)',
+                    }}
+                  >
+                    {c === 'auto' ? '◻' : c}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           {/* Sync */}
           {session && (
             <button
@@ -641,7 +691,7 @@ export default function HomePage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+              gridTemplateColumns,
               gap: 12,
             }}
           >

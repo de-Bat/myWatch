@@ -12,6 +12,7 @@ export interface CardMetaSettings {
 
 export type FontFamily = 'system' | 'serif' | 'mono'
 export type FontSize = 'sm' | 'md' | 'lg' | 'xl'
+export type GridColumns = 2 | 3 | 4 | 'auto'
 
 export interface AppSettings {
   theme: 'dark' | 'light'
@@ -20,6 +21,7 @@ export interface AppSettings {
   font: FontFamily
   fontSize: FontSize
   syncInterval: number // minutes; 0 = disabled
+  gridColumns: GridColumns
   cardMeta: CardMetaSettings
 }
 
@@ -30,6 +32,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   font: 'system',
   fontSize: 'md',
   syncInterval: 5,
+  gridColumns: 'auto',
   cardMeta: {
     showGenres: true,
     showTmdbRating: false,
