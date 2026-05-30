@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useToast } from '@/components/Toast'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
@@ -11,7 +11,7 @@ export function useSyncEvents(
   lastSyncedAt: string | null,
   sync: SyncFn,
 ): { connId: string | null } {
-  const connIdRef = useRef<string | null>(null)
+  const [connId, setConnId] = useState<string | null>(null)
   const { toast } = useToast()
   const lastSyncedAtRef = useRef(lastSyncedAt)
   useEffect(() => { lastSyncedAtRef.current = lastSyncedAt }, [lastSyncedAt])
@@ -23,12 +23,12 @@ export function useSyncEvents(
 
     es.addEventListener('connected', (e) => {
       try {
-        const { connId } = JSON.parse((e as MessageEvent).data) as { connId: string }
-        connIdRef.current = connId
+        const { connId: id } = JSON.parse((e as MessageEvent).data) as { connId: string }
+        setConnId(id)
       } catch { /* malformed */ }
     })
 
-    es.addEventListener('error', () => { connIdRef.current = null })
+    es.addEventListener('error', () => { setConnId(null) })
 
     es.addEventListener('sync', () => {
       const since = lastSyncedAtRef.current ?? new Date(0).toISOString()
@@ -41,8 +41,8 @@ export function useSyncEvents(
       })
     })
 
-    return () => { es.close(); connIdRef.current = null }
+    return () => { es.close(); setConnId(null) }
   }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { connId: connIdRef.current }
+  return { connId }
 }
