@@ -28,6 +28,8 @@ export function useSyncEvents(
       } catch { /* malformed */ }
     })
 
+    es.addEventListener('error', () => { connIdRef.current = null })
+
     es.addEventListener('sync', () => {
       const since = lastSyncedAtRef.current ?? new Date(0).toISOString()
       sync({ silent: true, since }).then((result) => {
