@@ -4,7 +4,7 @@ import type { WatchlistItem } from '@mywatch/core'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { useSettings } from '@/hooks/useSettings'
 
-const TMDB_IMG = 'https://image.tmdb.org/t/p/w185'
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w342'
 const PROVIDER_IMG = 'https://image.tmdb.org/t/p/w45'
 
 function isUpcoming(releaseDate: string | null): boolean {
@@ -79,7 +79,7 @@ export function GridItemCard({ item, onSelect }: { item: WatchlistItem; onSelect
         {cardMeta.showTmdbRating && meta?.voteAverage != null && meta.voteAverage > 0 && (
           <div className="absolute top-[6px] right-[6px]">
             <span
-              className="text-[9px] font-bold px-[5px] py-[2px] rounded-[3px]"
+              className="text-[10px] font-bold px-[6px] py-[2px] rounded-[3px]"
               style={{ background: 'rgba(0,0,0,.65)', color: 'var(--amber)' }}
             >
               ★ {meta.voteAverage.toFixed(1)}
@@ -90,7 +90,7 @@ export function GridItemCard({ item, onSelect }: { item: WatchlistItem; onSelect
         {/* Bottom overlay */}
         <div className="absolute bottom-0 left-0 right-0 px-[8px] pb-[7px] flex flex-col gap-[4px]">
           <div
-            className="text-[11px] font-semibold leading-[1.2] truncate"
+            className="text-[13px] font-semibold leading-[1.2] truncate"
             style={{ color: '#fff', letterSpacing: '-0.01em' }}
           >
             {meta?.title ?? `#${item.tmdbId}`}
@@ -99,7 +99,7 @@ export function GridItemCard({ item, onSelect }: { item: WatchlistItem; onSelect
           {/* TV/Movie badge row */}
           <div className="flex items-center gap-[4px] flex-wrap">
             <span
-              className="text-[8.5px] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+              className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
               style={
                 item.mediaType === 'movie'
                   ? { background: 'rgba(251,146,60,.85)', color: '#fff' }
