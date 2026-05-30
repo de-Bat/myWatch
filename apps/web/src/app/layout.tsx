@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { SessionProvider } from 'next-auth/react'
 import { auth } from '@/auth'
 import { SettingsProvider } from '@/hooks/useSettings'
+import { ToastProvider } from '@/components/Toast'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -15,7 +16,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" className="dark">
       <body className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--fg)' }}>
         <SessionProvider session={session}>
-          <SettingsProvider>{children}</SettingsProvider>
+          <SettingsProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </SettingsProvider>
         </SessionProvider>
       </body>
     </html>
