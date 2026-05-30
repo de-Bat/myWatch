@@ -96,7 +96,7 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
       </div>
 
       {/* Body */}
-      <div className="flex-1 min-w-0 flex flex-col gap-[3px] pt-[1px]">
+      <div className="flex-1 min-w-0 flex flex-col gap-[3px] pt-[1px] overflow-visible">
         <div
           className="text-[14px] font-semibold tracking-[-0.015em] truncate leading-[1.25]"
           style={{ color: 'var(--fg)' }}
@@ -165,11 +165,11 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
 
         {/* Genres */}
         {cardMeta.showGenres && genres.length > 0 && (
-          <div className="flex items-center gap-[4px] flex-wrap mt-[2px]">
+          <div className="flex items-start gap-[4px] flex-wrap mt-[2px]">
             {genres.map((g) => (
               <span
                 key={g.id}
-                className="text-[10px] font-medium px-[6px] py-[1px] rounded-[4px] leading-[1.4]"
+                className="text-[10px] font-medium px-[6px] py-[1px] rounded-[4px] leading-[1.4] whitespace-nowrap"
                 style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
               >
                 {g.name}
