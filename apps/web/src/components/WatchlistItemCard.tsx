@@ -28,7 +28,7 @@ function formatRuntime(minutes: number): string {
   return `${Math.floor(minutes / 60)}h ${minutes % 60}m`
 }
 
-export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
+export function WatchlistItemCard({ item, onSelect }: { item: WatchlistItem; onSelect?: () => void }) {
   const { settings } = useSettings()
   const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey, settings.language)
   const router = useRouter()
@@ -55,7 +55,7 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
   return (
     <div className="relative">
     <div
-      onClick={() => router.push(`/media/${item.mediaType}/${item.tmdbId}`)}
+      onClick={() => onSelect ? onSelect() : router.push(`/media/${item.mediaType}/${item.tmdbId}`)}
       onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY }) }}
       className="flex gap-3 rounded-[var(--r)] border cursor-pointer transition-all duration-[120ms]
         hover:-translate-y-px hover:shadow-[0_2px_10px_rgba(0,0,0,.25)]"

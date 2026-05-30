@@ -8,6 +8,7 @@ import { useWatchlistItems } from '@/hooks/useWatchlist'
 import { useSync } from '@/hooks/useSync'
 import { WatchlistItemCard } from '@/components/WatchlistItemCard'
 import { GridItemCard } from '@/components/GridItemCard'
+import { MediaPanel } from '@/components/MediaPanel'
 import { db } from '@/lib/db'
 
 const STATUS_TABS: Array<WatchStatus | 'all'> = ['all', 'planned', 'in_progress', 'watched', 'quit']
@@ -39,6 +40,7 @@ export default function HomePage() {
   const [sortIndex, setSortIndex] = useState(0)
   const [genreFilter, setGenreFilter] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [panel, setPanel] = useState<{ tmdbId: number; mediaType: MediaType } | null>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_STORAGE_KEY)
@@ -534,7 +536,11 @@ export default function HomePage() {
         ) : viewMode === 'list' ? (
           <div className="flex flex-col" style={{ gap: 5 }}>
             {displayed.map((item) => (
-              <WatchlistItemCard key={item.id} item={item} />
+              <WatchlistItemCard
+                key={item.id}
+                item={item}
+                onSelect={() => setPanel({ tmdbId: item.tmdbId, mediaType: item.mediaType as MediaType })}
+              />
             ))}
           </div>
         ) : (
@@ -546,11 +552,23 @@ export default function HomePage() {
             }}
           >
             {displayed.map((item) => (
-              <GridItemCard key={item.id} item={item} />
+              <GridItemCard
+                key={item.id}
+                item={item}
+                onSelect={() => setPanel({ tmdbId: item.tmdbId, mediaType: item.mediaType as MediaType })}
+              />
             ))}
           </div>
         )}
       </div>
+
+      {panel && (
+        <MediaPanel
+          tmdbId={panel.tmdbId}
+          mediaType={panel.mediaType}
+          onClose={() => setPanel(null)}
+        />
+      )}
     </div>
   )
 }

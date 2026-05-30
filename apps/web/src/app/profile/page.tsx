@@ -6,7 +6,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useSync } from '@/hooks/useSync'
 import { useSettings } from '@/hooks/useSettings'
 import { useToast } from '@/components/Toast'
-import type { CardMetaSettings } from '@/hooks/useSettings'
+import type { CardMetaSettings, FontFamily, FontSize } from '@/hooks/useSettings'
 import { db } from '@/lib/db'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -79,6 +79,19 @@ const CARD_META_LABELS: Record<keyof CardMetaSettings, string> = {
   showProviders: 'Streaming Providers',
   showOverview: 'Plot Overview',
 }
+
+const FONT_OPTIONS: Array<{ value: FontFamily; label: string }> = [
+  { value: 'system', label: 'System' },
+  { value: 'serif', label: 'Serif' },
+  { value: 'mono', label: 'Mono' },
+]
+
+const FONT_SIZE_OPTIONS: Array<{ value: FontSize; label: string }> = [
+  { value: 'sm', label: 'S' },
+  { value: 'md', label: 'M' },
+  { value: 'lg', label: 'L' },
+  { value: 'xl', label: 'XL' },
+]
 
 export default function SettingsPage() {
   const { data: session } = useSession()
@@ -243,6 +256,54 @@ export default function SettingsPage() {
                     }}
                   >
                     {t}
+                  </button>
+                )
+              })}
+            </div>
+          </Row>
+          <Row label="Font">
+            <div
+              className="flex"
+              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
+            >
+              {FONT_OPTIONS.map((f) => {
+                const active = settings.font === f.value
+                return (
+                  <button
+                    key={f.value}
+                    onClick={() => update({ font: f.value })}
+                    className="px-3 py-[4px] text-[12px] rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                    style={{
+                      background: active ? 'var(--surface2)' : 'transparent',
+                      color: active ? 'var(--fg)' : 'var(--muted)',
+                      fontWeight: active ? 600 : 500,
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                )
+              })}
+            </div>
+          </Row>
+          <Row label="Font Size">
+            <div
+              className="flex"
+              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
+            >
+              {FONT_SIZE_OPTIONS.map((f) => {
+                const active = settings.fontSize === f.value
+                return (
+                  <button
+                    key={f.value}
+                    onClick={() => update({ fontSize: f.value })}
+                    className="px-3 py-[4px] text-[12px] rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                    style={{
+                      background: active ? 'var(--surface2)' : 'transparent',
+                      color: active ? 'var(--fg)' : 'var(--muted)',
+                      fontWeight: active ? 600 : 500,
+                    }}
+                  >
+                    {f.label}
                   </button>
                 )
               })}

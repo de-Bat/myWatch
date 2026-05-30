@@ -10,10 +10,15 @@ export interface CardMetaSettings {
   showOverview: boolean
 }
 
+export type FontFamily = 'system' | 'serif' | 'mono'
+export type FontSize = 'sm' | 'md' | 'lg' | 'xl'
+
 export interface AppSettings {
   theme: 'dark' | 'light'
   tmdbApiKey: string
   language: string
+  font: FontFamily
+  fontSize: FontSize
   cardMeta: CardMetaSettings
 }
 
@@ -21,6 +26,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
   tmdbApiKey: '',
   language: 'en-US',
+  font: 'system',
+  fontSize: 'md',
   cardMeta: {
     showGenres: true,
     showTmdbRating: false,
@@ -28,6 +35,19 @@ export const DEFAULT_SETTINGS: AppSettings = {
     showProviders: false,
     showOverview: false,
   },
+}
+
+const FONT_FAMILIES: Record<FontFamily, string> = {
+  system: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif",
+  serif: "Georgia, 'Times New Roman', serif",
+  mono: "ui-monospace, 'SF Mono', 'Cascadia Code', 'Fira Code', monospace",
+}
+
+const FONT_SIZES: Record<FontSize, string> = {
+  sm: '13px',
+  md: '14px',
+  lg: '15px',
+  xl: '16px',
 }
 
 const STORAGE_KEY = 'mywatch_settings'
@@ -69,6 +89,12 @@ function applyTheme(theme: 'dark' | 'light') {
   document.documentElement.classList.toggle('dark', theme === 'dark')
 }
 
+function applyFont(font: FontFamily, fontSize: FontSize) {
+  if (typeof document === 'undefined') return
+  document.documentElement.style.setProperty('--font-family', FONT_FAMILIES[font])
+  document.documentElement.style.setProperty('--font-size', FONT_SIZES[fontSize])
+}
+
 type SettingsCtx = {
   settings: AppSettings
   update: (patch: Partial<AppSettings>) => void
@@ -92,12 +118,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const loaded = loadSettings()
     setSettings(loaded)
     applyTheme(loaded.theme)
+    applyFont(loaded.font, loaded.fontSize)
 
     function onStorage(e: StorageEvent) {
       if (e.key === 'mywatch_settings') {
         const fresh = loadSettings()
         setSettings(fresh)
         applyTheme(fresh.theme)
+        applyFont(fresh.font, fresh.fontSize)
       }
     }
     window.addEventListener('storage', onStorage)
@@ -109,6 +137,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       const next = { ...prev, ...patch }
       persistSettings(next)
       if (patch.theme) applyTheme(patch.theme)
+      if (patch.font !== undefined || patch.fontSize !== undefined) {
+        applyFont(next.font, next.fontSize)
+      }
       return next
     })
   }

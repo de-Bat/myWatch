@@ -5,29 +5,30 @@ import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { useSettings } from '@/hooks/useSettings'
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w185'
-
-const STATUS_DOTS: Record<string, string> = {
-  planned: 'var(--blue)',
-  in_progress: 'var(--amber)',
-  watched: 'var(--green)',
-  quit: 'var(--red)',
-}
+const PROVIDER_IMG = 'https://image.tmdb.org/t/p/w45'
 
 function isUpcoming(releaseDate: string | null): boolean {
   if (!releaseDate) return false
   return new Date(releaseDate) > new Date()
 }
 
-export function GridItemCard({ item }: { item: WatchlistItem }) {
+function formatRuntime(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`
+}
+
+export function GridItemCard({ item, onSelect }: { item: WatchlistItem; onSelect?: () => void }) {
   const { settings } = useSettings()
   const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey, settings.language)
   const router = useRouter()
+  const { cardMeta } = settings
   const upcoming = isUpcoming(meta?.releaseDate ?? null)
-  const genre = meta?.genres?.[0]?.name ?? null
+  const genres = meta?.genres ?? []
+  const providers = (meta?.watchProviders ?? []).slice(0, 3)
 
   return (
     <div
-      onClick={() => router.push(`/media/${item.mediaType}/${item.tmdbId}`)}
+      onClick={() => onSelect ? onSelect() : router.push(`/media/${item.mediaType}/${item.tmdbId}`)}
       className="cursor-pointer transition-all duration-[120ms] hover:-translate-y-[2px] hover:shadow-[0_4px_16px_rgba(0,0,0,.4)]"
       style={{ borderRadius: 'var(--r)', overflow: 'hidden' }}
     >
@@ -59,7 +60,7 @@ export function GridItemCard({ item }: { item: WatchlistItem }) {
         {/* Gradient overlay */}
         <div
           className="absolute inset-0"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,.75) 0%, transparent 50%)' }}
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,.82) 0%, transparent 55%)' }}
         />
 
         {/* Upcoming badge */}
@@ -74,28 +75,79 @@ export function GridItemCard({ item }: { item: WatchlistItem }) {
           </div>
         )}
 
-        {/* Bottom overlay: title + status dot */}
-        <div className="absolute bottom-0 left-0 right-0 px-[8px] pb-[7px]">
+        {/* TMDB rating top-right */}
+        {cardMeta.showTmdbRating && meta?.voteAverage != null && meta.voteAverage > 0 && (
+          <div className="absolute top-[6px] right-[6px]">
+            <span
+              className="text-[9px] font-bold px-[5px] py-[2px] rounded-[3px]"
+              style={{ background: 'rgba(0,0,0,.65)', color: 'var(--amber)' }}
+            >
+              ★ {meta.voteAverage.toFixed(1)}
+            </span>
+          </div>
+        )}
+
+        {/* Bottom overlay */}
+        <div className="absolute bottom-0 left-0 right-0 px-[8px] pb-[7px] flex flex-col gap-[4px]">
           <div
-            className="text-[11px] font-semibold leading-[1.2] truncate mb-[4px]"
+            className="text-[11px] font-semibold leading-[1.2] truncate"
             style={{ color: '#fff', letterSpacing: '-0.01em' }}
           >
             {meta?.title ?? `#${item.tmdbId}`}
           </div>
-          <div className="flex items-center gap-[5px]">
+
+          {/* TV/Movie badge row */}
+          <div className="flex items-center gap-[4px] flex-wrap">
             <span
-              className="w-[6px] h-[6px] rounded-full flex-shrink-0"
-              style={{ background: STATUS_DOTS[item.status] ?? 'var(--muted)' }}
-            />
-            {genre && (
-              <span
-                className="text-[9.5px] truncate"
-                style={{ color: 'rgba(255,255,255,0.65)' }}
-              >
-                {genre}
+              className="text-[8.5px] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+              style={
+                item.mediaType === 'movie'
+                  ? { background: 'rgba(251,146,60,.85)', color: '#fff' }
+                  : { background: 'rgba(168,85,247,.85)', color: '#fff' }
+              }
+            >
+              {item.mediaType === 'movie' ? 'Movie' : 'TV'}
+            </span>
+
+            {cardMeta.showRuntime && meta?.runtime != null && meta.runtime > 0 && (
+              <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                {formatRuntime(meta.runtime)}
               </span>
             )}
           </div>
+
+          {/* Genres */}
+          {cardMeta.showGenres && genres.length > 0 && (
+            <div className="flex gap-[3px] flex-wrap">
+              {genres.slice(0, 2).map((g) => (
+                <span
+                  key={g.id}
+                  className="text-[8.5px] truncate"
+                  style={{ color: 'rgba(255,255,255,0.6)' }}
+                >
+                  {g.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Streaming providers */}
+          {cardMeta.showProviders && providers.length > 0 && (
+            <div className="flex items-center gap-[3px]">
+              {providers.map((p) =>
+                p.logoPath ? (
+                  <img
+                    key={p.providerId}
+                    src={`${PROVIDER_IMG}${p.logoPath}`}
+                    alt={p.providerName}
+                    title={p.providerName}
+                    className="rounded-[3px]"
+                    style={{ width: 14, height: 14, objectFit: 'cover' }}
+                  />
+                ) : null
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
