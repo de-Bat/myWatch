@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { db } from '@/lib/db'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -19,7 +20,8 @@ export default function LoginPage() {
     if (result?.error) {
       setError('Invalid email or password')
     } else {
-      router.push('/')
+      const localCount = await db.watchlistItems.filter((i) => i.deletedAt === null).count()
+      router.push(localCount > 0 ? `/?importLocal=1&count=${localCount}` : '/')
     }
     setLoading(false)
   }

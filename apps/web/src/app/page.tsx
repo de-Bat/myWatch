@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { WatchStatus, MediaType } from '@mywatch/core'
 import { useWatchlistItems } from '@/hooks/useWatchlist'
@@ -32,6 +32,8 @@ const VIEW_STORAGE_KEY = 'mywatch_view'
 export default function HomePage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [importBanner, setImportBanner] = useState<{ count: number } | null>(null)
   const [statusFilter, setStatusFilter] = useState<WatchStatus | 'all'>('all')
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
   const [sortIndex, setSortIndex] = useState(0)
@@ -41,6 +43,18 @@ export default function HomePage() {
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_STORAGE_KEY)
     if (saved === 'grid' || saved === 'list') setViewMode(saved)
+  }, [])
+
+  useEffect(() => {
+    if (searchParams.get('importLocal') === '1') {
+      const count = Number(searchParams.get('count') ?? 0)
+      if (count > 0) setImportBanner({ count })
+      // Clean URL without triggering navigation
+      const url = new URL(window.location.href)
+      url.searchParams.delete('importLocal')
+      url.searchParams.delete('count')
+      window.history.replaceState({}, '', url.toString())
+    }
   }, [])
 
   function setView(v: ViewMode) {
@@ -228,6 +242,37 @@ export default function HomePage() {
           </button>
         </nav>
       </header>
+
+      {/* Import local data banner */}
+      {importBanner && (
+        <div
+          className="mx-5 mb-3 px-4 py-3 rounded-[10px] flex items-center justify-between gap-3"
+          style={{ background: 'var(--accent-bg)', border: '1px solid var(--accent)' }}
+        >
+          <p className="text-[13px]" style={{ color: 'var(--fg2)' }}>
+            <span className="font-semibold" style={{ color: 'var(--accent2)' }}>{importBanner.count} local items</span> found. Import to your account?
+          </p>
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              onClick={async () => {
+                setImportBanner(null)
+                await sync()
+              }}
+              className="px-3 py-1.5 rounded-[6px] text-[12px] font-semibold border-none cursor-pointer"
+              style={{ background: 'var(--accent)', color: '#fff' }}
+            >
+              Import
+            </button>
+            <button
+              onClick={() => setImportBanner(null)}
+              className="px-3 py-1.5 rounded-[6px] text-[12px] font-medium border-none cursor-pointer"
+              style={{ background: 'var(--surface2)', color: 'var(--muted)' }}
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filter bar */}
       <div
