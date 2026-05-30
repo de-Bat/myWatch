@@ -54,6 +54,19 @@ export function createWatchlistRepo(sql: Sql): WatchlistRepo {
       if (items.length === 0) return
 
       for (const item of items) {
+        // postgres.js throws UNDEFINED_VALUE if any parameter is `undefined`.
+        // Coerce every nullable field to null so the INSERT is always safe.
+        const progressEpisode = item.progressEpisode ?? null
+        const progressSeason  = item.progressSeason  ?? null
+        const rating          = item.rating           ?? null
+        const notes           = item.notes            ?? null
+        const customPlatforms = item.customPlatforms  ?? []
+        const startedAt       = item.startedAt        ?? null
+        const finishedAt      = item.finishedAt       ?? null
+        const quitAt          = item.quitAt           ?? null
+        const deletedAt       = item.deletedAt        ?? null
+        const deviceId        = item.deviceId         ?? ''
+
         await sql`
           INSERT INTO watchlist_items (
             id, user_id, tmdb_id, media_type, status,
@@ -62,10 +75,10 @@ export function createWatchlistRepo(sql: Sql): WatchlistRepo {
             updated_at, device_id, deleted_at
           ) VALUES (
             ${item.id}, ${userId}, ${item.tmdbId}, ${item.mediaType}, ${item.status},
-            ${item.progressEpisode}, ${item.progressSeason}, ${item.rating}, ${item.notes},
-            ${item.customPlatforms},
-            ${item.addedAt}, ${item.startedAt}, ${item.finishedAt}, ${item.quitAt},
-            ${item.updatedAt}, ${item.deviceId}, ${item.deletedAt}
+            ${progressEpisode}, ${progressSeason}, ${rating}, ${notes},
+            ${customPlatforms},
+            ${item.addedAt}, ${startedAt}, ${finishedAt}, ${quitAt},
+            ${item.updatedAt}, ${deviceId}, ${deletedAt}
           )
           ON CONFLICT (user_id, tmdb_id, media_type) DO UPDATE SET
             id = EXCLUDED.id,

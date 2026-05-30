@@ -64,14 +64,19 @@ export function createPlaylistRepo(sql: Sql): PlaylistRepo {
       if (playlists.length === 0) return
 
       for (const p of playlists) {
+        const description = p.description ?? null
+        const smartRules  = p.smartRules  ?? null
+        const deletedAt   = p.deletedAt   ?? null
+        const deviceId    = p.deviceId    ?? ''
+
         await sql`
           INSERT INTO playlists (
             id, user_id, name, description, type, smart_rules,
             sort_order, created_at, updated_at, device_id, deleted_at
           ) VALUES (
-            ${p.id}, ${userId}, ${p.name}, ${p.description}, ${p.type},
-            ${p.smartRules ? sql.json(p.smartRules as never) : null},
-            ${p.sortOrder}, ${p.createdAt}, ${p.updatedAt}, ${p.deviceId}, ${p.deletedAt}
+            ${p.id}, ${userId}, ${p.name}, ${description}, ${p.type},
+            ${smartRules ? sql.json(smartRules as never) : null},
+            ${p.sortOrder}, ${p.createdAt}, ${p.updatedAt}, ${deviceId}, ${deletedAt}
           )
           ON CONFLICT (id) DO UPDATE SET
             name = EXCLUDED.name,
