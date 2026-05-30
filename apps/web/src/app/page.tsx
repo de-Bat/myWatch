@@ -7,6 +7,7 @@ import type { WatchStatus, MediaType } from '@mywatch/core'
 import { useWatchlistItems } from '@/hooks/useWatchlist'
 import { useSync } from '@/hooks/useSync'
 import { useSettings } from '@/hooks/useSettings'
+import { useJellyfinProgress } from '@/hooks/useJellyfinProgress'
 import type { GridColumns } from '@/hooks/useSettings'
 import { WatchlistItemCard } from '@/components/WatchlistItemCard'
 import { GridItemCard } from '@/components/GridItemCard'
@@ -128,6 +129,7 @@ export default function HomePage() {
   }
 
   const { settings, update: updateSettings } = useSettings()
+  const { progressMap } = useJellyfinProgress(settings)
   const allItems = useWatchlistItems()
   const { syncing, lastSyncedAt, error: syncError, sync } = useSync()
   const pendingCount = useLiveQuery(() => db.pendingPushes.count()) ?? 0
@@ -912,6 +914,7 @@ export default function HomePage() {
               <WatchlistItemCard
                 key={item.id}
                 item={item}
+                jellyfinProgress={progressMap?.get(`${item.tmdbId}-${item.mediaType}`) ?? undefined}
                 onSelect={() => setPanel({ tmdbId: item.tmdbId, mediaType: item.mediaType as MediaType })}
               />
             ))}
