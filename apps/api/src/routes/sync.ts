@@ -68,7 +68,10 @@ export function registerSyncRoutes(
       await playlistRepo.upsertPlaylists(userId, playlists)
       await playlistRepo.upsertPlaylistItems(playlistItems)
 
-      return reply.send({ pushedAt: new Date().toISOString() })
+      const connId = (req.headers['x-conn-id'] as string | undefined) ?? ''
+      const pushedAt = new Date().toISOString()
+      sseBus.emit(userId, connId, { pushedAt })
+      return reply.send({ pushedAt })
     },
   )
 

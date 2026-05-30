@@ -165,6 +165,28 @@ describe('POST /sync/push', () => {
     })
     expect(res.statusCode).toBe(200)
   })
+
+  it('emits SSE event to other connections after push', async () => {
+    const watchlistRepo = makeWatchlistRepo()
+    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
+    const token = getAuthToken(app)
+
+    const sent: string[] = []
+    sseBus.subscribe(mockUser.id, 'other-conn', (data) => { sent.push(data) })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/sync/push',
+      headers: { authorization: `Bearer ${token}`, 'x-conn-id': 'my-conn' },
+      payload: { items: [mockItem] },
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(sent).toHaveLength(1)
+    expect(sent[0]).toContain('event: sync')
+
+    sseBus.unsubscribe(mockUser.id, 'other-conn')
+  })
 })
 
 describe('GET /sync/events', () => {
