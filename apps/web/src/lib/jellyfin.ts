@@ -43,7 +43,7 @@ export function mapMovie(item: JellyfinItem): JellyfinProgress | null {
   if (item.UserData.PlaybackPositionTicks > 0 && item.RunTimeTicks) {
     const moviePercent = Math.min(
       100,
-      Math.round((item.UserData.PlaybackPositionTicks / item.RunTimeTicks) * 100),
+      Math.max(0, Math.round((item.UserData.PlaybackPositionTicks / item.RunTimeTicks) * 100)),
     )
     return { tmdbId, mediaType: 'movie', jellyfinStatus: 'watching', moviePercent }
   }
@@ -63,7 +63,7 @@ export function mapSeries(
   const played = total - (UnplayedItemCount ?? total)
 
   let jellyfinStatus: 'planned' | 'watching' | 'watched'
-  if (UnplayedItemCount === 0 && total > 0) {
+  if (item.UserData.Played || (UnplayedItemCount === 0 && total > 0)) {
     jellyfinStatus = 'watched'
   } else if (played > 0 || PlaybackPositionTicks > 0) {
     jellyfinStatus = 'watching'
@@ -87,7 +87,7 @@ export function findCurrentEpisode(
       inProgress.RunTimeTicks && inProgress.RunTimeTicks > 0
         ? Math.min(
             100,
-            Math.round((inProgress.UserData.PlaybackPositionTicks / inProgress.RunTimeTicks) * 100),
+            Math.max(0, Math.round((inProgress.UserData.PlaybackPositionTicks / inProgress.RunTimeTicks) * 100)),
           )
         : 0
     return {
@@ -122,7 +122,7 @@ export async function fetchJellyfinProgress(
 
   // Movies
   const moviesRes = await fetch(
-    `${base}/Users/${userId}/Items?IncludeItemTypes=Movie&Recursive=true&Fields=ProviderIds,UserData,RunTimeTicks`,
+    `${base}/Users/${encodeURIComponent(userId)}/Items?IncludeItemTypes=Movie&Recursive=true&Fields=ProviderIds,UserData,RunTimeTicks`,
     { headers },
   )
   if (!moviesRes.ok) throw new Error(`Jellyfin movies fetch failed: ${moviesRes.status}`)
@@ -134,7 +134,7 @@ export async function fetchJellyfinProgress(
 
   // TV series
   const seriesRes = await fetch(
-    `${base}/Users/${userId}/Items?IncludeItemTypes=Series&Recursive=true&Fields=ProviderIds,UserData,RecursiveItemCount`,
+    `${base}/Users/${encodeURIComponent(userId)}/Items?IncludeItemTypes=Series&Recursive=true&Fields=ProviderIds,UserData,RecursiveItemCount`,
     { headers },
   )
   if (!seriesRes.ok) throw new Error(`Jellyfin series fetch failed: ${seriesRes.status}`)
@@ -154,7 +154,7 @@ export async function fetchJellyfinProgress(
   await Promise.all(
     watchingSeries.map(async ({ progress, jellyfinId }) => {
       const epRes = await fetch(
-        `${base}/Users/${userId}/Items?ParentId=${jellyfinId}&IncludeItemTypes=Episode&Recursive=true&Fields=UserData,ParentIndexNumber,IndexNumber,RunTimeTicks&SortBy=SortName`,
+        `${base}/Users/${encodeURIComponent(userId)}/Items?ParentId=${encodeURIComponent(jellyfinId)}&IncludeItemTypes=Episode&Recursive=true&Fields=UserData,ParentIndexNumber,IndexNumber,RunTimeTicks&SortBy=ParentIndexNumber,IndexNumber`,
         { headers },
       )
       if (!epRes.ok) return
