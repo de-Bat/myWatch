@@ -480,7 +480,7 @@ export default function HomePage() {
           {isMobile ? (
             <>
               {/* Status icon + hidden select */}
-              <div className="mobile-filter-btn" style={{ color: statusFilter !== 'all' ? 'var(--accent2)' : undefined, borderColor: statusFilter !== 'all' ? 'var(--accent)' : undefined, background: statusFilter !== 'all' ? 'var(--accent-bg)' : undefined }}>
+              <div className="mobile-filter-btn" style={{ color: statusFilter !== 'all' ? 'var(--accent2)' : undefined, border: statusFilter !== 'all' ? '1px solid var(--accent)' : undefined, background: statusFilter !== 'all' ? 'var(--accent-bg)' : undefined }}>
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="8" cy="8" r="6" />
                   <line x1="8" y1="5" x2="8" y2="8" />
@@ -498,7 +498,7 @@ export default function HomePage() {
               </div>
 
               {/* Type icon + hidden select */}
-              <div className="mobile-filter-btn" style={{ color: typeFilter !== 'all' ? 'var(--accent2)' : undefined, borderColor: typeFilter !== 'all' ? 'var(--accent)' : undefined, background: typeFilter !== 'all' ? 'var(--accent-bg)' : undefined }}>
+              <div className="mobile-filter-btn" style={{ color: typeFilter !== 'all' ? 'var(--accent2)' : undefined, border: typeFilter !== 'all' ? '1px solid var(--accent)' : undefined, background: typeFilter !== 'all' ? 'var(--accent-bg)' : undefined }}>
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="1" y="3" width="14" height="10" rx="2" />
                   <polygon points="6.5,6 6.5,10 10.5,8" fill="currentColor" stroke="none" />
@@ -515,7 +515,7 @@ export default function HomePage() {
               </div>
 
               {/* Sort icon + hidden select */}
-              <div className="mobile-filter-btn" style={{ color: sortIndex !== 0 ? 'var(--accent2)' : undefined, borderColor: sortIndex !== 0 ? 'var(--accent)' : undefined, background: sortIndex !== 0 ? 'var(--accent-bg)' : undefined }}>
+              <div className="mobile-filter-btn" style={{ color: sortIndex !== 0 ? 'var(--accent2)' : undefined, border: sortIndex !== 0 ? '1px solid var(--accent)' : undefined, background: sortIndex !== 0 ? 'var(--accent-bg)' : undefined }}>
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
                   <line x1="2" y1="4" x2="14" y2="4" />
                   <line x1="2" y1="8" x2="10" y2="8" />
@@ -534,7 +534,7 @@ export default function HomePage() {
 
               {/* Genre icon + hidden select (if genres available) */}
               {genreOptions.length > 0 && (
-                <div className="mobile-filter-btn" style={{ color: genreFilter.size > 0 ? 'var(--accent2)' : undefined, borderColor: genreFilter.size > 0 ? 'var(--accent)' : undefined, background: genreFilter.size > 0 ? 'var(--accent-bg)' : undefined }}>
+                <div className="mobile-filter-btn" style={{ color: genreFilter.size > 0 ? 'var(--accent2)' : undefined, border: genreFilter.size > 0 ? '1px solid var(--accent)' : undefined, background: genreFilter.size > 0 ? 'var(--accent-bg)' : undefined }}>
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="2" y1="4" x2="14" y2="4" />
                     <line x1="4" y1="8" x2="12" y2="8" />
