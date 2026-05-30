@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation'
 import type { WatchlistItem } from '@mywatch/core'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
+import { useSettings } from '@/hooks/useSettings'
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w185'
 
@@ -18,7 +19,8 @@ function isUpcoming(releaseDate: string | null): boolean {
 }
 
 export function GridItemCard({ item }: { item: WatchlistItem }) {
-  const meta = useMediaMeta(item.tmdbId, item.mediaType)
+  const { settings } = useSettings()
+  const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey)
   const router = useRouter()
   const upcoming = isUpcoming(meta?.releaseDate ?? null)
   const genre = meta?.genres?.[0]?.name ?? null

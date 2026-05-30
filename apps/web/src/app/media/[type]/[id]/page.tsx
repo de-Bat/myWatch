@@ -7,6 +7,7 @@ import Link from 'next/link'
 import type { MediaType, WatchStatus } from '@mywatch/core'
 import { useWatchlistItem, useUpsertItem, useSoftDeleteItem, getLocalDeviceId, type UpsertItemInput } from '@/hooks/useWatchlist'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
+import { useSettings } from '@/hooks/useSettings'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ProgressTracker } from '@/components/ProgressTracker'
 
@@ -43,7 +44,8 @@ export default function MediaDetailPage() {
   const mediaType = params.type as MediaType
   const tmdbId = parseInt(params.id as string, 10)
 
-  const meta = useMediaMeta(tmdbId, mediaType)
+  const { settings } = useSettings()
+  const meta = useMediaMeta(tmdbId, mediaType, settings.tmdbApiKey)
   const existingItem = useWatchlistItem(tmdbId, mediaType)
   const upsert = useUpsertItem()
   const softDelete = useSoftDeleteItem()

@@ -29,11 +29,11 @@ function formatRuntime(minutes: number): string {
 }
 
 export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
-  const meta = useMediaMeta(item.tmdbId, item.mediaType)
+  const { settings } = useSettings()
+  const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey)
   const router = useRouter()
   const playlists = usePlaylists()
   const addToPlaylist = useAddToPlaylist()
-  const { settings } = useSettings()
   const { cardMeta } = settings
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -49,7 +49,7 @@ export function WatchlistItemCard({ item }: { item: WatchlistItem }) {
 
   const year = meta?.releaseDate?.slice(0, 4) ?? null
   const upcoming = isUpcoming(meta?.releaseDate ?? null)
-  const genres = meta?.genres?.slice(0, 2) ?? []
+  const genres = meta?.genres ?? []
   const providers = (meta?.watchProviders ?? []).slice(0, 3)
 
   return (

@@ -2,15 +2,13 @@
 import { useEffect, useState } from 'react'
 import type { MediaCache, MediaType, WatchProvider } from '@mywatch/core'
 import { TmdbClient, normalizeMovie, normalizeTv, isStale } from '@mywatch/tmdb'
-import { getTmdbApiKey } from './useSettings'
 import type { TmdbMovieDetail, TmdbTvDetail } from '@mywatch/tmdb'
 import { db } from '@/lib/db'
 
 const PROVIDERS_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
-function getClient() {
-  const storedKey = getTmdbApiKey()
-  const key = storedKey || (process.env.NEXT_PUBLIC_TMDB_API_KEY ?? '')
+function getClient(tmdbApiKey: string) {
+  const key = tmdbApiKey || (process.env.NEXT_PUBLIC_TMDB_API_KEY ?? '')
   return new TmdbClient({ apiKey: key })
 }
 
@@ -48,20 +46,19 @@ async function fetchAndStoreProviders(
   }
 }
 
-export function useMediaMeta(tmdbId: number, mediaType: MediaType) {
+export function useMediaMeta(tmdbId: number, mediaType: MediaType, tmdbApiKey: string) {
   const [meta, setMeta] = useState<MediaCache | null>(null)
 
   useEffect(() => {
     let cancelled = false
     const region = navigator.language?.split('-')[1] ?? 'US'
-    const client = getClient()
+    const client = getClient(tmdbApiKey)
 
     ;(async () => {
       try {
         const cached = await db.mediaCache.get([tmdbId, mediaType])
         if (cached && !isStale(cached)) {
           if (!cancelled) setMeta(cached)
-          // Fetch providers in background if stale
           if (isProviderStale(cached.watchProvidersCachedAt ?? null)) {
             fetchAndStoreProviders(client, tmdbId, mediaType, region).then((providers) => {
               if (!cancelled) setMeta((prev) => prev ? { ...prev, watchProviders: providers } : prev)
@@ -79,7 +76,6 @@ export function useMediaMeta(tmdbId: number, mediaType: MediaType) {
             : normalizeTv(detail as TmdbTvDetail)
         await db.mediaCache.put(normalized)
         if (!cancelled) setMeta(normalized)
-        // Fetch providers after main meta
         fetchAndStoreProviders(client, tmdbId, mediaType, region).then((providers) => {
           if (!cancelled) setMeta((prev) => prev ? { ...prev, watchProviders: providers } : prev)
         })
@@ -91,7 +87,7 @@ export function useMediaMeta(tmdbId: number, mediaType: MediaType) {
     return () => {
       cancelled = true
     }
-  }, [tmdbId, mediaType])
+  }, [tmdbId, mediaType, tmdbApiKey])
 
   return meta
 }
