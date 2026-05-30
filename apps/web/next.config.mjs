@@ -16,7 +16,9 @@ const config = {
   output: 'standalone',
   // Required for pnpm monorepo: tells nft to trace files from the workspace root
   // so root node_modules (where pnpm stores packages) are included in standalone output.
-  outputFileTracingRoot: path.join(__dirname, '../../'),
+  experimental: {
+    outputFileTracingRoot: path.join(__dirname, '../../'),
+  },
 }
 
 export default withSerwist(config)
