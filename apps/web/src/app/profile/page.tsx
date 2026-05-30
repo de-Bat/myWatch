@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useSync } from '@/hooks/useSync'
 import { useSettings } from '@/hooks/useSettings'
+import { useToast } from '@/components/Toast'
 import type { CardMetaSettings } from '@/hooks/useSettings'
 import { db } from '@/lib/db'
 
@@ -84,8 +85,8 @@ export default function SettingsPage() {
   const router = useRouter()
   const { syncing, lastSyncedAt, error, sync } = useSync()
   const { settings, update, updateCardMeta } = useSettings()
+  const { toast } = useToast()
   const [tmdbKeyInput, setTmdbKeyInput] = useState('')
-  const [tmdbKeySaved, setTmdbKeySaved] = useState(false)
 
   const pendingCount = useLiveQuery(() => db.pendingPushes.count())
   const itemCount = useLiveQuery(() =>
@@ -98,12 +99,12 @@ export default function SettingsPage() {
 
   function saveTmdbKey() {
     update({ tmdbApiKey: tmdbKeyInput.trim() })
-    setTmdbKeySaved(true)
-    setTimeout(() => setTmdbKeySaved(false), 1800)
+    toast('API key saved', 'success')
   }
 
   async function handleClearCache() {
     await db.mediaCache.clear()
+    toast('Cache cleared', 'success')
   }
 
   return (
@@ -240,9 +241,9 @@ export default function SettingsPage() {
               <button
                 onClick={saveTmdbKey}
                 className="px-3 py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none flex-shrink-0 transition-all duration-100"
-                style={{ background: tmdbKeySaved ? 'var(--green)' : 'var(--accent)', color: '#fff' }}
+                style={{ background: 'var(--accent)', color: '#fff' }}
               >
-                {tmdbKeySaved ? '✓ Saved' : 'Save'}
+                Save
               </button>
             </div>
           </div>
@@ -254,7 +255,10 @@ export default function SettingsPage() {
             <Row key={key} label={CARD_META_LABELS[key]}>
               <Toggle
                 on={settings.cardMeta[key]}
-                onToggle={() => updateCardMeta({ [key]: !settings.cardMeta[key] })}
+                onToggle={() => {
+                  updateCardMeta({ [key]: !settings.cardMeta[key] })
+                  toast('Saved', 'success', 1500)
+                }}
               />
             </Row>
           ))}
