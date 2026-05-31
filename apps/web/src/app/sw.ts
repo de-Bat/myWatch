@@ -13,7 +13,10 @@ declare const self: ServiceWorkerGlobalScope
 const FALLBACK_URL = '/offline'
 
 const serwist = new Serwist({
-  precacheEntries: self.__SW_MANIFEST,
+  precacheEntries: [
+    ...(self.__SW_MANIFEST ?? []),
+    { url: '/offline', revision: '1' },
+  ],
   skipWaiting: true,
   clientsClaim: true,
   // Disable navigationPreload — not well supported on iOS Safari
