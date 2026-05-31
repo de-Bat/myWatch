@@ -110,6 +110,15 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
               {item.mediaType === 'movie' ? 'Movie' : 'TV'}
             </span>
 
+            {item.mediaType === 'tv' && item.progressSeason != null && (
+              <span
+                className="text-[9px] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
+                style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}
+              >
+                S{item.progressSeason}·E{item.progressEpisode ?? '?'}
+              </span>
+            )}
+
             {cardMeta.showRuntime && meta?.runtime != null && meta.runtime > 0 && (
               <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.65)' }}>
                 {formatRuntime(meta.runtime)}
