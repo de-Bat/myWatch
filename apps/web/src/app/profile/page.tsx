@@ -172,6 +172,7 @@ export default function SettingsPage() {
 
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+      setJellyfinPullLog(prev => [...prev, `🌐 API base: ${apiBase}`])
       const res = await fetch(`${apiBase}/api/user/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.apiToken}` },
