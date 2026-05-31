@@ -156,30 +156,43 @@ export default function SettingsPage() {
   }
 
   async function saveJellyfin() {
-    update({
-      jellyfinUrl: jellyfinUrlInput.trim(),
-      jellyfinUserId: jellyfinUserIdInput.trim(),
-      jellyfinApiKey: jellyfinApiKeyInput.trim(),
-    })
-    if (session?.apiToken) {
-      try {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/user/settings`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.apiToken}`
-          },
-          body: JSON.stringify({
-            jellyfinUrl: jellyfinUrlInput.trim(),
-            jellyfinUserId: jellyfinUserIdInput.trim(),
-            jellyfinApiKey: jellyfinApiKeyInput.trim(),
-          })
-        })
-      } catch (err) {
-        console.error('Failed to sync Jellyfin settings to server:', err)
-      }
+    const url = jellyfinUrlInput.trim()
+    const userId = jellyfinUserIdInput.trim()
+    const apiKey = jellyfinApiKeyInput.trim()
+
+    update({ jellyfinUrl: url, jellyfinUserId: userId, jellyfinApiKey: apiKey })
+
+    setJellyfinPullLog([`⏳ Saving to server... (url="${url}", userId="${userId}", apiKey="${apiKey ? '****' : 'EMPTY'}")`])
+
+    if (!session?.apiToken) {
+      setJellyfinPullLog(prev => [...prev, '❌ Not logged in — cannot save to server'])
+      toast('Saved locally only (not logged in)', 'error')
+      return
     }
-    toast('Jellyfin settings saved', 'success')
+
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+      const res = await fetch(`${apiBase}/api/user/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.apiToken}` },
+        body: JSON.stringify({ jellyfinUrl: url, jellyfinUserId: userId, jellyfinApiKey: apiKey }),
+      })
+      const text = await res.text()
+      if (!res.ok) {
+        setJellyfinPullLog(prev => [...prev, `❌ Server responded ${res.status}: ${text}`])
+        toast('Failed to save to server — check debug log', 'error')
+      } else {
+        setJellyfinPullLog(prev => [...prev, `✅ Saved to server (${res.status}): ${text}`, '⏳ Triggering immediate poll...'])
+        setServerCredsStatus('set')
+        toast('Jellyfin settings saved', 'success')
+        // Trigger poll now that creds are saved
+        await pollJellyfinNow()
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setJellyfinPullLog(prev => [...prev, `❌ Network error: ${msg}`])
+      toast('Network error saving Jellyfin settings', 'error')
+    }
   }
 
   async function testJellyfin() {
