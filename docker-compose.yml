@@ -61,23 +61,5 @@ services:
     ports:
       - "${PORT_WEB:-3000}:${PORT_WEB:-3000}"
 
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      PORT_WEB: ${PORT_WEB:-3000}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      web:
-        condition: service_started
-
 volumes:
   postgres_data:
-  caddy_data:
-  caddy_config:
