@@ -41,7 +41,7 @@ function Row({
     <section>
       <h2
         className="mb-3"
-        style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}
+        style={{ fontSize: 'var(--text-13)', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}
       >
         {title}
       </h2>
@@ -123,7 +123,7 @@ export default function DiscoverPage() {
             <polyline points="10 4 6 8 10 12" />
           </svg>
         </Link>
-        <h1 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}>
+        <h1 style={{ fontSize: 'var(--text-17)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}>
           Discover
         </h1>
       </header>

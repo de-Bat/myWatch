@@ -42,7 +42,7 @@ export function MediaCard({ result, existingStatus, onAdd }: Props) {
       <div className="flex-1 min-w-0 flex flex-col gap-[3px] pt-[1px]">
         <Link href={`/media/${result.media_type}/${result.id}`}>
           <div
-            className="text-[14px] font-semibold tracking-[-0.015em] truncate leading-[1.25] hover:opacity-80"
+            className="text-[1rem] font-semibold tracking-[-0.015em] truncate leading-[1.25] hover:opacity-80"
             style={{ color: 'var(--fg)' }}
           >
             {title}
@@ -50,13 +50,13 @@ export function MediaCard({ result, existingStatus, onAdd }: Props) {
         </Link>
 
         <div
-          className="flex items-center gap-[5px] text-[11.5px] leading-none mb-[2px]"
+          className="flex items-center gap-[5px] text-[var(--text-11h)] leading-none mb-[2px]"
           style={{ color: 'var(--muted2)' }}
         >
           {year && <span>{year}</span>}
           {year && <span style={{ opacity: 0.4 }}>·</span>}
           <span
-            className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase leading-[1.3] px-[5px] py-[1.5px] rounded-[3px]"
+            className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase leading-[1.3] px-[5px] py-[1.5px] rounded-[3px]"
             style={
               result.media_type === 'movie'
                 ? { background: 'rgba(251,146,60,.13)', color: 'var(--orange)' }
@@ -75,7 +75,7 @@ export function MediaCard({ result, existingStatus, onAdd }: Props) {
           ) : (
             <button
               onClick={() => onAdd(result)}
-              className="text-[11px] font-semibold px-[10px] py-[3px] rounded-full border-none cursor-pointer"
+              className="text-[var(--text-11)] font-semibold px-[10px] py-[3px] rounded-full border-none cursor-pointer"
               style={{ background: 'var(--accent)', color: '#fff' }}
               onMouseEnter={(e) => (e.currentTarget.style.background = '#4f46e5')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}

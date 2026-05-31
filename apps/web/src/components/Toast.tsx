@@ -46,7 +46,7 @@ function ToastBubble({
         ...VARIANT_STYLES[item.variant],
         padding: '8px 14px',
         borderRadius: 8,
-        fontSize: 13,
+        fontSize: 'var(--text-13)',
         fontWeight: 500,
         display: 'flex',
         alignItems: 'center',
@@ -65,7 +65,7 @@ function ToastBubble({
             border: 'none',
             cursor: 'pointer',
             color: 'inherit',
-            fontSize: 16,
+            fontSize: 'var(--text-17)',
             lineHeight: 1,
             padding: '0 2px',
           }}

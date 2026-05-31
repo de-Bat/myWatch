@@ -19,7 +19,7 @@ export function StatusBadge({ status }: { status: WatchStatus }) {
   return (
     <span
       style={{ background: bg, color }}
-      className="inline-flex items-center gap-1 text-[11px] font-semibold px-[7px] py-[2px] rounded-full leading-[1.4]"
+      className="inline-flex items-center gap-1 text-[var(--text-11)] font-semibold px-[7px] py-[2px] rounded-full leading-[1.4]"
     >
       <span
         className="w-[5px] h-[5px] rounded-full flex-shrink-0"

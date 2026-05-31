@@ -49,7 +49,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
             style={{ background: `linear-gradient(135deg, var(--accent-bg), var(--bg))` }}
           >
             <span
-              className="text-[11px] font-bold leading-[1.2]"
+              className="text-[var(--text-11)] font-bold leading-[1.2]"
               style={{ color: 'var(--fg2)', letterSpacing: '-0.01em' }}
             >
               {meta?.title ?? `#${item.tmdbId}`}
@@ -79,7 +79,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
         {cardMeta.showTmdbRating && meta?.voteAverage != null && meta.voteAverage > 0 && (
           <div className="absolute top-[6px] right-[6px]">
             <span
-              className="text-[10px] font-bold px-[6px] py-[2px] rounded-[3px]"
+              className="text-[var(--text-10)] font-bold px-[6px] py-[2px] rounded-[3px]"
               style={{ background: 'rgba(0,0,0,.65)', color: 'var(--amber)' }}
             >
               ★ {meta.voteAverage.toFixed(1)}
@@ -90,7 +90,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
         {/* Bottom overlay */}
         <div className="absolute bottom-0 left-0 right-0 px-[8px] pb-[7px] flex flex-col gap-[4px]">
           <div
-            className="text-[13px] font-semibold leading-[1.2] truncate"
+            className="text-[var(--text-13)] font-semibold leading-[1.2] truncate"
             style={{ color: '#fff', letterSpacing: '-0.01em' }}
           >
             {meta?.title ?? `#${item.tmdbId}`}
@@ -99,7 +99,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
           {/* TV/Movie badge row */}
           <div className="flex items-center gap-[4px] flex-wrap">
             <span
-              className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+              className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
               style={
                 item.mediaType === 'movie'
                   ? { background: 'rgba(251,146,60,.85)', color: '#fff' }
@@ -116,7 +116,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
                   <div className="flex gap-[4px]">
                     {jellyfinProgress.season != null && (
                       <span
-                        className="text-[9px] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
+                        className="text-[var(--text-9)] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
                         style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}
                       >
                         S{jellyfinProgress.season}·E{jellyfinProgress.episode ?? '?'}
@@ -124,7 +124,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
                     )}
                     {jellyfinProgress.totalEpisodes != null && jellyfinProgress.totalEpisodes > 0 && (
                       <span
-                        className="text-[9px] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
+                        className="text-[var(--text-9)] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
                         style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }}
                       >
                         {jellyfinProgress.watchedEpisodes ?? 0}/{jellyfinProgress.totalEpisodes}
@@ -132,7 +132,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
                     )}
                     {jellyfinProgress.episodePercent != null && jellyfinProgress.episodePercent > 0 && jellyfinProgress.episodePercent < 100 && (
                       <span
-                        className="text-[9px] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
+                        className="text-[var(--text-9)] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
                         style={{ background: 'rgba(251,191,36,0.2)', color: 'var(--amber)' }}
                       >
                         {jellyfinProgress.episodePercent}%
@@ -145,7 +145,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
               if (item.progressSeason != null) {
                 return (
                   <span
-                    className="text-[9px] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
+                    className="text-[var(--text-9)] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
                     style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}
                   >
                     S{item.progressSeason}·E{item.progressEpisode ?? '?'}
@@ -156,7 +156,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
             })()}
 
             {cardMeta.showRuntime && meta?.runtime != null && meta.runtime > 0 && (
-              <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <span className="text-[var(--text-9)]" style={{ color: 'rgba(255,255,255,0.65)' }}>
                 {formatRuntime(meta.runtime)}
               </span>
             )}

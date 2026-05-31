@@ -222,13 +222,13 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
             <div className="flex flex-col gap-[5px] pt-[4px] min-w-0">
               <h2
                 className="font-bold leading-[1.2]"
-                style={{ fontSize: 18, letterSpacing: '-0.025em', color: 'var(--fg)' }}
+                style={{ fontSize: 'var(--text-18)', letterSpacing: '-0.025em', color: 'var(--fg)' }}
               >
                 {meta?.title ?? `#${tmdbId}`}
               </h2>
-              <div className="flex items-center gap-[5px] flex-wrap" style={{ color: 'var(--muted2)', fontSize: 12 }}>
+              <div className="flex items-center gap-[5px] flex-wrap" style={{ color: 'var(--muted2)', fontSize: 'var(--text-12)' }}>
                 <span
-                  className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+                  className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
                   style={
                     mediaType === 'movie'
                       ? { background: 'rgba(251,146,60,.13)', color: 'var(--orange)' }
@@ -247,12 +247,12 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
               {upcoming && meta?.releaseDate && (
                 <div className="flex items-center gap-2">
                   <span
-                    className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase px-[6px] py-[2px] rounded-[3px]"
+                    className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[6px] py-[2px] rounded-[3px]"
                     style={{ background: 'rgba(251,191,36,.15)', color: 'var(--amber)' }}
                   >
                     Upcoming
                   </span>
-                  <span style={{ fontSize: 11, color: 'var(--muted2)' }}>{formatReleaseDate(meta.releaseDate)}</span>
+                  <span style={{ fontSize: 'var(--text-11)', color: 'var(--muted2)' }}>{formatReleaseDate(meta.releaseDate)}</span>
                 </div>
               )}
               {/* Genres */}
@@ -261,7 +261,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                   {meta.genres.map((g) => (
                     <span
                       key={g.id}
-                      className="text-[10px] font-medium px-[6px] py-[1.5px] rounded-[4px]"
+                      className="text-[var(--text-10)] font-medium px-[6px] py-[1.5px] rounded-[4px]"
                       style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
                     >
                       {g.name}
@@ -274,7 +274,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
 
           {/* Overview */}
           {meta?.overview && (
-            <p style={{ fontSize: 13, color: 'var(--fg2)', lineHeight: 1.6 }}>{meta.overview}</p>
+            <p style={{ fontSize: 'var(--text-13)', color: 'var(--fg2)', lineHeight: 1.6 }}>{meta.overview}</p>
           )}
 
           <Divider />
@@ -289,7 +289,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                   <button
                     key={s}
                     onClick={() => handleStatusChange(s)}
-                    className="px-[12px] py-[6px] rounded-[6px] text-[12px] font-medium transition-all duration-100 cursor-pointer border-none"
+                    className="px-[12px] py-[6px] rounded-[6px] text-[var(--text-12)] font-medium transition-all duration-100 cursor-pointer border-none"
                     style={{
                       background: active ? 'var(--accent)' : 'var(--surface)',
                       color: active ? '#fff' : 'var(--muted)',
@@ -321,18 +321,18 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                 <SectionLabel>On Jellyfin</SectionLabel>
                 <div className="flex items-center gap-[8px] flex-wrap">
                   <span
-                    className="text-[9.5px] font-extrabold tracking-[0.04em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+                    className="text-[var(--text-9h)] font-extrabold tracking-[0.04em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
                     style={{ background: 'rgba(251,191,36,.15)', color: 'var(--amber)' }}
                   >
                     {jellyfinProgress.jellyfinStatus === 'watched' ? 'Watched' : 'Watching'}
                   </span>
                   {jellyfinProgress.jellyfinStatus === 'watching' && jellyfinProgress.mediaType === 'movie' && (
-                    <span style={{ fontSize: 12, color: 'var(--fg2)' }}>
+                    <span style={{ fontSize: 'var(--text-12)', color: 'var(--fg2)' }}>
                       {jellyfinProgress.moviePercent ?? 0}% watched
                     </span>
                   )}
                   {jellyfinProgress.jellyfinStatus === 'watching' && jellyfinProgress.mediaType === 'tv' && (
-                    <span style={{ fontSize: 12, color: 'var(--fg2)' }}>
+                    <span style={{ fontSize: 'var(--text-12)', color: 'var(--fg2)' }}>
                       {jellyfinProgress.season != null && `S${jellyfinProgress.season} · E${jellyfinProgress.episode ?? '?'}`}
                       {jellyfinProgress.totalEpisodes
                         ? ` · ${jellyfinProgress.watchedEpisodes ?? 0} of ${jellyfinProgress.totalEpisodes} ep.`
@@ -369,7 +369,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                 <button
                   key={n}
                   onClick={() => setRating(rating === n ? null : n)}
-                  className="w-[28px] h-[28px] rounded-[5px] text-[12px] font-semibold transition-all duration-100 cursor-pointer border-none"
+                  className="w-[28px] h-[28px] rounded-[5px] text-[var(--text-12)] font-semibold transition-all duration-100 cursor-pointer border-none"
                   style={{
                     background: rating != null && n <= rating ? 'var(--amber)' : 'var(--surface)',
                     color: rating != null && n <= rating ? '#18181b' : 'var(--muted)',
@@ -392,7 +392,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="Your thoughts…"
-              className="w-full px-3 py-2 rounded-[6px] text-[13px] focus:outline-none resize-none"
+              className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none resize-none"
               style={{
                 background: 'var(--surface)',
                 border: '1px solid var(--border2)',
@@ -420,7 +420,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                   {p.logoPath && (
                     <img src={`${TMDB_LOGO}${p.logoPath}`} alt={p.providerName} className="w-[16px] h-[16px] rounded-[3px]" />
                   )}
-                  <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--fg2)' }}>{p.providerName}</span>
+                  <span style={{ fontSize: 'var(--text-11)', fontWeight: 500, color: 'var(--fg2)' }}>{p.providerName}</span>
                 </div>
               ))}
 
@@ -430,11 +430,11 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                   className="flex items-center gap-[5px] px-[8px] py-[5px] rounded-[6px] group"
                   style={{ background: 'var(--accent-bg)', border: '1px solid rgba(99,102,241,.3)' }}
                 >
-                  <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--accent2)' }}>{p}</span>
+                  <span style={{ fontSize: 'var(--text-11)', fontWeight: 500, color: 'var(--accent2)' }}>{p}</span>
                   <button
                     onClick={() => removeCustomPlatform(p)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ color: 'var(--muted2)', fontSize: 13, lineHeight: 1, cursor: 'pointer', border: 'none', background: 'transparent', padding: 0 }}
+                    style={{ color: 'var(--muted2)', fontSize: 'var(--text-13)', lineHeight: 1, cursor: 'pointer', border: 'none', background: 'transparent', padding: 0 }}
                   >
                     ×
                   </button>
@@ -449,7 +449,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                     background: 'transparent',
                     border: '1px dashed var(--border)',
                     color: 'var(--muted2)',
-                    fontSize: 11,
+                    fontSize: 'var(--text-11)',
                     cursor: 'pointer',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--muted2)' }}
@@ -463,7 +463,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                     <button
                       key={p}
                       onClick={() => addCustomPlatform(p)}
-                      className="px-[7px] py-[3px] rounded-[4px] text-[10px] font-medium transition-all duration-100 cursor-pointer"
+                      className="px-[7px] py-[3px] rounded-[4px] text-[var(--text-10)] font-medium transition-all duration-100 cursor-pointer"
                       style={{ background: 'var(--surface)', border: '1px solid var(--border2)', color: 'var(--muted)' }}
                       onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface2)' }}
                       onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'var(--surface)' }}
@@ -480,14 +480,14 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                       if (e.key === 'Escape') setShowCustomInput(false)
                     }}
                     placeholder="Custom…"
-                    className="w-[90px] px-[8px] py-[4px] rounded-[5px] text-[11px] focus:outline-none"
+                    className="w-[90px] px-[8px] py-[4px] rounded-[5px] text-[var(--text-11)] focus:outline-none"
                     style={{ background: 'var(--surface)', border: '1px solid var(--accent)', color: 'var(--fg)' }}
                   />
                 </div>
               )}
 
               {!hasProviders && !showCustomInput && (
-                <span style={{ fontSize: 11, color: 'var(--muted2)' }}>No streaming info available</span>
+                <span style={{ fontSize: 'var(--text-11)', color: 'var(--muted2)' }}>No streaming info available</span>
               )}
             </div>
           </div>
@@ -499,7 +499,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
               <div className="flex gap-[8px]">
                 <button
                   onClick={handleSave}
-                  className="flex-1 py-[9px] rounded-[6px] text-[13px] font-medium cursor-pointer border-none transition-all duration-100"
+                  className="flex-1 py-[9px] rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
                   style={{ background: 'var(--accent)', color: '#fff' }}
                   onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.88' }}
                   onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
@@ -508,7 +508,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                 </button>
                 <button
                   onClick={handleRemove}
-                  className="py-[9px] px-[16px] rounded-[6px] text-[13px] font-medium cursor-pointer border-none transition-all duration-100"
+                  className="py-[9px] px-[16px] rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
                   style={{ background: 'rgba(248,113,113,.1)', color: 'var(--red)', border: '1px solid rgba(248,113,113,.2)' }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(248,113,113,.18)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(248,113,113,.1)' }}
@@ -532,7 +532,7 @@ function Divider() {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <span
-      className="text-[10px] font-bold tracking-[0.08em] uppercase"
+      className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase"
       style={{ color: 'var(--muted2)' }}
     >
       {children}

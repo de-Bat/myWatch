@@ -35,7 +35,7 @@ export function OfflineIndicator() {
 
   return (
     <div
-      className="fixed left-0 right-0 z-[99] flex items-center justify-center gap-2 px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
+      className="fixed left-0 right-0 z-[99] flex items-center justify-center gap-2 px-4 py-2 text-[var(--text-13)] font-semibold text-white shadow-lg"
       style={{
         // Below safe-area on iOS (status bar + notch area)
         top: 'env(safe-area-inset-top, 0px)',

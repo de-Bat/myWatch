@@ -3,6 +3,19 @@
 @tailwind utilities;
 
 :root {
+  /* text size scale — all relative to html font-size so applyFont() works */
+  --text-9: 0.643rem;
+  --text-9h: 0.679rem;
+  --text-10: 0.714rem;
+  --text-10h: 0.75rem;
+  --text-11: 0.786rem;
+  --text-11h: 0.821rem;
+  --text-12: 0.857rem;
+  --text-13: 0.929rem;
+  --text-15: 1.071rem;
+  --text-17: 1.214rem;
+  --text-18: 1.286rem;
+
   --bg: #18181b;
   --surface: #27272a;
   --surface2: #2f2f33;
@@ -42,12 +55,16 @@ html.light {
   --accent-bg: rgba(99, 102, 241, 0.12);
 }
 
+html {
+  font-size: 14px; /* overridden by applyFont() */
+}
+
 html,
 body {
   background: var(--bg);
   color: var(--fg);
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
-  font-size: 14px;
+  font-size: 1rem; /* scale with html font-size */
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -127,7 +144,7 @@ html[data-font="mono"] body {
   border: 1px solid var(--border);
   background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10' fill='none' stroke='%23888' stroke-width='1.6' stroke-linecap='round'%3E%3Cpolyline points='2 3.5 5 6.5 8 3.5'/%3E%3C/svg%3E") no-repeat right 8px center;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-12);
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;

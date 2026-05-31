@@ -282,7 +282,7 @@ export default function HomePage() {
       >
         <div className="flex items-center gap-[10px] min-w-0">
           <span
-            className="text-[13px] font-bold whitespace-nowrap"
+            className="text-[var(--text-13)] font-bold whitespace-nowrap"
             style={{
               color: 'var(--accent2)',
               background: 'var(--accent-bg)',
@@ -295,19 +295,19 @@ export default function HomePage() {
           </span>
           <h1
             className="flex items-center gap-[7px] whitespace-nowrap"
-            style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}
+            style={{ fontSize: 'var(--text-17)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}
           >
             My List
             {isMobile && !isOnline && (
               <span
-                className="text-[9px] font-bold tracking-[0.06em] uppercase px-[6px] py-[2px] rounded-[4px]"
+                className="text-[var(--text-9)] font-bold tracking-[0.06em] uppercase px-[6px] py-[2px] rounded-[4px]"
                 style={{ background: 'rgba(239,68,68,.15)', color: 'var(--red)', letterSpacing: '0.05em' }}
               >
                 Offline
               </span>
             )}
             <span
-              className="text-[11px] font-semibold tabular-nums"
+              className="text-[var(--text-11)] font-semibold tabular-nums"
               style={{
                 color: 'var(--muted2)',
                 background: 'var(--surface)',
@@ -382,7 +382,7 @@ export default function HomePage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 focus:outline-none bg-transparent border-none min-w-0"
-                style={{ color: 'var(--fg)', fontSize: 13, paddingLeft: 6 }}
+                style={{ color: 'var(--fg)', fontSize: 'var(--text-13)', paddingLeft: 6 }}
                 autoFocus
               />
             )}
@@ -435,7 +435,7 @@ export default function HomePage() {
           {/* Avatar */}
           <button
             onClick={() => router.push('/profile')}
-            className="flex items-center justify-center w-[30px] h-[30px] rounded-full border-none cursor-pointer ml-[6px] flex-shrink-0 text-[11px] font-bold"
+            className="flex items-center justify-center w-[30px] h-[30px] rounded-full border-none cursor-pointer ml-[6px] flex-shrink-0 text-[var(--text-11)] font-bold"
             style={{ background: 'var(--accent-bg)', border: '1.5px solid var(--accent)', color: 'var(--accent2)' }}
           >
             {userInitial}
@@ -450,7 +450,7 @@ export default function HomePage() {
           className="mx-5 mb-3 px-4 py-3 rounded-[10px] flex items-center justify-between gap-3"
           style={{ background: 'var(--accent-bg)', border: '1px solid var(--accent)' }}
         >
-          <p className="text-[13px]" style={{ color: 'var(--fg2)' }}>
+          <p className="text-[var(--text-13)]" style={{ color: 'var(--fg2)' }}>
             <span className="font-semibold" style={{ color: 'var(--accent2)' }}>{importBanner.count} local items</span> found. Import to your account?
           </p>
           <div className="flex gap-2 flex-shrink-0">
@@ -459,14 +459,14 @@ export default function HomePage() {
                 setImportBanner(null)
                 await sync()
               }}
-              className="px-3 py-1.5 rounded-[6px] text-[12px] font-semibold border-none cursor-pointer"
+              className="px-3 py-1.5 rounded-[6px] text-[var(--text-12)] font-semibold border-none cursor-pointer"
               style={{ background: 'var(--accent)', color: '#fff' }}
             >
               Import
             </button>
             <button
               onClick={() => setImportBanner(null)}
-              className="px-3 py-1.5 rounded-[6px] text-[12px] font-medium border-none cursor-pointer"
+              className="px-3 py-1.5 rounded-[6px] text-[var(--text-12)] font-medium border-none cursor-pointer"
               style={{ background: 'var(--surface2)', color: 'var(--muted)' }}
             >
               Skip
@@ -493,7 +493,7 @@ export default function HomePage() {
                   style={{
                     padding: '5px 11px',
                     borderRadius: 'var(--pill)',
-                    fontSize: 13,
+                    fontSize: 'var(--text-13)',
                     fontWeight: active ? 600 : 500,
                     background: active ? 'var(--accent)' : 'var(--surface)',
                     color: active ? '#fff' : 'var(--muted)',
@@ -504,7 +504,7 @@ export default function HomePage() {
                 >
                   {STATUS_LABELS[s]}
                   <span
-                    className="text-[10px] font-bold tabular-nums text-center"
+                    className="text-[var(--text-10)] font-bold tabular-nums text-center"
                     style={{
                       padding: '1px 5px',
                       borderRadius: 'var(--pill)',
@@ -631,7 +631,7 @@ export default function HomePage() {
                       style={{
                         padding: '4px 10px',
                         borderRadius: 'var(--rxs)',
-                        fontSize: 12,
+                        fontSize: 'var(--text-12)',
                         fontWeight: active ? 600 : 500,
                         background: active ? 'var(--surface2)' : 'transparent',
                         color: active ? 'var(--fg)' : 'var(--muted)',
@@ -656,7 +656,7 @@ export default function HomePage() {
                     border: '1px solid var(--border)',
                     background: sortOpen ? 'var(--surface2)' : 'var(--surface)',
                     color: 'var(--muted)',
-                    fontSize: 12,
+                    fontSize: 'var(--text-12)',
                     fontWeight: 500,
                   }}
                 >
@@ -679,7 +679,7 @@ export default function HomePage() {
                       <button
                         key={opt.value}
                         onClick={() => { setSortIndex(i); setSortOpen(false) }}
-                        className="w-full text-left px-3 py-[8px] text-[12px] cursor-pointer border-none transition-all duration-100"
+                        className="w-full text-left px-3 py-[8px] text-[var(--text-12)] cursor-pointer border-none transition-all duration-100"
                         style={{
                           background: sortIndex === i ? 'var(--accent-bg)' : 'transparent',
                           color: sortIndex === i ? 'var(--accent2)' : 'var(--fg2)',
@@ -709,7 +709,7 @@ export default function HomePage() {
                   border: `1px solid ${genreFilter.size > 0 ? 'var(--accent)' : 'var(--border)'}`,
                   background: genreFilter.size > 0 ? 'var(--accent-bg)' : genreOpen ? 'var(--surface2)' : 'var(--surface)',
                   color: genreFilter.size > 0 ? 'var(--accent2)' : 'var(--muted)',
-                  fontSize: 12,
+                  fontSize: 'var(--text-12)',
                   fontWeight: genreFilter.size > 0 ? 600 : 500,
                 }}
               >
@@ -725,14 +725,14 @@ export default function HomePage() {
                 >
                   {/* Header */}
                   <div className="flex items-center justify-between px-3 py-[8px]" style={{ borderBottom: '1px solid var(--border2)' }}>
-                    <span className="text-[10px] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+                    <span className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
                       Filter by Genre
                     </span>
                     <div className="flex items-center gap-[6px]">
                       {genreFilter.size > 0 && (
                         <button
                           onClick={() => setGenreFilter(new Set())}
-                          className="text-[10px] cursor-pointer border-none transition-all duration-100"
+                          className="text-[var(--text-10)] cursor-pointer border-none transition-all duration-100"
                           style={{ background: 'transparent', color: 'var(--accent2)', fontWeight: 500 }}
                         >
                           Clear
@@ -763,7 +763,7 @@ export default function HomePage() {
                             if (checked) next.delete(g); else next.add(g)
                             setGenreFilter(next)
                           }}
-                          className="w-full flex items-center gap-[8px] px-3 py-[7px] text-[12px] cursor-pointer border-none transition-all duration-100 text-left"
+                          className="w-full flex items-center gap-[8px] px-3 py-[7px] text-[var(--text-12)] cursor-pointer border-none transition-all duration-100 text-left"
                           style={{ background: 'transparent', color: checked ? 'var(--fg)' : 'var(--fg2)', fontWeight: checked ? 500 : 400 }}
                           onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface2)' }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
@@ -856,7 +856,7 @@ export default function HomePage() {
                     style={{
                       padding: '3px 7px',
                       borderRadius: 'var(--rxs)',
-                      fontSize: 11,
+                      fontSize: 'var(--text-11)',
                       fontWeight: active ? 600 : 400,
                       background: active ? 'var(--surface2)' : 'transparent',
                       color: active ? 'var(--fg)' : 'var(--muted)',
@@ -882,7 +882,7 @@ export default function HomePage() {
                 border: `1px solid ${pendingCount > 0 ? 'rgba(251,191,36,.35)' : syncError ? 'rgba(248,113,113,.35)' : 'transparent'}`,
                 background: pendingCount > 0 ? 'rgba(251,191,36,.07)' : syncError ? 'rgba(248,113,113,.07)' : 'transparent',
                 color: pendingCount > 0 ? 'var(--amber)' : syncError ? 'var(--red)' : 'var(--muted2)',
-                fontSize: 11,
+                fontSize: 'var(--text-11)',
                 fontWeight: pendingCount > 0 ? 600 : 400,
               }}
               onMouseEnter={(e) => { if (!pendingCount && !syncError) { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--border2)' } }}
@@ -899,7 +899,7 @@ export default function HomePage() {
               {pendingCount > 0 && !syncing && (
                 <span
                   className="rounded-full tabular-nums font-bold"
-                  style={{ fontSize: 9, padding: '1px 5px', background: 'rgba(251,191,36,.25)', color: 'var(--amber)' }}
+                  style={{ fontSize: 'var(--text-9)', padding: '1px 5px', background: 'rgba(251,191,36,.25)', color: 'var(--amber)' }}
                 >
                   {pendingCount}
                 </span>
@@ -914,7 +914,7 @@ export default function HomePage() {
       {/* List / Grid */}
       <div className="content-area">
         {allItems === undefined ? (
-          <p style={{ color: 'var(--muted)', fontSize: 13 }}>Loading…</p>
+          <p style={{ color: 'var(--muted)', fontSize: 'var(--text-13)' }}>Loading…</p>
         ) : displayed.length === 0 ? (
           <div className="flex flex-col items-center gap-3 text-center" style={{ padding: '64px 16px 48px' }}>
             <div
@@ -928,10 +928,10 @@ export default function HomePage() {
                 <line x1="7" y1="11.5" x2="14" y2="11.5" />
               </svg>
             </div>
-            <p className="font-semibold" style={{ fontSize: 15, color: 'var(--fg2)', letterSpacing: '-0.02em' }}>
+            <p className="font-semibold" style={{ fontSize: 'var(--text-15)', color: 'var(--fg2)', letterSpacing: '-0.02em' }}>
               Nothing here yet
             </p>
-            <p style={{ fontSize: 13, color: 'var(--muted2)', maxWidth: 220, lineHeight: 1.5, marginTop: -4 }}>
+            <p style={{ fontSize: 'var(--text-13)', color: 'var(--muted2)', maxWidth: 220, lineHeight: 1.5, marginTop: -4 }}>
               Try a different filter or search something to watch
             </p>
           </div>

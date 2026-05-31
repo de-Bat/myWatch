@@ -96,14 +96,14 @@ export function PlaylistCard({ playlist }: { playlist: Playlist }) {
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div
-          className="text-[14px] font-semibold tracking-[-0.015em] truncate leading-[1.25] mb-[3px]"
+          className="text-[1rem] font-semibold tracking-[-0.015em] truncate leading-[1.25] mb-[3px]"
           style={{ color: 'var(--fg)' }}
         >
           {playlist.name}
         </div>
         <div className="flex items-center gap-[5px]">
           <span
-            className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+            className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
             style={
               playlist.type === 'smart'
                 ? { background: 'rgba(96,165,250,.13)', color: 'var(--blue)' }
@@ -113,12 +113,12 @@ export function PlaylistCard({ playlist }: { playlist: Playlist }) {
             {playlist.type === 'smart' ? 'Smart' : 'Manual'}
           </span>
           {itemCount != null && (
-            <span className="text-[11.5px]" style={{ color: 'var(--muted2)' }}>
+            <span className="text-[var(--text-11h)]" style={{ color: 'var(--muted2)' }}>
               {itemCount} {itemCount === 1 ? 'item' : 'items'}
             </span>
           )}
           {playlist.description && (
-            <span className="text-[11.5px] truncate" style={{ color: 'var(--muted2)' }}>
+            <span className="text-[var(--text-11h)] truncate" style={{ color: 'var(--muted2)' }}>
               · {playlist.description}
             </span>
           )}

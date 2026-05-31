@@ -99,7 +99,7 @@ export default function SearchPage() {
             <polyline points="10 4 6 8 10 12" />
           </svg>
         </Link>
-        <h1 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}>
+        <h1 style={{ fontSize: 'var(--text-17)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}>
           Search
         </h1>
       </header>
@@ -119,7 +119,7 @@ export default function SearchPage() {
             border: '1px solid var(--border)',
             background: 'var(--surface)',
             color: 'var(--fg)',
-            fontSize: 14,
+            fontSize: '1rem',
           }}
         />
         <div
@@ -143,7 +143,7 @@ export default function SearchPage() {
                 style={{
                   padding: '5px 10px',
                   borderRadius: 'var(--rxs)',
-                  fontSize: 12,
+                  fontSize: 'var(--text-12)',
                   fontWeight: active ? 600 : 500,
                   background: active ? 'var(--surface2)' : 'transparent',
                   color: active ? 'var(--fg)' : 'var(--muted)',
@@ -157,20 +157,20 @@ export default function SearchPage() {
       </div>
 
       {!process.env.NEXT_PUBLIC_TMDB_API_KEY && (
-        <p className="mb-3" style={{ color: 'var(--red)', fontSize: 13 }}>
+        <p className="mb-3" style={{ color: 'var(--red)', fontSize: 'var(--text-13)' }}>
           NEXT_PUBLIC_TMDB_API_KEY not set — search won&apos;t work
         </p>
       )}
 
       {loading && (
-        <p style={{ color: 'var(--muted)', fontSize: 13 }}>Searching…</p>
+        <p style={{ color: 'var(--muted)', fontSize: 'var(--text-13)' }}>Searching…</p>
       )}
       {error && (
-        <p style={{ color: 'var(--red)', fontSize: 13 }}>{error}</p>
+        <p style={{ color: 'var(--red)', fontSize: 'var(--text-13)' }}>{error}</p>
       )}
 
       {!loading && !error && query && results.length === 0 && (
-        <p style={{ color: 'var(--muted2)', fontSize: 13 }}>No results for &ldquo;{query}&rdquo;</p>
+        <p style={{ color: 'var(--muted2)', fontSize: 'var(--text-13)' }}>No results for &ldquo;{query}&rdquo;</p>
       )}
 
       <div className="flex flex-col" style={{ gap: 8 }}>

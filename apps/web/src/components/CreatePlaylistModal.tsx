@@ -74,7 +74,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
           className="flex items-center justify-between px-5 py-4"
           style={{ borderBottom: '1px solid var(--border2)' }}
         >
-          <h2 className="text-[15px] font-semibold" style={{ color: 'var(--fg)', letterSpacing: '-0.02em' }}>
+          <h2 className="text-[var(--text-15)] font-semibold" style={{ color: 'var(--fg)', letterSpacing: '-0.02em' }}>
             New Playlist
           </h2>
           <button
@@ -92,7 +92,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
           {/* Name */}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+            <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
               Name
             </label>
             <input
@@ -100,7 +100,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Weekend movies…"
-              className="w-full px-3 py-2 rounded-[6px] text-[13px] focus:outline-none"
+              className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
               style={{
                 background: 'var(--bg)',
                 border: '1px solid var(--border)',
@@ -113,14 +113,14 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
 
           {/* Description */}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+            <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
               Description (optional)
             </label>
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description"
-              className="w-full px-3 py-2 rounded-[6px] text-[13px] focus:outline-none"
+              className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
               style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
               onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
               onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
@@ -129,7 +129,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
 
           {/* Type toggle */}
           <div className="space-y-2">
-            <label className="text-[10px] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+            <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
               Type
             </label>
             <div
@@ -146,7 +146,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
                 <button
                   key={t}
                   onClick={() => setType(t)}
-                  className="flex-1 py-[6px] text-[12px] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                  className="flex-1 py-[6px] text-[var(--text-12)] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none"
                   style={{
                     background: type === t ? 'var(--surface)' : 'transparent',
                     color: type === t ? 'var(--fg)' : 'var(--muted)',
@@ -157,7 +157,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
                 </button>
               ))}
             </div>
-            <p className="text-[11px]" style={{ color: 'var(--muted2)' }}>
+            <p className="text-[var(--text-11)]" style={{ color: 'var(--muted2)' }}>
               {type === 'manual'
                 ? 'Add items manually. Drag to reorder.'
                 : 'Items auto-populate based on rules below.'}
@@ -168,7 +168,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
           {type === 'smart' && (
             <div className="space-y-3">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+                <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
                   Status (any of)
                 </label>
                 <div className="flex flex-wrap gap-[5px]">
@@ -178,7 +178,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
                       <button
                         key={value}
                         onClick={() => toggleStatus(value)}
-                        className="px-[9px] py-[4px] rounded-full text-[11px] font-medium transition-all duration-100 cursor-pointer border"
+                        className="px-[9px] py-[4px] rounded-full text-[var(--text-11)] font-medium transition-all duration-100 cursor-pointer border"
                         style={{
                           background: active ? 'var(--accent-bg)' : 'transparent',
                           color: active ? 'var(--accent2)' : 'var(--muted)',
@@ -193,7 +193,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+                <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
                   Type (any of)
                 </label>
                 <div className="flex gap-[5px]">
@@ -203,7 +203,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
                       <button
                         key={t}
                         onClick={() => toggleMediaType(t)}
-                        className="px-[9px] py-[4px] rounded-full text-[11px] font-medium transition-all duration-100 cursor-pointer border"
+                        className="px-[9px] py-[4px] rounded-full text-[var(--text-11)] font-medium transition-all duration-100 cursor-pointer border"
                         style={{
                           background: active ? 'var(--accent-bg)' : 'transparent',
                           color: active ? 'var(--accent2)' : 'var(--muted)',
@@ -218,7 +218,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+                <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
                   Min. rating (1–10)
                 </label>
                 <input
@@ -228,7 +228,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
                   value={minRating}
                   onChange={(e) => setMinRating(e.target.value)}
                   placeholder="Any"
-                  className="w-20 px-3 py-2 rounded-[6px] text-[13px] focus:outline-none"
+                  className="w-20 px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
                   style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
@@ -245,7 +245,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
         >
           <button
             onClick={onClose}
-            className="flex-1 py-2 rounded-[6px] text-[13px] font-medium transition-all duration-100 cursor-pointer border"
+            className="flex-1 py-2 rounded-[6px] text-[var(--text-13)] font-medium transition-all duration-100 cursor-pointer border"
             style={{ background: 'transparent', color: 'var(--muted)', borderColor: 'var(--border)' }}
           >
             Cancel
@@ -253,7 +253,7 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
           <button
             onClick={handleCreate}
             disabled={!name.trim() || saving}
-            className="flex-1 py-2 rounded-[6px] text-[13px] font-medium transition-all duration-100 cursor-pointer border-none disabled:opacity-50"
+            className="flex-1 py-2 rounded-[6px] text-[var(--text-13)] font-medium transition-all duration-100 cursor-pointer border-none disabled:opacity-50"
             style={{ background: 'var(--accent)', color: '#fff' }}
           >
             {saving ? 'Creating…' : 'Create Playlist'}

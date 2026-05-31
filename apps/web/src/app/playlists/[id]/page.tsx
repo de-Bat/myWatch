@@ -34,7 +34,7 @@ export default function PlaylistDetailPage() {
   if (!playlist) {
     return (
       <div className="subpage-root">
-        <p style={{ color: 'var(--muted)', fontSize: 13 }}>Playlist not found.</p>
+        <p style={{ color: 'var(--muted)', fontSize: 'var(--text-13)' }}>Playlist not found.</p>
       </div>
     )
   }
@@ -73,11 +73,11 @@ export default function PlaylistDetailPage() {
           </button>
           <h1
             className="flex items-center gap-[7px] min-w-0"
-            style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}
+            style={{ fontSize: 'var(--text-17)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}
           >
             <span className="truncate">{playlist.name}</span>
             <span
-              className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px] flex-shrink-0"
+              className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px] flex-shrink-0"
               style={
                 isSmart
                   ? { background: 'rgba(96,165,250,.13)', color: 'var(--blue)' }
@@ -87,7 +87,7 @@ export default function PlaylistDetailPage() {
               {isSmart ? 'Smart' : 'Manual'}
             </span>
             <span
-              className="text-[11px] font-semibold tabular-nums flex-shrink-0"
+              className="text-[var(--text-11)] font-semibold tabular-nums flex-shrink-0"
               style={{ color: 'var(--muted2)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--pill)', padding: '1px 7px' }}
             >
               {resolvedItems.length}
@@ -137,20 +137,20 @@ export default function PlaylistDetailPage() {
           className="mb-3 px-3 py-2 rounded-[8px] flex flex-wrap gap-[5px] items-center"
           style={{ background: 'var(--surface)', border: '1px solid var(--border2)', marginLeft: 'max(20px, env(safe-area-inset-left))', marginRight: 'max(20px, env(safe-area-inset-right))' }}
         >
-          <span className="text-[10px] font-bold tracking-[0.06em] uppercase" style={{ color: 'var(--muted2)', marginRight: 2 }}>Rules:</span>
+          <span className="text-[var(--text-10)] font-bold tracking-[0.06em] uppercase" style={{ color: 'var(--muted2)', marginRight: 2 }}>Rules:</span>
           {rules.statuses?.map((s) => (
-            <span key={s} className="text-[10px] font-medium px-[6px] py-[2px] rounded-full" style={{ background: 'rgba(0,0,0,.2)', color: STATUS_COLORS[s] ?? 'var(--muted)' }}>
+            <span key={s} className="text-[var(--text-10)] font-medium px-[6px] py-[2px] rounded-full" style={{ background: 'rgba(0,0,0,.2)', color: STATUS_COLORS[s] ?? 'var(--muted)' }}>
               {s.replace('_', ' ')}
             </span>
           ))}
           {rules.mediaTypes?.map((t) => (
-            <span key={t} className="text-[10px] font-medium px-[6px] py-[2px] rounded-full"
+            <span key={t} className="text-[var(--text-10)] font-medium px-[6px] py-[2px] rounded-full"
               style={{ background: t === 'movie' ? 'rgba(251,146,60,.13)' : 'rgba(168,85,247,.13)', color: t === 'movie' ? 'var(--orange)' : 'var(--purple)' }}>
               {t === 'movie' ? 'Movies' : 'TV'}
             </span>
           ))}
           {rules.minRating != null && (
-            <span className="text-[10px] font-medium px-[6px] py-[2px] rounded-full" style={{ background: 'rgba(251,191,36,.13)', color: 'var(--amber)' }}>
+            <span className="text-[var(--text-10)] font-medium px-[6px] py-[2px] rounded-full" style={{ background: 'rgba(251,191,36,.13)', color: 'var(--amber)' }}>
               ★{rules.minRating}+
             </span>
           )}
@@ -161,10 +161,10 @@ export default function PlaylistDetailPage() {
       <div className="content-area">
         {resolvedItems.length === 0 ? (
           <div className="flex flex-col items-center gap-3 text-center" style={{ padding: '64px 16px 48px' }}>
-            <p className="font-semibold" style={{ fontSize: 15, color: 'var(--fg2)', letterSpacing: '-0.02em' }}>
+            <p className="font-semibold" style={{ fontSize: 'var(--text-15)', color: 'var(--fg2)', letterSpacing: '-0.02em' }}>
               {isSmart ? 'No items match these rules' : 'Playlist is empty'}
             </p>
-            <p style={{ fontSize: 13, color: 'var(--muted2)', maxWidth: 240, lineHeight: 1.5, marginTop: -4 }}>
+            <p style={{ fontSize: 'var(--text-13)', color: 'var(--muted2)', maxWidth: 240, lineHeight: 1.5, marginTop: -4 }}>
               {isSmart
                 ? 'Add items to your watchlist that match the rules above'
                 : 'Right-click any item in My List to add it here'}

@@ -109,7 +109,7 @@ export function WatchlistItemCard({
         {/* Row 1: [Movie/TV] Title */}
         <div className="flex items-center gap-[6px] min-w-0">
           <span
-            className="flex-shrink-0 text-[9.5px] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+            className="flex-shrink-0 text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
             style={
               item.mediaType === 'movie'
                 ? { background: 'rgba(251,146,60,.13)', color: 'var(--orange)' }
@@ -119,7 +119,7 @@ export function WatchlistItemCard({
             {item.mediaType === 'movie' ? 'Movie' : 'TV'}
           </span>
           <span
-            className="text-[15px] font-semibold tracking-[-0.018em] truncate leading-[1.25]"
+            className="text-[var(--text-15)] font-semibold tracking-[-0.018em] truncate leading-[1.25]"
             style={{ color: 'var(--fg)' }}
           >
             {meta?.title ?? `#${item.tmdbId}`}
@@ -129,7 +129,7 @@ export function WatchlistItemCard({
         {/* Row 2: all meta in one line */}
         <div
           className="flex items-center gap-[5px] flex-wrap leading-none"
-          style={{ color: 'var(--muted2)', fontSize: 11.5 }}
+          style={{ color: 'var(--muted2)', fontSize: 'var(--text-11h)' }}
         >
           <StatusBadge status={item.status} />
           {item.mediaType === 'tv' && (() => {
@@ -138,7 +138,7 @@ export function WatchlistItemCard({
                 <div className="flex gap-[4px] items-center">
                   {jellyfinProgress.season != null && (
                     <span
-                      className="text-[10.5px] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
+                      className="text-[var(--text-10h)] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
                       style={{ color: 'var(--muted2)', background: 'var(--bg)', borderColor: 'var(--border2)' }}
                     >
                       S{jellyfinProgress.season}·E{jellyfinProgress.episode ?? '?'}
@@ -146,7 +146,7 @@ export function WatchlistItemCard({
                   )}
                   {jellyfinProgress.totalEpisodes != null && jellyfinProgress.totalEpisodes > 0 && (
                     <span
-                      className="text-[10.5px] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
+                      className="text-[var(--text-10h)] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
                       style={{ color: 'var(--muted)', background: 'var(--surface2)', borderColor: 'var(--border)' }}
                     >
                       {jellyfinProgress.watchedEpisodes ?? 0}/{jellyfinProgress.totalEpisodes}
@@ -154,7 +154,7 @@ export function WatchlistItemCard({
                   )}
                   {jellyfinProgress.episodePercent != null && jellyfinProgress.episodePercent > 0 && jellyfinProgress.episodePercent < 100 && (
                     <span
-                      className="text-[10.5px] font-bold rounded-full px-[7px] py-[1.5px] border tabular-nums"
+                      className="text-[var(--text-10h)] font-bold rounded-full px-[7px] py-[1.5px] border tabular-nums"
                       style={{ color: 'var(--amber)', background: 'rgba(251,191,36,0.1)', borderColor: 'rgba(251,191,36,0.2)' }}
                     >
                       {jellyfinProgress.episodePercent}%
@@ -166,7 +166,7 @@ export function WatchlistItemCard({
             if (item.progressSeason != null) {
               return (
                 <span
-                  className="text-[10.5px] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
+                  className="text-[var(--text-10h)] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
                   style={{ color: 'var(--muted2)', background: 'var(--bg)', borderColor: 'var(--border2)' }}
                 >
                   S{item.progressSeason}·E{item.progressEpisode ?? '?'}
@@ -180,12 +180,12 @@ export function WatchlistItemCard({
             <>
               <span style={{ opacity: 0.35 }}>·</span>
               <span
-                className="text-[9.5px] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+                className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
                 style={{ background: 'rgba(251,191,36,.15)', color: 'var(--amber)' }}
               >
                 Upcoming
               </span>
-              {meta?.releaseDate && <span style={{ fontSize: 10.5 }}>{formatDate(meta.releaseDate)}</span>}
+              {meta?.releaseDate && <span style={{ fontSize: 'var(--text-10h)' }}>{formatDate(meta.releaseDate)}</span>}
             </>
           )}
           {cardMeta.showTmdbRating && meta?.voteAverage != null && meta.voteAverage > 0 && (
@@ -197,7 +197,7 @@ export function WatchlistItemCard({
           {cardMeta.showGenres && genres.slice(0, 3).map((g) => (
             <span
               key={g.id}
-              className="text-[10px] font-medium px-[6px] py-[1px] rounded-[4px] whitespace-nowrap"
+              className="text-[var(--text-10)] font-medium px-[6px] py-[1px] rounded-[4px] whitespace-nowrap"
               style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
             >
               {g.name}
@@ -207,7 +207,7 @@ export function WatchlistItemCard({
             p.logoPath ? (
               <img key={p.providerId} src={`${PROVIDER_IMG}${p.logoPath}`} alt={p.providerName} title={p.providerName} className="rounded-[3px]" style={{ width: 16, height: 16, objectFit: 'cover' }} />
             ) : (
-              <span key={p.providerId} className="text-[9px] font-medium px-[4px] py-[1px] rounded-[3px]" style={{ background: 'var(--surface2)', color: 'var(--muted2)' }}>{p.providerName}</span>
+              <span key={p.providerId} className="text-[var(--text-9)] font-medium px-[4px] py-[1px] rounded-[3px]" style={{ background: 'var(--surface2)', color: 'var(--muted2)' }}>{p.providerName}</span>
             )
           )}
         </div>
@@ -215,7 +215,7 @@ export function WatchlistItemCard({
         {/* Overview optional */}
         {cardMeta.showOverview && meta?.overview && (
           <p
-            className="text-[11.5px] leading-[1.5]"
+            className="text-[var(--text-11h)] leading-[1.5]"
             style={{ color: 'var(--muted2)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
           >
             {meta.overview}
@@ -227,7 +227,7 @@ export function WatchlistItemCard({
       {item.rating != null && (
         <div className="flex-shrink-0 flex flex-col items-end pt-[2px]">
           <div
-            className="text-[13px] font-bold flex items-center gap-[2px] tracking-[-0.01em]"
+            className="text-[var(--text-13)] font-bold flex items-center gap-[2px] tracking-[-0.01em]"
             style={{ color: 'var(--amber)' }}
           >
             ★{item.rating}
@@ -268,13 +268,13 @@ export function WatchlistItemCard({
         }}
       >
         <div
-          className="px-3 py-1.5 text-[10px] font-bold tracking-[0.08em] uppercase"
+          className="px-3 py-1.5 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase"
           style={{ color: 'var(--muted2)' }}
         >
           Add to Playlist
         </div>
         {(playlists ?? []).filter((p) => p.type === 'manual').length === 0 ? (
-          <div className="px-3 py-1.5 text-[12px]" style={{ color: 'var(--muted2)' }}>
+          <div className="px-3 py-1.5 text-[var(--text-12)]" style={{ color: 'var(--muted2)' }}>
             No manual playlists yet
           </div>
         ) : (
@@ -288,7 +288,7 @@ export function WatchlistItemCard({
                   await addToPlaylist(p.id, item.tmdbId, item.mediaType as 'movie' | 'tv')
                   setCtxMenu(null)
                 }}
-                className="w-full text-left px-3 py-1.5 text-[12px] transition-all duration-100 cursor-pointer border-none"
+                className="w-full text-left px-3 py-1.5 text-[var(--text-12)] transition-all duration-100 cursor-pointer border-none"
                 style={{ background: 'transparent', color: 'var(--fg2)' }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface2)' }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}

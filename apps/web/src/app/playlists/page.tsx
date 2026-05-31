@@ -28,12 +28,12 @@ export default function PlaylistsPage() {
           </button>
         <h1
           className="flex items-center gap-[7px]"
-          style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}
+          style={{ fontSize: 'var(--text-17)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}
         >
           Playlists
           {playlists && playlists.length > 0 && (
             <span
-              className="text-[11px] font-semibold tabular-nums"
+              className="text-[var(--text-11)] font-semibold tabular-nums"
               style={{
                 color: 'var(--muted2)',
                 background: 'var(--surface)',
@@ -50,7 +50,7 @@ export default function PlaylistsPage() {
 
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-[5px] text-[12px] font-semibold cursor-pointer transition-all duration-100"
+          className="flex items-center gap-[5px] text-[var(--text-12)] font-semibold cursor-pointer transition-all duration-100"
           style={{
             padding: '6px 12px',
             borderRadius: 'var(--rsm)',
@@ -69,7 +69,7 @@ export default function PlaylistsPage() {
 
       <div className="content-area">
         {playlists === undefined ? (
-          <p style={{ color: 'var(--muted)', fontSize: 13 }}>Loading…</p>
+          <p style={{ color: 'var(--muted)', fontSize: 'var(--text-13)' }}>Loading…</p>
         ) : playlists.length === 0 ? (
           <div className="flex flex-col items-center gap-3 text-center" style={{ padding: '64px 16px 48px' }}>
             <div
@@ -83,15 +83,15 @@ export default function PlaylistsPage() {
                 <circle cx="16" cy="14" r="3" />
               </svg>
             </div>
-            <p className="font-semibold" style={{ fontSize: 15, color: 'var(--fg2)', letterSpacing: '-0.02em' }}>
+            <p className="font-semibold" style={{ fontSize: 'var(--text-15)', color: 'var(--fg2)', letterSpacing: '-0.02em' }}>
               No playlists yet
             </p>
-            <p style={{ fontSize: 13, color: 'var(--muted2)', maxWidth: 220, lineHeight: 1.5, marginTop: -4 }}>
+            <p style={{ fontSize: 'var(--text-13)', color: 'var(--muted2)', maxWidth: 220, lineHeight: 1.5, marginTop: -4 }}>
               Create a manual playlist or a smart playlist that auto-fills based on rules
             </p>
             <button
               onClick={() => setShowCreate(true)}
-              className="text-[13px] font-medium cursor-pointer transition-all duration-100 mt-1"
+              className="text-[var(--text-13)] font-medium cursor-pointer transition-all duration-100 mt-1"
               style={{
                 padding: '8px 16px',
                 borderRadius: 'var(--rsm)',

@@ -20,7 +20,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         className="px-4 py-2"
         style={{ borderBottom: '1px solid var(--border2)', background: 'var(--surface2)' }}
       >
-        <span className="text-[10px] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+        <span className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
           {title}
         </span>
       </div>
@@ -34,7 +34,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between px-4 py-3 gap-3">
-      <span className="text-[13px]" style={{ color: 'var(--fg2)' }}>{label}</span>
+      <span className="text-[var(--text-13)]" style={{ color: 'var(--fg2)' }}>{label}</span>
       {children}
     </div>
   )
@@ -294,7 +294,7 @@ export default function SettingsPage() {
             <polyline points="10 4 6 8 10 12" />
           </svg>
         </button>
-        <h1 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}>
+        <h1 style={{ fontSize: 'var(--text-17)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}>
           Settings
         </h1>
       </header>
@@ -305,7 +305,7 @@ export default function SettingsPage() {
           {session ? (
             <>
               <Row label={session.user?.name ?? 'User'}>
-                <span className="text-[12px]" style={{ color: 'var(--muted2)' }}>{session.user?.email}</span>
+                <span className="text-[var(--text-12)]" style={{ color: 'var(--muted2)' }}>{session.user?.email}</span>
               </Row>
               <div className="px-4 py-3">
                 <button
@@ -313,7 +313,7 @@ export default function SettingsPage() {
                     await signOut({ redirect: false })
                     router.push('/')
                   }}
-                  className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none transition-all duration-100"
+                  className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
                   style={{ background: 'rgba(248,113,113,.12)', color: 'var(--red)' }}
                 >
                   Sign Out
@@ -324,7 +324,7 @@ export default function SettingsPage() {
             <div className="px-4 py-3">
               <button
                 onClick={() => router.push('/auth/login')}
-                className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none"
+                className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none"
                 style={{ background: 'var(--accent)', color: '#fff' }}
               >
                 Sign In to Sync
@@ -336,20 +336,20 @@ export default function SettingsPage() {
         {/* Sync */}
         <Section title="Sync">
           <Row label="Items in list">
-            <span className="text-[13px] tabular-nums" style={{ color: 'var(--muted2)' }}>{itemCount ?? '–'}</span>
+            <span className="text-[var(--text-13)] tabular-nums" style={{ color: 'var(--muted2)' }}>{itemCount ?? '–'}</span>
           </Row>
           <Row label="Pending changes">
-            <span className="text-[13px] tabular-nums" style={{ color: 'var(--muted2)' }}>{pendingCount ?? '–'}</span>
+            <span className="text-[var(--text-13)] tabular-nums" style={{ color: 'var(--muted2)' }}>{pendingCount ?? '–'}</span>
           </Row>
           {lastSyncedAt && (
             <Row label="Last synced">
-              <span className="text-[12px]" style={{ color: 'var(--muted2)' }}>
+              <span className="text-[var(--text-12)]" style={{ color: 'var(--muted2)' }}>
                 {new Date(lastSyncedAt).toLocaleString()}
               </span>
             </Row>
           )}
           {error && (
-            <div className="px-4 py-2 text-[12px]" style={{ color: 'var(--red)' }}>{error}</div>
+            <div className="px-4 py-2 text-[var(--text-12)]" style={{ color: 'var(--red)' }}>{error}</div>
           )}
           <Row label="Auto Sync">
             <div
@@ -362,7 +362,7 @@ export default function SettingsPage() {
                   <button
                     key={o.value}
                     onClick={() => update({ syncInterval: o.value })}
-                    className="px-3 py-[4px] text-[12px] rounded-[4px] transition-all duration-100 cursor-pointer border-none whitespace-nowrap"
+                    className="px-3 py-[4px] text-[var(--text-12)] rounded-[4px] transition-all duration-100 cursor-pointer border-none whitespace-nowrap"
                     style={{
                       background: active ? 'var(--surface2)' : 'transparent',
                       color: active ? 'var(--fg)' : 'var(--muted)',
@@ -380,13 +380,13 @@ export default function SettingsPage() {
               <button
                 onClick={() => sync()}
                 disabled={syncing}
-                className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none disabled:opacity-50 transition-all duration-100"
+                className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none disabled:opacity-50 transition-all duration-100"
                 style={{ background: 'var(--accent)', color: '#fff' }}
               >
                 {syncing ? 'Syncing…' : 'Sync Now'}
               </button>
             ) : (
-              <p className="text-[12px]" style={{ color: 'var(--muted2)' }}>Sign in to enable sync.</p>
+              <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)' }}>Sign in to enable sync.</p>
             )}
           </div>
         </Section>
@@ -407,7 +407,7 @@ export default function SettingsPage() {
                   <button
                     key={lang.value}
                     onClick={() => update({ language: lang.value })}
-                    className="px-3 py-[4px] text-[12px] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                    className="px-3 py-[4px] text-[var(--text-12)] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none"
                     style={{
                       background: active ? 'var(--surface2)' : 'transparent',
                       color: active ? 'var(--fg)' : 'var(--muted)',
@@ -431,7 +431,7 @@ export default function SettingsPage() {
                   <button
                     key={t}
                     onClick={() => update({ theme: t })}
-                    className="px-3 py-[4px] text-[12px] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none capitalize"
+                    className="px-3 py-[4px] text-[var(--text-12)] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none capitalize"
                     style={{
                       background: active ? 'var(--surface2)' : 'transparent',
                       color: active ? 'var(--fg)' : 'var(--muted)',
@@ -455,7 +455,7 @@ export default function SettingsPage() {
                   <button
                     key={f.value}
                     onClick={() => update({ font: f.value })}
-                    className="px-3 py-[4px] text-[12px] rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                    className="px-3 py-[4px] text-[var(--text-12)] rounded-[4px] transition-all duration-100 cursor-pointer border-none"
                     style={{
                       background: active ? 'var(--surface2)' : 'transparent',
                       color: active ? 'var(--fg)' : 'var(--muted)',
@@ -479,7 +479,7 @@ export default function SettingsPage() {
                   <button
                     key={f.value}
                     onClick={() => update({ fontSize: f.value })}
-                    className="px-3 py-[4px] text-[12px] rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                    className="px-3 py-[4px] text-[var(--text-12)] rounded-[4px] transition-all duration-100 cursor-pointer border-none"
                     style={{
                       background: active ? 'var(--surface2)' : 'transparent',
                       color: active ? 'var(--fg)' : 'var(--muted)',
@@ -497,7 +497,7 @@ export default function SettingsPage() {
         {/* TMDB */}
         <Section title="TMDB API">
           <div className="px-4 py-3 space-y-2">
-            <p className="text-[12px]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
+            <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
               Override the server TMDB key. Stored locally, never sent to the server.
             </p>
             <div className="flex gap-2">
@@ -506,7 +506,7 @@ export default function SettingsPage() {
                 value={tmdbKeyInput}
                 onChange={(e) => setTmdbKeyInput(e.target.value)}
                 placeholder="Enter API key…"
-                className="flex-1 px-3 py-2 rounded-[6px] text-[13px] focus:outline-none"
+                className="flex-1 px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
                 style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
@@ -514,7 +514,7 @@ export default function SettingsPage() {
               />
               <button
                 onClick={saveTmdbKey}
-                className="px-3 py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none flex-shrink-0 transition-all duration-100"
+                className="px-3 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none flex-shrink-0 transition-all duration-100"
                 style={{ background: 'var(--accent)', color: '#fff' }}
               >
                 Save
@@ -526,7 +526,7 @@ export default function SettingsPage() {
         {/* Jellyfin */}
         <Section title="Jellyfin">
           <div className="px-4 py-3 space-y-3">
-            <p className="text-[12px]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
+            <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
               Connect to your Jellyfin server to overlay watch progress on cards. Requires CORS enabled in Jellyfin → Networking.
             </p>
             <div className="flex flex-col gap-2">
@@ -535,7 +535,7 @@ export default function SettingsPage() {
                 value={jellyfinUrlInput}
                 onChange={(e) => setJellyfinUrlInput(e.target.value)}
                 placeholder="Server URL (e.g. http://jellyfin.local:8096)"
-                className="w-full px-3 py-2 rounded-[6px] text-[13px] focus:outline-none"
+                className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
                 style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
@@ -545,7 +545,7 @@ export default function SettingsPage() {
                 value={jellyfinUserIdInput}
                 onChange={(e) => setJellyfinUserIdInput(e.target.value)}
                 placeholder="User ID"
-                className="w-full px-3 py-2 rounded-[6px] text-[13px] focus:outline-none"
+                className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
                 style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
@@ -555,7 +555,7 @@ export default function SettingsPage() {
                 value={jellyfinApiKeyInput}
                 onChange={(e) => setJellyfinApiKeyInput(e.target.value)}
                 placeholder="API Key"
-                className="w-full px-3 py-2 rounded-[6px] text-[13px] focus:outline-none"
+                className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
                 style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
@@ -565,24 +565,24 @@ export default function SettingsPage() {
               <button
                 onClick={testJellyfin}
                 disabled={jellyfinTesting || !jellyfinUrlInput || !jellyfinUserIdInput || !jellyfinApiKeyInput}
-                className="px-3 py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none flex-shrink-0 transition-all duration-100 disabled:opacity-50"
+                className="px-3 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none flex-shrink-0 transition-all duration-100 disabled:opacity-50"
                 style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
               >
                 {jellyfinTesting ? 'Testing…' : 'Test'}
               </button>
               <button
                 onClick={saveJellyfin}
-                className="flex-1 py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none transition-all duration-100"
+                className="flex-1 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
                 style={{ background: 'var(--accent)', color: '#fff' }}
               >
                 Save
               </button>
             </div>
             {jellyfinTestResult === 'ok' && (
-              <p className="text-[12px]" style={{ color: 'var(--green)' }}>✓ Connected successfully</p>
+              <p className="text-[var(--text-12)]" style={{ color: 'var(--green)' }}>✓ Connected successfully</p>
             )}
             {jellyfinTestResult === 'error' && (
-              <p className="text-[12px]" style={{ color: 'var(--red)' }}>Connection failed — check URL, user ID, API key, and CORS settings</p>
+              <p className="text-[var(--text-12)]" style={{ color: 'var(--red)' }}>Connection failed — check URL, user ID, API key, and CORS settings</p>
             )}
           </div>
         </Section>
@@ -590,17 +590,17 @@ export default function SettingsPage() {
         {/* Jellyfin Debug */}
         <Section title="Jellyfin Debug">
           <Row label="Server credentials">
-            <span className="text-[12px]" style={{ color: serverCredsStatus === 'set' ? 'var(--green)' : serverCredsStatus === 'missing' ? 'var(--red)' : 'var(--muted2)' }}>
+            <span className="text-[var(--text-12)]" style={{ color: serverCredsStatus === 'set' ? 'var(--green)' : serverCredsStatus === 'missing' ? 'var(--red)' : 'var(--muted2)' }}>
               {serverCredsStatus === 'set' ? '✓ Configured' : serverCredsStatus === 'missing' ? '✗ Not set — go save Jellyfin settings above' : '…'}
             </span>
           </Row>
           <Row label="Local progress records">
-            <span className="text-[13px] tabular-nums" style={{ color: (jellyfinProgressCount ?? 0) > 0 ? 'var(--green)' : 'var(--red)' }}>
+            <span className="text-[var(--text-13)] tabular-nums" style={{ color: (jellyfinProgressCount ?? 0) > 0 ? 'var(--green)' : 'var(--red)' }}>
               {jellyfinProgressCount ?? 0}
             </span>
           </Row>
           {(jellyfinProgressItems ?? []).slice(0, 5).map(p => (
-            <div key={`${p.tmdbId}-${p.mediaType}`} className="px-4 py-1 text-[11px] tabular-nums" style={{ color: 'var(--muted2)', fontFamily: 'monospace' }}>
+            <div key={`${p.tmdbId}-${p.mediaType}`} className="px-4 py-1 text-[var(--text-11)] tabular-nums" style={{ color: 'var(--muted2)', fontFamily: 'monospace' }}>
               tmdb:{p.tmdbId} ({p.mediaType}) → <span style={{ color: p.jellyfinStatus === 'watching' ? 'var(--amber)' : p.jellyfinStatus === 'watched' ? 'var(--green)' : 'var(--muted2)' }}>{p.jellyfinStatus}</span>
               {p.season != null && ` S${p.season}·E${p.episode}`}
               {p.totalEpisodes != null && ` ${p.watchedEpisodes ?? 0}/${p.totalEpisodes}ep`}
@@ -608,13 +608,13 @@ export default function SettingsPage() {
             </div>
           ))}
           {(jellyfinProgressCount ?? 0) > 5 && (
-            <div className="px-4 py-1 text-[11px]" style={{ color: 'var(--muted2)' }}>…and {(jellyfinProgressCount ?? 0) - 5} more</div>
+            <div className="px-4 py-1 text-[var(--text-11)]" style={{ color: 'var(--muted2)' }}>…and {(jellyfinProgressCount ?? 0) - 5} more</div>
           )}
           <div className="px-4 py-3 flex flex-col gap-2">
             <button
               onClick={pollJellyfinNow}
               disabled={jellyfinPolling || jellyfinPulling}
-              className="w-full py-2 rounded-[6px] text-[13px] font-semibold cursor-pointer border-none disabled:opacity-50 transition-all"
+              className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-semibold cursor-pointer border-none disabled:opacity-50 transition-all"
               style={{ background: 'var(--accent)', color: '#fff' }}
             >
               {jellyfinPolling ? 'Polling…' : '▶ Poll Jellyfin Now (Server → Local)'}
@@ -622,7 +622,7 @@ export default function SettingsPage() {
             <button
               onClick={forcePullJellyfin}
               disabled={jellyfinPulling || jellyfinPolling}
-              className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none disabled:opacity-50 transition-all"
+              className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none disabled:opacity-50 transition-all"
               style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
             >
               {jellyfinPulling ? 'Pulling…' : 'Pull from Backend DB Only'}
@@ -630,7 +630,7 @@ export default function SettingsPage() {
             {jellyfinPullLog.length > 0 && (
               <div className="flex flex-col gap-1 p-2 rounded-[6px]" style={{ background: 'var(--bg)', border: '1px solid var(--border2)' }}>
                 {jellyfinPullLog.map((line, i) => (
-                  <span key={i} className="text-[11px]" style={{ color: 'var(--fg2)', fontFamily: 'monospace' }}>{line}</span>
+                  <span key={i} className="text-[var(--text-11)]" style={{ color: 'var(--fg2)', fontFamily: 'monospace' }}>{line}</span>
                 ))}
               </div>
             )}
@@ -657,7 +657,7 @@ export default function SettingsPage() {
           <div className="px-4 py-3">
             <button
               onClick={handleClearCache}
-              className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none transition-all duration-100"
+              className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
               style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
             >
               Clear Media Cache

@@ -155,7 +155,7 @@ export default function MediaDetailPage() {
               <div className="flex items-center gap-2 flex-wrap">
                 {upcoming && (
                   <span
-                    className="text-[10px] font-extrabold tracking-[0.06em] uppercase px-[6px] py-[2px] rounded-[3px]"
+                    className="text-[var(--text-10)] font-extrabold tracking-[0.06em] uppercase px-[6px] py-[2px] rounded-[3px]"
                     style={{ background: 'rgba(251,191,36,.15)', color: 'var(--amber)' }}
                   >
                     Upcoming
@@ -171,7 +171,7 @@ export default function MediaDetailPage() {
                 {meta.genres.map((g) => (
                   <span
                     key={g.id}
-                    className="text-[10px] font-medium px-[7px] py-[2px] rounded-[4px]"
+                    className="text-[var(--text-10)] font-medium px-[7px] py-[2px] rounded-[4px]"
                     style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
                   >
                     {g.name}
@@ -193,7 +193,7 @@ export default function MediaDetailPage() {
         {/* WHERE TO WATCH */}
         <div className="space-y-2">
           <p
-            className="text-[10px] font-bold tracking-[0.08em] uppercase"
+            className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase"
             style={{ color: 'var(--muted2)' }}
           >
             Where to Watch
@@ -214,7 +214,7 @@ export default function MediaDetailPage() {
                     className="w-[16px] h-[16px] rounded-[3px]"
                   />
                 ) : null}
-                <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>
+                <span className="text-[var(--text-11)] font-medium" style={{ color: 'var(--fg2)' }}>
                   {p.providerName}
                 </span>
               </div>
@@ -227,11 +227,11 @@ export default function MediaDetailPage() {
                 className="flex items-center gap-[5px] px-[8px] py-[5px] rounded-[6px] group"
                 style={{ background: 'var(--accent-bg)', border: '1px solid rgba(99,102,241,.3)' }}
               >
-                <span className="text-[11px] font-medium" style={{ color: 'var(--accent2)' }}>{p}</span>
+                <span className="text-[var(--text-11)] font-medium" style={{ color: 'var(--accent2)' }}>{p}</span>
                 <button
                   onClick={() => removeCustomPlatform(p)}
                   className="opacity-0 group-hover:opacity-100 transition-opacity ml-[1px]"
-                  style={{ color: 'var(--muted2)', fontSize: 11, lineHeight: 1 }}
+                  style={{ color: 'var(--muted2)', fontSize: 'var(--text-11)', lineHeight: 1 }}
                 >
                   ×
                 </button>
@@ -247,7 +247,7 @@ export default function MediaDetailPage() {
                   background: 'transparent',
                   border: '1px dashed var(--border)',
                   color: 'var(--muted2)',
-                  fontSize: 11,
+                  fontSize: 'var(--text-11)',
                   cursor: 'pointer',
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--muted2)' }}
@@ -263,7 +263,7 @@ export default function MediaDetailPage() {
                     <button
                       key={p}
                       onClick={() => addCustomPlatform(p)}
-                      className="px-[7px] py-[3px] rounded-[4px] text-[10px] font-medium transition-all duration-100 cursor-pointer"
+                      className="px-[7px] py-[3px] rounded-[4px] text-[var(--text-10)] font-medium transition-all duration-100 cursor-pointer"
                       style={{ background: 'var(--surface)', border: '1px solid var(--border2)', color: 'var(--muted)' }}
                       onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface2)' }}
                       onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'var(--surface)' }}
@@ -281,7 +281,7 @@ export default function MediaDetailPage() {
                     if (e.key === 'Escape') setShowCustomInput(false)
                   }}
                   placeholder="Custom…"
-                  className="w-[100px] px-[8px] py-[4px] rounded-[5px] text-[11px] focus:outline-none"
+                  className="w-[100px] px-[8px] py-[4px] rounded-[5px] text-[var(--text-11)] focus:outline-none"
                   style={{
                     background: 'var(--surface)',
                     border: '1px solid var(--accent)',
