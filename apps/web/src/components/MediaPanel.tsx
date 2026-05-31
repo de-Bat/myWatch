@@ -308,41 +308,68 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
 
           {/* Jellyfin progress */}
           {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (() => {
-            const pct = jellyfinProgress.jellyfinStatus === 'watched' ? 100
-              : jellyfinProgress.mediaType === 'movie' ? (jellyfinProgress.moviePercent ?? 0)
-              : jellyfinProgress.totalEpisodes
-                ? Math.round(((jellyfinProgress.watchedEpisodes ?? 0) / jellyfinProgress.totalEpisodes) * 100)
+            const watched = jellyfinProgress.jellyfinStatus === 'watched'
+            const isMovie = jellyfinProgress.mediaType === 'movie'
+            const total = jellyfinProgress.totalEpisodes ?? 0
+
+            let bar: React.ReactNode
+            if (isMovie) {
+              const pct = watched ? 100 : (jellyfinProgress.moviePercent ?? 0)
+              const fill = watched ? 'rgba(134,239,172,.8)' : 'rgba(251,191,36,.9)'
+              bar = (
+                <div style={{ height: 4, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden' }}>
+                  <div style={{ width: `${pct}%`, height: '100%', background: fill, transition: 'width 300ms' }} />
+                </div>
+              )
+            } else if (watched) {
+              bar = <div style={{ height: 4, background: 'rgba(134,239,172,.8)', borderRadius: 99 }} />
+            } else {
+              const completedPct = total > 0 ? Math.round(((jellyfinProgress.watchedEpisodes ?? 0) / total) * 100) : 0
+              const inProgressPct = total > 0 && (jellyfinProgress.episodePercent ?? 0) > 0
+                ? (jellyfinProgress.episodePercent ?? 0) / total
                 : 0
-            const fill = jellyfinProgress.jellyfinStatus === 'watched'
-              ? 'rgba(134,239,172,.8)'
-              : 'rgba(251,191,36,.9)'
+              bar = (
+                <div style={{ height: 4, background: 'var(--surface2)', borderRadius: 99, position: 'relative', overflow: 'hidden' }}>
+                  {completedPct > 0 && (
+                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${completedPct}%`, background: 'rgba(251,191,36,.9)', transition: 'width 300ms' }} />
+                  )}
+                  {inProgressPct > 0 && (
+                    <div style={{ position: 'absolute', left: `${completedPct}%`, top: 0, bottom: 0, width: `${inProgressPct}%`, background: 'rgba(251,191,36,.38)', transition: 'width 300ms' }} />
+                  )}
+                </div>
+              )
+            }
+
             return (
               <div className="flex flex-col gap-[8px]">
                 <SectionLabel>On Jellyfin</SectionLabel>
                 <div className="flex items-center gap-[8px] flex-wrap">
                   <span
                     className="text-[var(--text-9h)] font-extrabold tracking-[0.04em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
-                    style={{ background: 'rgba(251,191,36,.15)', color: 'var(--amber)' }}
+                    style={{ background: watched ? 'rgba(134,239,172,.15)' : 'rgba(251,191,36,.15)', color: watched ? 'var(--green)' : 'var(--amber)' }}
                   >
-                    {jellyfinProgress.jellyfinStatus === 'watched' ? 'Watched' : 'Watching'}
+                    {watched ? 'Watched' : 'Watching'}
                   </span>
-                  {jellyfinProgress.jellyfinStatus === 'watching' && jellyfinProgress.mediaType === 'movie' && (
+                  {!watched && isMovie && (
                     <span style={{ fontSize: 'var(--text-12)', color: 'var(--fg2)' }}>
-                      {jellyfinProgress.moviePercent ?? 0}% watched
+                      {jellyfinProgress.moviePercent ?? 0}%
                     </span>
                   )}
-                  {jellyfinProgress.jellyfinStatus === 'watching' && jellyfinProgress.mediaType === 'tv' && (
+                  {!watched && !isMovie && (
                     <span style={{ fontSize: 'var(--text-12)', color: 'var(--fg2)' }}>
-                      {jellyfinProgress.season != null && `S${jellyfinProgress.season} · E${jellyfinProgress.episode ?? '?'}`}
-                      {jellyfinProgress.totalEpisodes
-                        ? ` · ${jellyfinProgress.watchedEpisodes ?? 0} of ${jellyfinProgress.totalEpisodes} ep.`
-                        : jellyfinProgress.episodePercent != null ? ` · ${jellyfinProgress.episodePercent}% through ep.` : ''}
+                      {jellyfinProgress.season != null && (
+                        <span style={{ color: 'var(--fg)' }}>S{jellyfinProgress.season} · E{jellyfinProgress.episode ?? '?'}</span>
+                      )}
+                      {total > 0 && (
+                        <span style={{ color: 'var(--muted2)' }}>{jellyfinProgress.season != null ? ' · ' : ''}{jellyfinProgress.watchedEpisodes ?? 0}/{total} ep</span>
+                      )}
+                      {(jellyfinProgress.episodePercent ?? 0) > 0 && (jellyfinProgress.episodePercent ?? 0) < 100 && (
+                        <span style={{ color: 'var(--amber)' }}> · {jellyfinProgress.episodePercent}%</span>
+                      )}
                     </span>
                   )}
                 </div>
-                <div style={{ height: 4, background: 'var(--surface2)', borderRadius: 99 }}>
-                  <div style={{ width: `${pct}%`, height: '100%', background: fill, borderRadius: 99, transition: 'width 300ms' }} />
-                </div>
+                {bar}
               </div>
             )
           })()}
