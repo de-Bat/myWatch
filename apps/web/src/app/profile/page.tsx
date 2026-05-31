@@ -221,13 +221,14 @@ export default function SettingsPage() {
     toast('Cache cleared', 'success')
   }
 
-  const forcePullJellyfin = useCallback(async () => {
+  const forcePullJellyfin = useCallback(async (append = false) => {
     if (!session?.apiToken) {
       setJellyfinPullLog(['❌ Not logged in — no API token'])
       return
     }
     setJellyfinPulling(true)
-    setJellyfinPullLog(['⏳ Pulling from server...'])
+    if (!append) setJellyfinPullLog(['⏳ Pulling from server...'])
+    else setJellyfinPullLog(prev => [...prev, '⏳ Pulling updated records from server...'])
     try {
       const result = await apiClient.sync.pull(new Date(0).toISOString(), session.apiToken)
       const jpCount = result.jellyfinProgress?.length ?? 0
@@ -236,12 +237,11 @@ export default function SettingsPage() {
       
       if (jpCount > 0) {
         await db.jellyfinProgress.bulkPut(result.jellyfinProgress!)
-        setJellyfinPullLog(prev => [...prev, `✅ Written ${jpCount} records to local DB`])
-        // Show sample
+        setJellyfinPullLog(prev => [...prev, `✅ Written ${jpCount} records to local DB — progress should now show on cards`])
         const sample = result.jellyfinProgress!.slice(0, 3).map(p => `tmdb:${p.tmdbId} (${p.mediaType}) → ${p.jellyfinStatus}`).join(', ')
         setJellyfinPullLog(prev => [...prev, `📋 Sample: ${sample}`])
       } else {
-        setJellyfinPullLog(prev => [...prev, '⚠️ Server returned 0 jellyfin progress records. Either Jellyfin is not configured server-side, or the poller hasn\'t run yet, or the DB migration is missing.'])
+        setJellyfinPullLog(prev => [...prev, '⚠️ Server returned 0 jellyfin progress records.'])
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -270,7 +270,7 @@ export default function SettingsPage() {
         setJellyfinPullLog(prev => [...prev, `✅ Server polled Jellyfin: ${data.count} records saved`])
         setServerCredsStatus('set')
         // Now do a local pull to get the fresh data
-        await forcePullJellyfin()
+        await forcePullJellyfin(true)
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)

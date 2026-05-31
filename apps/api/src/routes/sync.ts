@@ -114,6 +114,12 @@ export function registerSyncRoutes(
       const userId = req.user.sub
       const connId = crypto.randomUUID()
 
+      // reply.hijack() bypasses Fastify's CORS plugin — set headers manually
+      const origin = req.headers.origin
+      if (origin) {
+        reply.raw.setHeader('Access-Control-Allow-Origin', origin)
+        reply.raw.setHeader('Access-Control-Allow-Credentials', 'true')
+      }
       reply.raw.setHeader('Content-Type', 'text/event-stream')
       reply.raw.setHeader('Cache-Control', 'no-cache')
       reply.raw.setHeader('Connection', 'keep-alive')
