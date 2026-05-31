@@ -7,8 +7,11 @@ function redirectTo(path: string, req: NextRequest) {
   return NextResponse.redirect(new URL(path, `${proto}://${host}`))
 }
 
-const PROTECTED = ['/', '/search', '/discover', '/playlists', '/media']
-
+// Local-first: app routes (/, /search, /discover, /playlists, /media, /profile)
+// are usable offline and as a guest — data lives in IndexedDB, sync only runs
+// when signed in. Middleware only bounces logged-in users off the auth screens.
+// App routes are NOT matched here so they can be statically prerendered and
+// served offline by the service worker.
 const middleware = auth((req) => {
   const isLoggedIn = !!req.auth
   const { pathname } = req.nextUrl
@@ -16,25 +19,10 @@ const middleware = auth((req) => {
   if (pathname.startsWith('/auth') && isLoggedIn) {
     return redirectTo('/', req)
   }
-
-  const isProtected = PROTECTED.some((p) =>
-    p === '/' ? pathname === '/' : pathname.startsWith(p),
-  )
-
-  if (isProtected && !isLoggedIn) {
-    return redirectTo('/auth/login', req)
-  }
 })
 
 export default middleware as unknown as NextMiddleware
 
 export const config = {
-  matcher: [
-    '/',
-    '/search/:path*',
-    '/discover/:path*',
-    '/playlists/:path*',
-    '/media/:path*',
-    '/auth/:path*',
-  ],
+  matcher: ['/auth/:path*'],
 }

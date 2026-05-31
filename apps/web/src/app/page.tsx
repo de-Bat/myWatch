@@ -1,5 +1,6 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+export const dynamic = 'force-static'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -35,7 +36,7 @@ type ViewMode = 'list' | 'grid'
 
 const VIEW_STORAGE_KEY = 'mywatch_view'
 
-export default function HomePage() {
+function HomePageInner() {
   const { data: session } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -975,5 +976,14 @@ export default function HomePage() {
         />
       )}
     </div>
+  )
+}
+
+// useSearchParams must sit under a Suspense boundary for static prerendering.
+export default function HomePage() {
+  return (
+    <Suspense fallback={null}>
+      <HomePageInner />
+    </Suspense>
   )
 }

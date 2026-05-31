@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { SessionProvider } from 'next-auth/react'
-import { auth } from '@/auth'
 import { SettingsProvider } from '@/hooks/useSettings'
 import { ToastProvider } from '@/components/Toast'
 import { AutoSync } from '@/components/AutoSync'
@@ -29,12 +28,15 @@ export const viewport: Viewport = {
   themeColor: '#000000',
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth()
+// No server-side `auth()` here: keeping the root layout static lets every app
+// page be statically prerendered and precached by the service worker, so the
+// PWA renders offline. SessionProvider fetches the session client-side when
+// online and resolves to null offline (local-first / guest mode).
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--fg)' }}>
-        <SessionProvider session={session}>
+        <SessionProvider>
           <SettingsProvider>
             <ToastProvider>
               <AutoSync />

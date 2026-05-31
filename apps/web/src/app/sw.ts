@@ -15,6 +15,16 @@ const FALLBACK_URL = '/offline'
 const serwist = new Serwist({
   precacheEntries: [
     ...(self.__SW_MANIFEST ?? []),
+    // @serwist/next only auto-precaches /_next/static assets, not page HTML.
+    // Precache the top-level route shells explicitly so the installed PWA can
+    // cold-open these routes offline (not just routes visited while online).
+    // These are static pages; they hydrate from IndexedDB. Detail routes
+    // (/media/*, /playlists/[id]) load via client-side nav from a cached shell.
+    { url: '/', revision: '1' },
+    { url: '/discover', revision: '1' },
+    { url: '/playlists', revision: '1' },
+    { url: '/profile', revision: '1' },
+    { url: '/search', revision: '1' },
     { url: '/offline', revision: '1' },
   ],
   skipWaiting: true,
