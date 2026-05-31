@@ -189,8 +189,9 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
           {/* Close button always in top-right of this zone */}
           <button
             onClick={handleClose}
-            className="absolute top-[12px] right-[12px] flex items-center justify-center w-[30px] h-[30px] rounded-full transition-all duration-100"
+            className="absolute right-[12px] flex items-center justify-center w-[30px] h-[30px] rounded-full transition-all duration-100"
             style={{
+              top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
               background: meta?.backdropPath ? 'rgba(0,0,0,.45)' : 'var(--surface)',
               border: `1px solid ${meta?.backdropPath ? 'rgba(255,255,255,.12)' : 'var(--border)'}`,
               color: meta?.backdropPath ? '#fff' : 'var(--muted)',
