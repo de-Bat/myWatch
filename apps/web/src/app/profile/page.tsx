@@ -773,75 +773,89 @@ export default function SettingsPage() {
             <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
               Checks whether this app is running as an installed PWA. Open this page from your home screen to see standalone mode confirmed.
             </p>
-            <button
-              onClick={() => {
-                setPwaLogs([])
-                // re-run by toggling a counter — simplest way without extracting fn
-                addPwaLog('🔄 Manual refresh — re-running PWA checks…', 'info')
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setPwaLogs([])
+                  // re-run by toggling a counter — simplest way without extracting fn
+                  addPwaLog('🔄 Manual refresh — re-running PWA checks…', 'info')
 
-                // display-mode
-                const isStandalone =
-                  window.matchMedia('(display-mode: standalone)').matches ||
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  (navigator as any).standalone === true
-                addPwaLog(
-                  isStandalone
-                    ? '✅ display-mode: standalone — running as installed PWA'
-                    : '⚠️ display-mode: browser — NOT running as installed PWA',
-                  isStandalone ? 'ok' : 'warn',
-                )
-                for (const mode of ['standalone', 'fullscreen', 'minimal-ui', 'browser']) {
-                  if (window.matchMedia(`(display-mode: ${mode})`).matches)
-                    addPwaLog(`ℹ️ matchMedia(display-mode: ${mode}) → true`, 'info')
-                }
-
-                // navigator.standalone (iOS)
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const navStandalone = (navigator as any).standalone
-                if (navStandalone !== undefined) {
+                  // display-mode
+                  const isStandalone =
+                    window.matchMedia('(display-mode: standalone)').matches ||
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (navigator as any).standalone === true
                   addPwaLog(
-                    navStandalone
-                      ? '✅ navigator.standalone = true (iOS)'
-                      : '⚠️ navigator.standalone = false (iOS browser)',
-                    navStandalone ? 'ok' : 'warn',
+                    isStandalone
+                      ? '✅ display-mode: standalone — running as installed PWA'
+                      : '⚠️ display-mode: browser — NOT running as installed PWA',
+                    isStandalone ? 'ok' : 'warn',
                   )
-                } else {
-                  addPwaLog('ℹ️ navigator.standalone = undefined (non-iOS)', 'info')
-                }
+                  for (const mode of ['standalone', 'fullscreen', 'minimal-ui', 'browser']) {
+                    if (window.matchMedia(`(display-mode: ${mode})`).matches)
+                      addPwaLog(`ℹ️ matchMedia(display-mode: ${mode}) → true`, 'info')
+                  }
 
-                // SW
-                if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.getRegistration().then((reg) => {
-                    if (!reg) { addPwaLog('⚠️ No SW registration', 'warn'); return }
-                    addPwaLog(`✅ SW registered — scope: ${reg.scope}`, 'ok')
-                    if (reg.active)     addPwaLog(`ℹ️ SW active: state="${reg.active.state}"`, 'info')
-                    if (reg.waiting)    addPwaLog(`ℹ️ SW waiting: state="${reg.waiting.state}"`, 'info')
-                    if (reg.installing) addPwaLog(`ℹ️ SW installing: state="${reg.installing.state}"`, 'info')
-                    if (navigator.serviceWorker.controller)
-                      addPwaLog(`✅ SW controller: ${navigator.serviceWorker.controller.scriptURL}`, 'ok')
-                    else
-                      addPwaLog('⚠️ No SW controller (reload may be needed)', 'warn')
-                  }).catch((e) => addPwaLog(`❌ SW error: ${e}`, 'warn'))
-                } else {
-                  addPwaLog('❌ serviceWorker API not available', 'warn')
-                }
+                  // navigator.standalone (iOS)
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const navStandalone = (navigator as any).standalone
+                  if (navStandalone !== undefined) {
+                    addPwaLog(
+                      navStandalone
+                        ? '✅ navigator.standalone = true (iOS)'
+                        : '⚠️ navigator.standalone = false (iOS browser)',
+                      navStandalone ? 'ok' : 'warn',
+                    )
+                  } else {
+                    addPwaLog('ℹ️ navigator.standalone = undefined (non-iOS)', 'info')
+                  }
 
-                // manifest
-                const ml = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
-                addPwaLog(ml ? `✅ manifest: ${ml.href}` : '⚠️ No manifest link found', ml ? 'ok' : 'warn')
+                  // SW
+                  if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistration().then((reg) => {
+                      if (!reg) { addPwaLog('⚠️ No SW registration', 'warn'); return }
+                      addPwaLog(`✅ SW registered — scope: ${reg.scope}`, 'ok')
+                      if (reg.active)     addPwaLog(`ℹ️ SW active: state="${reg.active.state}"`, 'info')
+                      if (reg.waiting)    addPwaLog(`ℹ️ SW waiting: state="${reg.waiting.state}"`, 'info')
+                      if (reg.installing) addPwaLog(`ℹ️ SW installing: state="${reg.installing.state}"`, 'info')
+                      if (navigator.serviceWorker.controller)
+                        addPwaLog(`✅ SW controller: ${navigator.serviceWorker.controller.scriptURL}`, 'ok')
+                      else
+                        addPwaLog('⚠️ No SW controller (reload may be needed)', 'warn')
+                    }).catch((e) => addPwaLog(`❌ SW error: ${e}`, 'warn'))
+                  } else {
+                    addPwaLog('❌ serviceWorker API not available', 'warn')
+                  }
 
-                // secure origin
-                const sec = location.protocol === 'https:' || ['localhost','127.0.0.1'].includes(location.hostname)
-                addPwaLog(
-                  sec ? `✅ Secure origin: ${location.protocol}//${location.host}` : `❌ NOT secure: ${location.protocol}//${location.host}`,
-                  sec ? 'ok' : 'warn',
-                )
-              }}
-              className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
-              style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
-            >
-              🔄 Refresh PWA Checks
-            </button>
+                  // manifest
+                  const ml = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
+                  addPwaLog(ml ? `✅ manifest: ${ml.href}` : '⚠️ No manifest link found', ml ? 'ok' : 'warn')
+
+                  // secure origin
+                  const sec = location.protocol === 'https:' || ['localhost','127.0.0.1'].includes(location.hostname)
+                  addPwaLog(
+                    sec ? `✅ Secure origin: ${location.protocol}//${location.host}` : `❌ NOT secure: ${location.protocol}//${location.host}`,
+                    sec ? 'ok' : 'warn',
+                  )
+                }}
+                className="flex-1 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
+                style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+              >
+                🔄 Refresh
+              </button>
+              <button
+                onClick={() => {
+                  const logText = pwaLogs.map((l) => l.text).join('\n')
+                  navigator.clipboard.writeText(logText)
+                  toast('Logs copied to clipboard', 'success', 2000)
+                }}
+                disabled={pwaLogs.length === 0}
+                className="flex-1 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100 disabled:opacity-50"
+                style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+              >
+                📋 Copy Logs
+              </button>
+            </div>
             {pwaLogs.length > 0 && (
               <div className="flex flex-col gap-[3px] p-2 rounded-[6px]" style={{ background: 'var(--bg)', border: '1px solid var(--border2)' }}>
                 {pwaLogs.map((log, i) => (
