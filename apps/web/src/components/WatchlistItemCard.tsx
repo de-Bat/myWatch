@@ -255,17 +255,20 @@ export function WatchlistItemCard({
         const completedPct = total > 0 ? Math.round(((jellyfinProgress.watchedEpisodes ?? 0) / total) * 100) : 0
         const episodePct = jellyfinProgress.episodePercent ?? 0
         const hasEpisodeBar = episodePct > 0 && episodePct < 100
-        const mainBottom = hasEpisodeBar ? 3 : 0
+        const hasBothBars = hasEpisodeBar && completedPct > 0
+        const mainBottom = hasBothBars ? 3 : 0
         return (
           <>
-            <div className="absolute left-0 right-0" style={{ bottom: mainBottom, height: 3, background: 'rgba(0,0,0,.12)' }} />
+            {(!hasEpisodeBar || completedPct > 0) && (
+              <div className="absolute left-0 right-0" style={{ bottom: mainBottom, height: 3, background: 'rgba(0,0,0,.12)' }} />
+            )}
             {completedPct > 0 && (
               <div className="absolute left-0" style={{ bottom: mainBottom, width: `${completedPct}%`, height: 3, background: 'rgba(251,191,36,.9)' }} />
             )}
             {hasEpisodeBar && (
               <>
                 <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: 'rgba(0,0,0,.12)' }} />
-                <div className="absolute bottom-0 left-0" style={{ width: `${episodePct}%`, height: 3, background: 'rgba(251,191,36,.7)' }} />
+                <div className="absolute bottom-0 left-0" style={{ width: `${episodePct}%`, height: 3, background: 'rgba(96,165,250,.9)' }} />
               </>
             )}
           </>
