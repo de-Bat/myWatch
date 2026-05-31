@@ -5,6 +5,7 @@ import { SettingsProvider } from '@/hooks/useSettings'
 import { ToastProvider } from '@/components/Toast'
 import { AutoSync } from '@/components/AutoSync'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
+import { PwaUpdater } from '@/components/PwaUpdater'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'myWatch',
   },
   formatDetection: {
@@ -38,6 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <ToastProvider>
               <AutoSync />
               <OfflineIndicator />
+              <PwaUpdater />
               {children}
             </ToastProvider>
           </SettingsProvider>
