@@ -1,6 +1,6 @@
 'use client'
 import { useSession, signOut } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useSync } from '@/hooks/useSync'
@@ -8,6 +8,7 @@ import { useSettings } from '@/hooks/useSettings'
 import { useToast } from '@/components/Toast'
 import type { CardMetaSettings, FontFamily, FontSize } from '@/hooks/useSettings'
 import { db } from '@/lib/db'
+import { apiClient } from '@/lib/api-client'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -114,11 +115,15 @@ export default function SettingsPage() {
   const [jellyfinApiKeyInput, setJellyfinApiKeyInput] = useState('')
   const [jellyfinTestResult, setJellyfinTestResult] = useState<'ok' | 'error' | null>(null)
   const [jellyfinTesting, setJellyfinTesting] = useState(false)
+  const [jellyfinPulling, setJellyfinPulling] = useState(false)
+  const [jellyfinPullLog, setJellyfinPullLog] = useState<string[]>([])
 
   const pendingCount = useLiveQuery(() => db.pendingPushes.count())
   const itemCount = useLiveQuery(() =>
     db.watchlistItems.filter((i) => i.deletedAt === null).count(),
   )
+  const jellyfinProgressCount = useLiveQuery(() => db.jellyfinProgress.count())
+  const jellyfinProgressItems = useLiveQuery(() => db.jellyfinProgress.toArray())
 
   useEffect(() => {
     setTmdbKeyInput(settings.tmdbApiKey)
@@ -186,6 +191,36 @@ export default function SettingsPage() {
     await db.mediaCache.clear()
     toast('Cache cleared', 'success')
   }
+
+  const forcePullJellyfin = useCallback(async () => {
+    if (!session?.apiToken) {
+      setJellyfinPullLog(['❌ Not logged in — no API token'])
+      return
+    }
+    setJellyfinPulling(true)
+    setJellyfinPullLog(['⏳ Pulling from server...'])
+    try {
+      const result = await apiClient.sync.pull(new Date(0).toISOString(), session.apiToken)
+      const jpCount = result.jellyfinProgress?.length ?? 0
+      const itemsCount = result.items?.length ?? 0
+      setJellyfinPullLog(prev => [...prev, `📦 Server returned: ${itemsCount} items, ${jpCount} jellyfin progress records`])
+      
+      if (jpCount > 0) {
+        await db.jellyfinProgress.bulkPut(result.jellyfinProgress!)
+        setJellyfinPullLog(prev => [...prev, `✅ Written ${jpCount} records to local DB`])
+        // Show sample
+        const sample = result.jellyfinProgress!.slice(0, 3).map(p => `tmdb:${p.tmdbId} (${p.mediaType}) → ${p.jellyfinStatus}`).join(', ')
+        setJellyfinPullLog(prev => [...prev, `📋 Sample: ${sample}`])
+      } else {
+        setJellyfinPullLog(prev => [...prev, '⚠️ Server returned 0 jellyfin progress records. Either Jellyfin is not configured server-side, or the poller hasn\'t run yet, or the DB migration is missing.'])
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setJellyfinPullLog(prev => [...prev, `❌ Error: ${msg}`])
+    } finally {
+      setJellyfinPulling(false)
+    }
+  }, [session?.apiToken])
 
   return (
     <div className="page-root">
@@ -490,6 +525,43 @@ export default function SettingsPage() {
             )}
             {jellyfinTestResult === 'error' && (
               <p className="text-[12px]" style={{ color: 'var(--red)' }}>Connection failed — check URL, user ID, API key, and CORS settings</p>
+            )}
+          </div>
+        </Section>
+
+        {/* Jellyfin Debug */}
+        <Section title="Jellyfin Debug">
+          <Row label="Local progress records">
+            <span className="text-[13px] tabular-nums" style={{ color: jellyfinProgressCount ? 'var(--green)' : 'var(--red)' }}>
+              {jellyfinProgressCount ?? 0}
+            </span>
+          </Row>
+          {(jellyfinProgressItems ?? []).slice(0, 5).map(p => (
+            <div key={`${p.tmdbId}-${p.mediaType}`} className="px-4 py-1 text-[11px] tabular-nums" style={{ color: 'var(--muted2)', fontFamily: 'monospace' }}>
+              tmdb:{p.tmdbId} ({p.mediaType}) → <span style={{ color: p.jellyfinStatus === 'watching' ? 'var(--amber)' : p.jellyfinStatus === 'watched' ? 'var(--green)' : 'var(--muted2)' }}>{p.jellyfinStatus}</span>
+              {p.season != null && ` S${p.season}·E${p.episode}`}
+              {p.totalEpisodes != null && ` ${p.watchedEpisodes ?? 0}/${p.totalEpisodes}ep`}
+              {p.moviePercent != null && ` ${p.moviePercent}%`}
+            </div>
+          ))}
+          {(jellyfinProgressCount ?? 0) > 5 && (
+            <div className="px-4 py-1 text-[11px]" style={{ color: 'var(--muted2)' }}>…and {(jellyfinProgressCount ?? 0) - 5} more</div>
+          )}
+          <div className="px-4 py-3 flex flex-col gap-2">
+            <button
+              onClick={forcePullJellyfin}
+              disabled={jellyfinPulling}
+              className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none disabled:opacity-50 transition-all"
+              style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+            >
+              {jellyfinPulling ? 'Pulling…' : 'Force Pull Jellyfin Progress'}
+            </button>
+            {jellyfinPullLog.length > 0 && (
+              <div className="flex flex-col gap-1 p-2 rounded-[6px]" style={{ background: 'var(--bg)', border: '1px solid var(--border2)' }}>
+                {jellyfinPullLog.map((line, i) => (
+                  <span key={i} className="text-[11px]" style={{ color: 'var(--fg2)', fontFamily: 'monospace' }}>{line}</span>
+                ))}
+              </div>
             )}
           </div>
         </Section>
