@@ -101,5 +101,5 @@ export interface JellyfinProgress {
   episodePercent?: number | null
   watchedEpisodes?: number | null
   totalEpisodes?: number | null
-  updatedAt: string
+  updatedAt?: string
 }

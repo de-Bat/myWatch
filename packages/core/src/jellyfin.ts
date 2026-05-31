@@ -19,6 +19,7 @@ export interface JellyfinEpisode {
   RunTimeTicks?: number
   ParentIndexNumber?: number
   IndexNumber?: number
+  SeriesId?: string
 }
 
 export function mapMovie(item: JellyfinItem): JellyfinProgress | null {
@@ -87,14 +88,13 @@ export function findCurrentEpisode(
     }
   }
 
-  // Fall back to last fully-played episode
-  const playedEpisodes = episodes.filter((e) => e.UserData.Played)
-  if (playedEpisodes.length > 0) {
-    const last = playedEpisodes[playedEpisodes.length - 1]
+  // Fall back to first unplayed episode (next up)
+  const nextUp = episodes.find((e) => !e.UserData.Played)
+  if (nextUp) {
     return {
-      season: last.ParentIndexNumber ?? 1,
-      episode: last.IndexNumber ?? 1,
-      episodePercent: 100,
+      season: nextUp.ParentIndexNumber ?? 1,
+      episode: nextUp.IndexNumber ?? 1,
+      episodePercent: 0,
     }
   }
 
@@ -131,16 +131,18 @@ export async function fetchJellyfinProgress(
   const seriesData: { Items?: JellyfinItem[] } = await seriesRes.json()
 
   const watchingSeries: Array<{ progress: JellyfinProgress; jellyfinId: string }> = []
+  const jellyfinIdToKey = new Map<string, string>()
   for (const item of seriesData.Items ?? []) {
     const mapped = mapSeries(item)
     if (!mapped) continue
     result.set(`${mapped.progress.tmdbId}-tv`, mapped.progress)
+    jellyfinIdToKey.set(mapped.jellyfinId, `${mapped.progress.tmdbId}-tv`)
     if (mapped.progress.jellyfinStatus === 'watching') {
       watchingSeries.push(mapped)
     }
   }
 
-  // Episodes for in-progress series only
+  // Episodes for in-progress series (played > 0): get next-up or in-progress episode
   await Promise.all(
     watchingSeries.map(async ({ progress, jellyfinId }) => {
       const epRes = await fetch(
@@ -157,6 +159,35 @@ export async function fetchJellyfinProgress(
       }
     }),
   )
+
+  // Resumable episodes: catches series where only episode-level playback position
+  // exists (Jellyfin sets PlaybackPositionTicks=0 on Series container items).
+  // This upgrades 'planned' series to 'watching' when user is mid-episode.
+  const resumeRes = await fetch(
+    `${base}/Users/${encodeURIComponent(userId)}/Items?Filters=IsResumable&IncludeItemTypes=Episode&Recursive=true&Fields=UserData,ParentIndexNumber,IndexNumber,RunTimeTicks,SeriesId`,
+    { headers },
+  )
+  if (resumeRes.ok) {
+    const resumeData: { Items?: JellyfinEpisode[] } = await resumeRes.json()
+    for (const ep of resumeData.Items ?? []) {
+      if (!ep.SeriesId) continue
+      const key = jellyfinIdToKey.get(ep.SeriesId)
+      if (!key) continue
+      const existing = result.get(key)
+      if (!existing) continue
+      const episodePercent =
+        ep.RunTimeTicks && ep.RunTimeTicks > 0
+          ? Math.min(100, Math.max(0, Math.round((ep.UserData.PlaybackPositionTicks / ep.RunTimeTicks) * 100)))
+          : 0
+      result.set(key, {
+        ...existing,
+        jellyfinStatus: 'watching',
+        season: ep.ParentIndexNumber ?? 1,
+        episode: ep.IndexNumber ?? 1,
+        episodePercent,
+      })
+    }
+  }
 
   return result
 }
