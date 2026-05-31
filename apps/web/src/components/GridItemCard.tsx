@@ -214,17 +214,20 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
           }
           const total = jellyfinProgress.totalEpisodes ?? 0
           const completedPct = total > 0 ? Math.round(((jellyfinProgress.watchedEpisodes ?? 0) / total) * 100) : 0
-          const inProgressPct = total > 0 && (jellyfinProgress.episodePercent ?? 0) > 0
-            ? (jellyfinProgress.episodePercent ?? 0) / total
-            : 0
+          const episodePct = jellyfinProgress.episodePercent ?? 0
+          const hasEpisodeBar = episodePct > 0 && episodePct < 100
+          const mainBottom = hasEpisodeBar ? 3 : 0
           return (
             <>
-              {track}
+              <div className="absolute left-0 right-0" style={{ bottom: mainBottom, height: 3, background: 'rgba(0,0,0,.35)' }} />
               {completedPct > 0 && (
-                <div className="absolute bottom-0 left-0" style={{ width: `${completedPct}%`, height: 3, background: 'rgba(251,191,36,.95)' }} />
+                <div className="absolute left-0" style={{ bottom: mainBottom, width: `${completedPct}%`, height: 3, background: 'rgba(251,191,36,.95)' }} />
               )}
-              {inProgressPct > 0 && (
-                <div className="absolute bottom-0" style={{ left: `${completedPct}%`, width: `${inProgressPct}%`, height: 3, background: 'rgba(251,191,36,.4)' }} />
+              {hasEpisodeBar && (
+                <>
+                  <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: 'rgba(0,0,0,.35)' }} />
+                  <div className="absolute bottom-0 left-0" style={{ width: `${episodePct}%`, height: 3, background: 'rgba(251,191,36,.7)' }} />
+                </>
               )}
             </>
           )
