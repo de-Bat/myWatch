@@ -237,18 +237,34 @@ export function WatchlistItemCard({
 
       {/* Jellyfin progress bar */}
       {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (() => {
-        const pct = jellyfinProgress.jellyfinStatus === 'watched' ? 100
-          : jellyfinProgress.mediaType === 'movie' ? (jellyfinProgress.moviePercent ?? 0)
-          : jellyfinProgress.totalEpisodes
-            ? Math.round(((jellyfinProgress.watchedEpisodes ?? 0) / jellyfinProgress.totalEpisodes) * 100)
-            : 0
-        const fill = jellyfinProgress.jellyfinStatus === 'watched'
-          ? 'rgba(134,239,172,.75)'
-          : 'rgba(251,191,36,.9)'
+        const watched = jellyfinProgress.jellyfinStatus === 'watched'
+        const track = <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: 'rgba(0,0,0,.12)' }} />
+        if (jellyfinProgress.mediaType === 'movie') {
+          const pct = watched ? 100 : (jellyfinProgress.moviePercent ?? 0)
+          return (
+            <>
+              {track}
+              <div className="absolute bottom-0 left-0" style={{ width: `${pct}%`, height: 3, background: watched ? 'rgba(134,239,172,.75)' : 'rgba(251,191,36,.9)' }} />
+            </>
+          )
+        }
+        if (watched) {
+          return <>{track}<div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: 'rgba(134,239,172,.75)' }} /></>
+        }
+        const total = jellyfinProgress.totalEpisodes ?? 0
+        const completedPct = total > 0 ? Math.round(((jellyfinProgress.watchedEpisodes ?? 0) / total) * 100) : 0
+        const inProgressPct = total > 0 && (jellyfinProgress.episodePercent ?? 0) > 0
+          ? (jellyfinProgress.episodePercent ?? 0) / total
+          : 0
         return (
           <>
-            <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: 'rgba(0,0,0,.12)' }} />
-            <div className="absolute bottom-0 left-0" style={{ width: `${pct}%`, height: 3, background: fill }} />
+            {track}
+            {completedPct > 0 && (
+              <div className="absolute bottom-0 left-0" style={{ width: `${completedPct}%`, height: 3, background: 'rgba(251,191,36,.9)' }} />
+            )}
+            {inProgressPct > 0 && (
+              <div className="absolute bottom-0" style={{ left: `${completedPct}%`, width: `${inProgressPct}%`, height: 3, background: 'rgba(251,191,36,.38)' }} />
+            )}
           </>
         )
       })()}
