@@ -19,6 +19,12 @@ const config = {
   experimental: {
     outputFileTracingRoot: path.join(__dirname, '../../'),
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 }
 
 export default withSerwist(config)

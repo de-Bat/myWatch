@@ -2,11 +2,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { v4 as uuidv4 } from 'uuid'
-import type { MediaType, WatchStatus } from '@mywatch/core'
+import type { MediaType, WatchStatus, JellyfinProgress } from '@mywatch/core'
 import { useWatchlistItem, useUpsertItem, useSoftDeleteItem, getLocalDeviceId } from '@/hooks/useWatchlist'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { useSettings } from '@/hooks/useSettings'
-import type { JellyfinProgress } from '@/lib/jellyfin'
 import { StatusBadge } from './StatusBadge'
 import { ProgressTracker } from './ProgressTracker'
 

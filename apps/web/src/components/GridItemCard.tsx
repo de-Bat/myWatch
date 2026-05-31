@@ -1,7 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import type { WatchlistItem } from '@mywatch/core'
-import type { JellyfinProgress } from '@/lib/jellyfin'
+import type { WatchlistItem, JellyfinProgress } from '@mywatch/core'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { useSettings } from '@/hooks/useSettings'
 
