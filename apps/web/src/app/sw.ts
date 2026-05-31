@@ -12,6 +12,8 @@ declare const self: ServiceWorkerGlobalScope
 
 const FALLBACK_URL = '/offline'
 
+const buildId = process.env.NEXT_PUBLIC_BUILD_ID ?? '1'
+
 const serwist = new Serwist({
   precacheEntries: [
     ...(self.__SW_MANIFEST ?? []),
@@ -20,12 +22,12 @@ const serwist = new Serwist({
     // cold-open these routes offline (not just routes visited while online).
     // These are static pages; they hydrate from IndexedDB. Detail routes
     // (/media/*, /playlists/[id]) load via client-side nav from a cached shell.
-    { url: '/', revision: '1' },
-    { url: '/discover', revision: '1' },
-    { url: '/playlists', revision: '1' },
-    { url: '/profile', revision: '1' },
-    { url: '/search', revision: '1' },
-    { url: '/offline', revision: '1' },
+    { url: '/', revision: buildId },
+    { url: '/discover', revision: buildId },
+    { url: '/playlists', revision: buildId },
+    { url: '/profile', revision: buildId },
+    { url: '/search', revision: buildId },
+    { url: '/offline', revision: buildId },
   ],
   skipWaiting: true,
   clientsClaim: true,
