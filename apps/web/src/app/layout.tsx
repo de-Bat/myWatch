@@ -11,7 +11,7 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'myWatch',
   description: 'Your media watchlist',
-  manifest: '/manifest.json',
+  manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
