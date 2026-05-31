@@ -109,14 +109,51 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
               {item.mediaType === 'movie' ? 'Movie' : 'TV'}
             </span>
 
-            {item.mediaType === 'tv' && item.progressSeason != null && (
-              <span
-                className="text-[9px] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
-                style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}
-              >
-                S{item.progressSeason}·E{item.progressEpisode ?? '?'}
-              </span>
-            )}
+            {item.mediaType === 'tv' && (() => {
+              // Prefer Jellyfin progress, fallback to manual item progress
+              if (jellyfinProgress && (jellyfinProgress.season != null || jellyfinProgress.watchedEpisodes != null)) {
+                return (
+                  <div className="flex gap-[4px]">
+                    {jellyfinProgress.season != null && (
+                      <span
+                        className="text-[9px] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
+                        style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}
+                      >
+                        S{jellyfinProgress.season}·E{jellyfinProgress.episode ?? '?'}
+                      </span>
+                    )}
+                    {jellyfinProgress.totalEpisodes != null && jellyfinProgress.totalEpisodes > 0 && (
+                      <span
+                        className="text-[9px] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
+                        style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }}
+                      >
+                        {jellyfinProgress.watchedEpisodes ?? 0}/{jellyfinProgress.totalEpisodes}
+                      </span>
+                    )}
+                    {jellyfinProgress.episodePercent != null && jellyfinProgress.episodePercent > 0 && jellyfinProgress.episodePercent < 100 && (
+                      <span
+                        className="text-[9px] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
+                        style={{ background: 'rgba(251,191,36,0.2)', color: 'var(--amber)' }}
+                      >
+                        {jellyfinProgress.episodePercent}%
+                      </span>
+                    )}
+                  </div>
+                )
+              }
+              
+              if (item.progressSeason != null) {
+                return (
+                  <span
+                    className="text-[9px] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
+                    style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}
+                  >
+                    S{item.progressSeason}·E{item.progressEpisode ?? '?'}
+                  </span>
+                )
+              }
+              return null
+            })()}
 
             {cardMeta.showRuntime && meta?.runtime != null && meta.runtime > 0 && (
               <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.65)' }}>

@@ -132,14 +132,49 @@ export function WatchlistItemCard({
           style={{ color: 'var(--muted2)', fontSize: 11.5 }}
         >
           <StatusBadge status={item.status} />
-          {item.mediaType === 'tv' && item.progressSeason != null && (
-            <span
-              className="text-[10.5px] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
-              style={{ color: 'var(--muted2)', background: 'var(--bg)', borderColor: 'var(--border2)' }}
-            >
-              S{item.progressSeason}·E{item.progressEpisode ?? '?'}
-            </span>
-          )}
+          {item.mediaType === 'tv' && (() => {
+            if (jellyfinProgress && (jellyfinProgress.season != null || jellyfinProgress.watchedEpisodes != null)) {
+              return (
+                <div className="flex gap-[4px] items-center">
+                  {jellyfinProgress.season != null && (
+                    <span
+                      className="text-[10.5px] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
+                      style={{ color: 'var(--muted2)', background: 'var(--bg)', borderColor: 'var(--border2)' }}
+                    >
+                      S{jellyfinProgress.season}·E{jellyfinProgress.episode ?? '?'}
+                    </span>
+                  )}
+                  {jellyfinProgress.totalEpisodes != null && jellyfinProgress.totalEpisodes > 0 && (
+                    <span
+                      className="text-[10.5px] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
+                      style={{ color: 'var(--muted)', background: 'var(--surface2)', borderColor: 'var(--border)' }}
+                    >
+                      {jellyfinProgress.watchedEpisodes ?? 0}/{jellyfinProgress.totalEpisodes}
+                    </span>
+                  )}
+                  {jellyfinProgress.episodePercent != null && jellyfinProgress.episodePercent > 0 && jellyfinProgress.episodePercent < 100 && (
+                    <span
+                      className="text-[10.5px] font-bold rounded-full px-[7px] py-[1.5px] border tabular-nums"
+                      style={{ color: 'var(--amber)', background: 'rgba(251,191,36,0.1)', borderColor: 'rgba(251,191,36,0.2)' }}
+                    >
+                      {jellyfinProgress.episodePercent}%
+                    </span>
+                  )}
+                </div>
+              )
+            }
+            if (item.progressSeason != null) {
+              return (
+                <span
+                  className="text-[10.5px] font-medium rounded-full px-[7px] py-[1.5px] border tabular-nums"
+                  style={{ color: 'var(--muted2)', background: 'var(--bg)', borderColor: 'var(--border2)' }}
+                >
+                  S{item.progressSeason}·E{item.progressEpisode ?? '?'}
+                </span>
+              )
+            }
+            return null
+          })()}
           {year && <><span style={{ opacity: 0.35 }}>·</span><span>{year}</span></>}
           {upcoming && (
             <>
