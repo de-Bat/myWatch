@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import type { JellyfinRepo } from '../repos/jellyfin-repo.js'
 import { authenticate } from '../middleware/authenticate.js'
 import { fetchJellyfinProgress } from '@mywatch/core'
+import { sseBus } from '../utils/sse-bus.js'
 
 interface SettingsBody {
   jellyfinUrl?: string
@@ -44,6 +45,7 @@ export function registerSettingsRoutes(app: FastifyInstance, jellyfinRepo: Jelly
             const items = Array.from(progressMap.values())
             if (items.length > 0) {
               await jellyfinRepo.upsertProgress(userId, items)
+              sseBus.emit(userId, '', { pushedAt: new Date().toISOString() })
               console.log(`[settings] Immediate Jellyfin poll: ${items.length} records saved for user ${userId}`)
             }
           })
@@ -71,6 +73,7 @@ export function registerSettingsRoutes(app: FastifyInstance, jellyfinRepo: Jelly
         const progressMap = await fetchJellyfinProgress(user.url, user.apiKey, user.jellyfinUserId)
         const items = Array.from(progressMap.values())
         await jellyfinRepo.upsertProgress(userId, items)
+        sseBus.emit(userId, '', { pushedAt: new Date().toISOString() })
         return reply.send({ success: true, count: items.length })
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
