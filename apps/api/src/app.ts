@@ -24,6 +24,7 @@ export async function createApp(deps?: AppDeps): Promise<FastifyInstance> {
   await app.register(cors, {
     origin: true,
     credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   })
 
   await app.register(jwt, {
