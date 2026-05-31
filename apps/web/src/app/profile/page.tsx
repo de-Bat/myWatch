@@ -117,6 +117,8 @@ export default function SettingsPage() {
   const [jellyfinTesting, setJellyfinTesting] = useState(false)
   const [jellyfinPulling, setJellyfinPulling] = useState(false)
   const [jellyfinPullLog, setJellyfinPullLog] = useState<string[]>([])
+  const [jellyfinPolling, setJellyfinPolling] = useState(false)
+  const [serverCredsStatus, setServerCredsStatus] = useState<'unknown' | 'set' | 'missing'>('unknown')
 
   const pendingCount = useLiveQuery(() => db.pendingPushes.count())
   const itemCount = useLiveQuery(() =>
@@ -124,6 +126,19 @@ export default function SettingsPage() {
   )
   const jellyfinProgressCount = useLiveQuery(() => db.jellyfinProgress.count())
   const jellyfinProgressItems = useLiveQuery(() => db.jellyfinProgress.toArray())
+
+  // Check if server has credentials saved
+  useEffect(() => {
+    if (!session?.apiToken) return
+    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/user/settings`, {
+      headers: { Authorization: `Bearer ${session.apiToken}` }
+    })
+      .then(r => r.json())
+      .then((data: { hasCredentials?: boolean }) => {
+        setServerCredsStatus(data.hasCredentials ? 'set' : 'missing')
+      })
+      .catch(() => setServerCredsStatus('unknown'))
+  }, [session?.apiToken])
 
   useEffect(() => {
     setTmdbKeyInput(settings.tmdbApiKey)
@@ -221,6 +236,35 @@ export default function SettingsPage() {
       setJellyfinPulling(false)
     }
   }, [session?.apiToken])
+
+  const pollJellyfinNow = useCallback(async () => {
+    if (!session?.apiToken) {
+      setJellyfinPullLog(['❌ Not logged in'])
+      return
+    }
+    setJellyfinPolling(true)
+    setJellyfinPullLog(prev => [...prev, '⏳ Asking server to poll Jellyfin now...'])
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/user/jellyfin/poll`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.apiToken}` }
+      })
+      const data: { success?: boolean; count?: number; error?: string } = await res.json()
+      if (!res.ok || data.error) {
+        setJellyfinPullLog(prev => [...prev, `❌ Server error: ${data.error ?? res.statusText}`])
+      } else {
+        setJellyfinPullLog(prev => [...prev, `✅ Server polled Jellyfin: ${data.count} records saved`])
+        setServerCredsStatus('set')
+        // Now do a local pull to get the fresh data
+        await forcePullJellyfin()
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setJellyfinPullLog(prev => [...prev, `❌ ${msg}`])
+    } finally {
+      setJellyfinPolling(false)
+    }
+  }, [session?.apiToken, forcePullJellyfin])
 
   return (
     <div className="page-root">
@@ -531,8 +575,13 @@ export default function SettingsPage() {
 
         {/* Jellyfin Debug */}
         <Section title="Jellyfin Debug">
+          <Row label="Server credentials">
+            <span className="text-[12px]" style={{ color: serverCredsStatus === 'set' ? 'var(--green)' : serverCredsStatus === 'missing' ? 'var(--red)' : 'var(--muted2)' }}>
+              {serverCredsStatus === 'set' ? '✓ Configured' : serverCredsStatus === 'missing' ? '✗ Not set — go save Jellyfin settings above' : '…'}
+            </span>
+          </Row>
           <Row label="Local progress records">
-            <span className="text-[13px] tabular-nums" style={{ color: jellyfinProgressCount ? 'var(--green)' : 'var(--red)' }}>
+            <span className="text-[13px] tabular-nums" style={{ color: (jellyfinProgressCount ?? 0) > 0 ? 'var(--green)' : 'var(--red)' }}>
               {jellyfinProgressCount ?? 0}
             </span>
           </Row>
@@ -549,12 +598,20 @@ export default function SettingsPage() {
           )}
           <div className="px-4 py-3 flex flex-col gap-2">
             <button
+              onClick={pollJellyfinNow}
+              disabled={jellyfinPolling || jellyfinPulling}
+              className="w-full py-2 rounded-[6px] text-[13px] font-semibold cursor-pointer border-none disabled:opacity-50 transition-all"
+              style={{ background: 'var(--accent)', color: '#fff' }}
+            >
+              {jellyfinPolling ? 'Polling…' : '▶ Poll Jellyfin Now (Server → Local)'}
+            </button>
+            <button
               onClick={forcePullJellyfin}
-              disabled={jellyfinPulling}
+              disabled={jellyfinPulling || jellyfinPolling}
               className="w-full py-2 rounded-[6px] text-[13px] font-medium cursor-pointer border-none disabled:opacity-50 transition-all"
               style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
             >
-              {jellyfinPulling ? 'Pulling…' : 'Force Pull Jellyfin Progress'}
+              {jellyfinPulling ? 'Pulling…' : 'Pull from Backend DB Only'}
             </button>
             {jellyfinPullLog.length > 0 && (
               <div className="flex flex-col gap-1 p-2 rounded-[6px]" style={{ background: 'var(--bg)', border: '1px solid var(--border2)' }}>
