@@ -1,33 +1,22 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
-import type { AppSettings } from './useSettings'
-import { fetchJellyfinProgress, type JellyfinProgress } from '@/lib/jellyfin'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from '@/lib/db'
+import type { JellyfinProgress } from '@mywatch/core'
 
-export function useJellyfinProgress(settings: AppSettings): {
+export function useJellyfinProgress(): {
   progressMap: Map<string, JellyfinProgress> | null
-  refresh: () => void
   loading: boolean
 } {
-  const [progressMap, setProgressMap] = useState<Map<string, JellyfinProgress> | null>(null)
-  const [loading, setLoading] = useState(false)
-  const { jellyfinUrl, jellyfinApiKey, jellyfinUserId } = settings
+  const items = useLiveQuery(() => db.jellyfinProgress.toArray())
 
-  const run = useCallback(async () => {
-    if (!jellyfinUrl || !jellyfinApiKey || !jellyfinUserId) return
-    setLoading(true)
-    try {
-      const map = await fetchJellyfinProgress(jellyfinUrl, jellyfinApiKey, jellyfinUserId)
-      setProgressMap(map)
-    } catch (err) {
-      console.error('Jellyfin fetch failed:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [jellyfinUrl, jellyfinApiKey, jellyfinUserId])
+  if (items === undefined) {
+    return { progressMap: null, loading: true }
+  }
 
-  useEffect(() => {
-    run()
-  }, [run])
+  const progressMap = new Map<string, JellyfinProgress>()
+  for (const item of items) {
+    progressMap.set(`${item.tmdbId}-${item.mediaType}`, item)
+  }
 
-  return { progressMap, refresh: run, loading }
+  return { progressMap, loading: false }
 }

@@ -1,16 +1,4 @@
-// apps/web/src/lib/jellyfin.ts
-
-export interface JellyfinProgress {
-  tmdbId: number
-  mediaType: 'movie' | 'tv'
-  jellyfinStatus: 'planned' | 'watching' | 'watched'
-  moviePercent?: number      // movie only, 0–100
-  season?: number            // tv in-progress only
-  episode?: number           // tv in-progress only
-  episodePercent?: number    // tv in-progress only, 0–100
-  watchedEpisodes?: number   // tv: episodes fully played
-  totalEpisodes?: number     // tv: total episode count
-}
+import type { JellyfinProgress } from './types'
 
 interface JellyfinUserData {
   Played: boolean

@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { WatchlistItem, MediaCache, Playlist, PlaylistItem } from '@mywatch/core'
+import type { WatchlistItem, MediaCache, Playlist, PlaylistItem, JellyfinProgress } from '@mywatch/core'
 
 export interface PendingPush {
   id?: number
@@ -13,6 +13,7 @@ class WatchDB extends Dexie {
   mediaCache!: Table<MediaCache, [number, string]>
   playlists!: Table<Playlist, string>
   playlistItems!: Table<PlaylistItem, string>
+  jellyfinProgress!: Table<JellyfinProgress, [number, string]>
 
   constructor() {
     super('mywatch')
@@ -34,6 +35,15 @@ class WatchDB extends Dexie {
       mediaCache: '[tmdbId+mediaType], cachedAt',
       playlists: 'id, userId, updatedAt',
       playlistItems: 'id, playlistId, [tmdbId+mediaType]',
+    })
+    // v4: adds jellyfinProgress table
+    this.version(4).stores({
+      watchlistItems: 'id, userId, status, mediaType, updatedAt',
+      pendingPushes: '++id, itemId, queuedAt',
+      mediaCache: '[tmdbId+mediaType], cachedAt',
+      playlists: 'id, userId, updatedAt',
+      playlistItems: 'id, playlistId, [tmdbId+mediaType]',
+      jellyfinProgress: '[tmdbId+mediaType], updatedAt',
     })
   }
 }

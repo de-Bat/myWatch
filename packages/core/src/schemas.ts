@@ -41,5 +41,19 @@ export const mediaCacheSchema = z.object({
   language: z.string().optional(),
 })
 
+export const jellyfinProgressSchema = z.object({
+  tmdbId: z.number().int().positive(),
+  mediaType: mediaTypeSchema,
+  jellyfinStatus: z.enum(['planned', 'watching', 'watched']),
+  moviePercent: z.number().int().min(0).max(100).nullable().optional(),
+  season: z.number().int().nonnegative().nullable().optional(),
+  episode: z.number().int().nonnegative().nullable().optional(),
+  episodePercent: z.number().int().min(0).max(100).nullable().optional(),
+  watchedEpisodes: z.number().int().nonnegative().nullable().optional(),
+  totalEpisodes: z.number().int().nonnegative().nullable().optional(),
+  updatedAt: z.string().datetime(),
+})
+
 export type WatchlistItemInput = z.input<typeof watchlistItemSchema>
 export type MediaCacheInput = z.input<typeof mediaCacheSchema>
+export type JellyfinProgressInput = z.input<typeof jellyfinProgressSchema>

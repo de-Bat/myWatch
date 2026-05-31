@@ -129,7 +129,7 @@ export default function HomePage() {
   }
 
   const { settings, update: updateSettings } = useSettings()
-  const { progressMap } = useJellyfinProgress(settings)
+  const { progressMap } = useJellyfinProgress()
   const allItems = useWatchlistItems()
   const upsert = useUpsertItem()
   const { syncing, lastSyncedAt, error: syncError, sync } = useSync()

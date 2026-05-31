@@ -90,3 +90,16 @@ export interface SmartRules {
   minRating?: number
   maxRating?: number
 }
+
+export interface JellyfinProgress {
+  tmdbId: number
+  mediaType: MediaType
+  jellyfinStatus: 'planned' | 'watching' | 'watched'
+  moviePercent?: number | null
+  season?: number | null
+  episode?: number | null
+  episodePercent?: number | null
+  watchedEpisodes?: number | null
+  totalEpisodes?: number | null
+  updatedAt: string
+}

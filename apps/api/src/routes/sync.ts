@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import type { WatchlistItem, Playlist, PlaylistItem } from '@mywatch/core'
+import type { WatchlistItem, Playlist, PlaylistItem, JellyfinProgress } from '@mywatch/core'
 import type { WatchlistRepo } from '../repos/watchlist-repo.js'
 import type { PlaylistRepo } from '../repos/playlist-repo.js'
+import type { JellyfinRepo } from '../repos/jellyfin-repo.js'
 import { authenticate } from '../middleware/authenticate.js'
 import { sseBus } from '../utils/sse-bus.js'
 
@@ -20,12 +21,14 @@ interface PushBody {
   items: WatchlistItem[]
   playlists?: Playlist[]
   playlistItems?: PlaylistItem[]
+  jellyfinProgress?: JellyfinProgress[]
 }
 
 interface PullResponse {
   items: WatchlistItem[]
   playlists: Playlist[]
   playlistItems: PlaylistItem[]
+  jellyfinProgress?: JellyfinProgress[]
   pulledAt: string
 }
 
@@ -33,6 +36,7 @@ export function registerSyncRoutes(
   app: FastifyInstance,
   watchlistRepo: WatchlistRepo,
   playlistRepo: PlaylistRepo,
+  jellyfinRepo: JellyfinRepo,
 ) {
   app.post<{ Body: PushBody }>(
     '/sync/push',
@@ -51,7 +55,7 @@ export function registerSyncRoutes(
       },
     },
     async (req, reply) => {
-      const { items, playlists = [], playlistItems = [] } = req.body
+      const { items, playlists = [], playlistItems = [], jellyfinProgress = [] } = req.body
       const userId = req.user.sub
 
       const foreign = items.find((item) => item.userId !== userId)
@@ -67,6 +71,7 @@ export function registerSyncRoutes(
       await watchlistRepo.upsertItems(userId, items)
       await playlistRepo.upsertPlaylists(userId, playlists)
       await playlistRepo.upsertPlaylistItems(playlistItems)
+      await jellyfinRepo.upsertProgress(userId, jellyfinProgress)
 
       const connId = (req.headers['x-conn-id'] as string | undefined) ?? ''
       const pushedAt = new Date().toISOString()
@@ -90,14 +95,15 @@ export function registerSyncRoutes(
       }
 
       const userId = req.user.sub
-      const [items, playlists, playlistItems] = await Promise.all([
+      const [items, playlists, playlistItems, jellyfinProgress] = await Promise.all([
         watchlistRepo.findSince(userId, since),
         playlistRepo.findPlaylistsSince(userId, since),
         playlistRepo.findPlaylistItemsSince(userId, since),
+        jellyfinRepo.findSince(userId, since),
       ])
       const pulledAt = new Date().toISOString()
 
-      return reply.send({ items, playlists, playlistItems, pulledAt } satisfies PullResponse)
+      return reply.send({ items, playlists, playlistItems, jellyfinProgress, pulledAt } satisfies PullResponse)
     },
   )
 

@@ -135,12 +135,30 @@ export default function SettingsPage() {
     toast('API key saved', 'success')
   }
 
-  function saveJellyfin() {
+  async function saveJellyfin() {
     update({
       jellyfinUrl: jellyfinUrlInput.trim(),
       jellyfinUserId: jellyfinUserIdInput.trim(),
       jellyfinApiKey: jellyfinApiKeyInput.trim(),
     })
+    if (session?.apiToken) {
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/user/settings`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.apiToken}`
+          },
+          body: JSON.stringify({
+            jellyfinUrl: jellyfinUrlInput.trim(),
+            jellyfinUserId: jellyfinUserIdInput.trim(),
+            jellyfinApiKey: jellyfinApiKeyInput.trim(),
+          })
+        })
+      } catch (err) {
+        console.error('Failed to sync Jellyfin settings to server:', err)
+      }
+    }
     toast('Jellyfin settings saved', 'success')
   }
 

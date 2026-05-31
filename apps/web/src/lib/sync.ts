@@ -18,8 +18,8 @@ export async function pushPendingItems(token: string, userId: string, connId?: s
 }
 
 export async function pullItems(since: string, token: string): Promise<{ pulledAt: string; count: number }> {
-  const { items: remoteItems, pulledAt } = await apiClient.sync.pull(since, token)
-  if (remoteItems.length === 0) return { pulledAt, count: 0 }
+  const { items: remoteItems, jellyfinProgress = [], pulledAt } = await apiClient.sync.pull(since, token)
+  if (remoteItems.length === 0 && jellyfinProgress.length === 0) return { pulledAt, count: 0 }
 
   const ids = remoteItems.map((i) => i.id)
   const localItems = await db.watchlistItems.where('id').anyOf(ids).toArray()
@@ -33,6 +33,15 @@ export async function pullItems(since: string, token: string): Promise<{ pulledA
     const local = localMap.get(item.id)
     return local === undefined || local.updatedAt !== item.updatedAt
   })
-  await db.watchlistItems.bulkPut(resolved)
-  return { pulledAt, count: changed.length }
+  
+  await db.transaction('rw', db.watchlistItems, db.jellyfinProgress, async () => {
+    if (resolved.length > 0) {
+      await db.watchlistItems.bulkPut(resolved)
+    }
+    if (jellyfinProgress.length > 0) {
+      await db.jellyfinProgress.bulkPut(jellyfinProgress)
+    }
+  })
+  
+  return { pulledAt, count: changed.length + jellyfinProgress.length }
 }
