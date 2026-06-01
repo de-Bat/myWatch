@@ -1,31 +1,68 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 
+type ConnectionStatus = 'online' | 'offline' | 'unreachable'
+
 export function OfflineIndicator() {
-  const [isOffline, setIsOffline] = useState(false)
+  const [status, setStatus] = useState<ConnectionStatus>('online')
   const [showReconnected, setShowReconnected] = useState(false)
   const [mounted, setMounted] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     setMounted(true)
-    setIsOffline(!navigator.onLine)
+
+    const checkStatus = async () => {
+      if (!navigator.onLine) {
+        setStatus('offline')
+        return
+      }
+
+      try {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 4000)
+        
+        // Fetch a cache-busted endpoint. If the server is down or returning a 502 Bad Gateway,
+        // it will respond with status 502 (>= 500). If the server is up and responsive,
+        // it will return a < 500 status (even if it's a 404 for a non-existent API route).
+        const res = await fetch(`/api/health?t=${Date.now()}`, {
+          method: 'HEAD',
+          signal: controller.signal,
+          headers: { 'Cache-Control': 'no-cache' }
+        })
+        clearTimeout(timeout)
+
+        if (res.status >= 500) {
+          setStatus('unreachable')
+        } else {
+          setStatus((prev) => {
+            if (prev === 'offline' || prev === 'unreachable') {
+              // Transitioning from offline/unreachable back to online
+              setShowReconnected(true)
+              if (timeoutRef.current) clearTimeout(timeoutRef.current)
+              timeoutRef.current = setTimeout(() => {
+                setShowReconnected(false)
+              }, 4000)
+            }
+            return 'online'
+          })
+        }
+      } catch (err) {
+        // If the request fails (network error, DNS failure, etc.), the server is unreachable
+        setStatus('unreachable')
+      }
+    }
+
+    // Run status check initially
+    checkStatus()
 
     const handleOnline = () => {
-      setIsOffline(false)
-      setShowReconnected(true)
-      
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-      
-      timeoutRef.current = setTimeout(() => {
-        setShowReconnected(false)
-      }, 4000)
+      checkStatus()
     }
 
     const handleOffline = () => {
-      setIsOffline(true)
+      setStatus('offline')
       setShowReconnected(false)
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
@@ -35,17 +72,27 @@ export function OfflineIndicator() {
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
 
+    // Periodically ping the server every 10 seconds to detect server state changes
+    intervalRef.current = setInterval(checkStatus, 10000)
+
     return () => {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
     }
   }, [])
 
   if (!mounted) return null
-  if (!isOffline && !showReconnected) return null
+
+  const isOfflineMode = status === 'offline' || status === 'unreachable'
+  if (!isOfflineMode && !showReconnected) return null
+
+  const isOffline = status === 'offline'
 
   return (
     <>
@@ -68,11 +115,11 @@ export function OfflineIndicator() {
           left: '50%',
           transform: 'translateX(-50%)',
           bottom: 'calc(20px + env(safe-area-inset-bottom, 0px))',
-          background: isOffline ? 'rgba(30, 30, 35, 0.85)' : 'rgba(20, 35, 25, 0.85)',
-          borderColor: isOffline ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)',
+          background: isOfflineMode ? 'rgba(30, 30, 35, 0.85)' : 'rgba(20, 35, 25, 0.85)',
+          borderColor: isOfflineMode ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
-          color: isOffline ? '#fca5a5' : '#86efac',
+          color: isOfflineMode ? '#fca5a5' : '#86efac',
           zIndex: 99999,
         }}
       >
@@ -80,15 +127,17 @@ export function OfflineIndicator() {
         <span
           className="w-2 h-2 rounded-full flex-shrink-0"
           style={{
-            background: isOffline ? '#ef4444' : '#22c55e',
-            animation: isOffline ? 'offline-glow 2s infinite ease-in-out' : 'online-glow 2s infinite ease-in-out',
+            background: isOfflineMode ? '#ef4444' : '#22c55e',
+            animation: isOfflineMode ? 'offline-glow 2s infinite ease-in-out' : 'online-glow 2s infinite ease-in-out',
           }}
         />
 
-        {isOffline ? (
+        {isOfflineMode ? (
           <div className="flex items-center gap-1.5 whitespace-nowrap">
             <span>📡</span>
-            <span>Offline Mode — showing cached data</span>
+            <span>
+              {isOffline ? 'Offline Mode — showing cached data' : 'Server Unreachable — showing cached data'}
+            </span>
           </div>
         ) : (
           <div className="flex items-center gap-1.5 whitespace-nowrap">
