@@ -1,0 +1,9 @@
+ALTER TABLE users ADD COLUMN IF NOT EXISTS radarr_url TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS radarr_api_key TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS radarr_quality_profile_id INTEGER DEFAULT 1;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS radarr_root_folder_path TEXT;
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS sonarr_url TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS sonarr_api_key TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS sonarr_quality_profile_id INTEGER DEFAULT 1;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS sonarr_root_folder_path TEXT;

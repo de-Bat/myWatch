@@ -1,7 +1,7 @@
 // apps/web/tests/jellyfin.test.ts
 import { describe, it, expect } from 'vitest'
-import { mapMovie, mapSeries, findCurrentEpisode } from '../src/lib/jellyfin'
-import type { JellyfinItem, JellyfinEpisode } from '../src/lib/jellyfin'
+import { mapMovie, mapSeries, findCurrentEpisode } from '@mywatch/core'
+import type { JellyfinItem, JellyfinEpisode } from '@mywatch/core'
 
 const BASE_ITEM: JellyfinItem = {
   Id: 'jf-1',
@@ -130,8 +130,8 @@ describe('findCurrentEpisode', () => {
     expect(findCurrentEpisode([])).toBeNull()
   })
 
-  it('returns null when no episodes played or in-progress', () => {
-    expect(findCurrentEpisode([makeEpisode({}), makeEpisode({ ep: 2 })])).toBeNull()
+  it('returns next up unplayed episode when no episodes played or in-progress', () => {
+    expect(findCurrentEpisode([makeEpisode({}), makeEpisode({ ep: 2 })])).toEqual({ season: 1, episode: 1, episodePercent: 0 })
   })
 
   it('returns in-progress episode with percent', () => {
@@ -143,13 +143,13 @@ describe('findCurrentEpisode', () => {
     expect(findCurrentEpisode(episodes)).toEqual({ season: 1, episode: 2, episodePercent: 40 })
   })
 
-  it('returns last played episode with episodePercent 100 when none in-progress', () => {
+  it('returns next up unplayed episode with episodePercent 0 when none in-progress', () => {
     const episodes = [
       makeEpisode({ played: true, season: 1, ep: 1 }),
       makeEpisode({ played: true, season: 1, ep: 2 }),
       makeEpisode({ season: 1, ep: 3 }),
     ]
-    expect(findCurrentEpisode(episodes)).toEqual({ season: 1, episode: 2, episodePercent: 100 })
+    expect(findCurrentEpisode(episodes)).toEqual({ season: 1, episode: 3, episodePercent: 0 })
   })
 
   it('prefers in-progress over last-played', () => {

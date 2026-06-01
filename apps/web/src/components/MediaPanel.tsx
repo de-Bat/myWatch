@@ -63,6 +63,75 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
   const [customInput, setCustomInput] = useState('')
   const [showCustomInput, setShowCustomInput] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [arrStatus, setArrStatus] = useState<{
+    monitored: boolean
+    hasFile: boolean
+    isDownloading: boolean
+    downloadPercent: number | null
+  } | null>(null)
+  const [arrLoading, setArrLoading] = useState(false)
+  const [requestingDownload, setRequestingDownload] = useState(false)
+
+  useEffect(() => {
+    if (!session?.apiToken) return
+    setArrLoading(true)
+    let active = true
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+    fetch(`${apiBase}/api/arr/status?tmdbId=${tmdbId}&mediaType=${mediaType}`, {
+      headers: { Authorization: `Bearer ${session.apiToken}` }
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (active && data) {
+          setArrStatus(data)
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setArrLoading(false)
+      })
+
+    return () => { active = false }
+  }, [tmdbId, mediaType, session?.apiToken])
+
+  async function handleRequestDownload() {
+    if (!session?.apiToken) return
+    setRequestingDownload(true)
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+      const res = await fetch(`${apiBase}/api/arr/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.apiToken}`
+        },
+        body: JSON.stringify({ tmdbId, mediaType }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        // Optimistically set to monitored/downloading
+        setArrStatus(prev => ({
+          monitored: true,
+          hasFile: false,
+          isDownloading: true,
+          downloadPercent: 0,
+          ...prev,
+        }))
+        // Re-fetch status to get actual state
+        const statusRes = await fetch(`${apiBase}/api/arr/status?tmdbId=${tmdbId}&mediaType=${mediaType}`, {
+          headers: { Authorization: `Bearer ${session.apiToken}` }
+        })
+        if (statusRes.ok) {
+          const freshData = await statusRes.json()
+          setArrStatus(freshData)
+        }
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setRequestingDownload(false)
+    }
+  }
 
   const [isRevealed, setIsRevealed] = useState(false)
   useEffect(() => {
@@ -454,6 +523,116 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
               </div>
             )
           })()}
+
+          {/* Download Manager block when not yet in Jellyfin library */}
+          {(!jellyfinProgress || jellyfinProgress.jellyfinStatus === 'planned') && session?.apiToken && (
+            <div className="flex flex-col gap-[8px]">
+              <SectionLabel>Download Manager</SectionLabel>
+              {arrStatus ? (
+                <div 
+                  className="rounded-[8px] p-4 flex flex-col gap-3 transition-all duration-300"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border2)' }}
+                >
+                  <div className="flex justify-between items-center text-[11px] font-bold">
+                    <span style={{ color: 'var(--fg)' }}>
+                      {mediaType === 'movie' ? 'Radarr (Movies)' : 'Sonarr (TV Shows)'}
+                    </span>
+                    <span 
+                      className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                      style={
+                        arrStatus.hasFile
+                          ? { background: 'rgba(34,197,94,.15)', color: 'var(--green)' }
+                          : arrStatus.isDownloading
+                          ? { background: 'rgba(245,158,11,.15)', color: 'var(--amber)' }
+                          : arrStatus.monitored
+                          ? { background: 'rgba(59,130,246,.15)', color: 'var(--accent2)' }
+                          : { background: 'rgba(255,255,255,.08)', color: 'var(--muted)' }
+                      }
+                    >
+                      {arrStatus.hasFile
+                        ? '✓ Available'
+                        : arrStatus.isDownloading
+                        ? 'Downloading'
+                        : arrStatus.monitored
+                        ? 'Monitored'
+                        : 'Not Tracked'
+                      }
+                    </span>
+                  </div>
+
+                  {arrStatus.isDownloading && (
+                    <div className="flex flex-col gap-1.5 w-full">
+                      <div className="flex justify-between text-[11px]" style={{ color: 'var(--muted2)' }}>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                          Active Download
+                        </span>
+                        <span className="font-semibold tabular-nums" style={{ color: 'var(--amber)' }}>
+                          {arrStatus.downloadPercent != null ? `${arrStatus.downloadPercent}%` : '0%'}
+                        </span>
+                      </div>
+                      <div style={{ height: 4, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden' }}>
+                        <div 
+                          style={{ 
+                            width: `${arrStatus.downloadPercent ?? 0}%`, 
+                            height: '100%', 
+                            background: 'rgba(251,191,36,.9)', 
+                            transition: 'width 400ms ease-out-in' 
+                          }} 
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {arrStatus.hasFile && (
+                    <p className="text-[11px]" style={{ color: 'var(--muted2)' }}>
+                      This title is successfully downloaded and is available in your media library directory.
+                    </p>
+                  )}
+
+                  {arrStatus.monitored && !arrStatus.isDownloading && !arrStatus.hasFile && (
+                    <p className="text-[11px]" style={{ color: 'var(--muted2)' }}>
+                      Monitored and waiting for a release to be indexed for download.
+                    </p>
+                  )}
+
+                  {!arrStatus.monitored && (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-[11px]" style={{ color: 'var(--muted2)', lineHeight: 1.4 }}>
+                        This title is not currently monitored or downloading. Request a download to start monitoring.
+                      </p>
+                      <button
+                        onClick={handleRequestDownload}
+                        disabled={requestingDownload}
+                        className="w-full py-1.5 rounded-[6px] text-[11px] font-bold cursor-pointer border-none transition-all duration-100 flex items-center justify-center gap-1.5"
+                        style={{
+                          background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%)',
+                          color: '#fff',
+                        }}
+                      >
+                        {requestingDownload ? (
+                          'Requesting…'
+                        ) : (
+                          <>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                              <polyline points="7 10 12 15 17 10" />
+                              <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            ✨ Request Download
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-[11px] text-center" style={{ color: 'var(--muted2)' }}>
+                  Loading download status…
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Progress (TV in_progress) */}
           {mediaType === 'tv' && existingItem?.status === 'in_progress' && (

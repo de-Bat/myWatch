@@ -15,6 +15,14 @@ interface SettingsBody {
   llmApiKey?: string
   llmModel?: string
   recapMinInterval?: number
+  radarrUrl?: string
+  radarrApiKey?: string
+  radarrQualityProfileId?: number
+  radarrRootFolderPath?: string
+  sonarrUrl?: string
+  sonarrApiKey?: string
+  sonarrQualityProfileId?: number
+  sonarrRootFolderPath?: string
 }
 
 export function registerSettingsRoutes(
@@ -32,8 +40,10 @@ export function registerSettingsRoutes(
       const user = users.find(u => u.id === userId)
 
       let llmSettings = null
+      let arrSettings = null
       if (userRepo) {
         llmSettings = await userRepo.getLlmSettings(userId)
+        arrSettings = await userRepo.getArrSettings(userId)
       }
 
       return reply.send({
@@ -46,6 +56,14 @@ export function registerSettingsRoutes(
         llmApiKey: llmSettings?.llmApiKey ? '••••••••' : '',
         llmModel: llmSettings?.llmModel ?? '',
         recapMinInterval: llmSettings?.recapMinInterval ?? 5,
+        radarrUrl: arrSettings?.radarrUrl ?? '',
+        radarrApiKey: arrSettings?.radarrApiKey ? '••••••••' : '',
+        radarrQualityProfileId: arrSettings?.radarrQualityProfileId ?? 1,
+        radarrRootFolderPath: arrSettings?.radarrRootFolderPath ?? '',
+        sonarrUrl: arrSettings?.sonarrUrl ?? '',
+        sonarrApiKey: arrSettings?.sonarrApiKey ? '••••••••' : '',
+        sonarrQualityProfileId: arrSettings?.sonarrQualityProfileId ?? 1,
+        sonarrRootFolderPath: arrSettings?.sonarrRootFolderPath ?? '',
       })
     }
   )
@@ -64,6 +82,14 @@ export function registerSettingsRoutes(
         llmApiKey,
         llmModel,
         recapMinInterval,
+        radarrUrl,
+        radarrApiKey,
+        radarrQualityProfileId,
+        radarrRootFolderPath,
+        sonarrUrl,
+        sonarrApiKey,
+        sonarrQualityProfileId,
+        sonarrRootFolderPath,
       } = req.body
       const userId = req.user.sub
 
@@ -111,6 +137,38 @@ export function registerSettingsRoutes(
           llmApiKey: finalApiKey || null,
           llmModel: finalModel || null,
           recapMinInterval: finalInterval || 5,
+        })
+      }
+
+      // 3. Partial update for Arr configurations
+      if (userRepo && (
+        radarrUrl !== undefined || radarrApiKey !== undefined || radarrQualityProfileId !== undefined || radarrRootFolderPath !== undefined ||
+        sonarrUrl !== undefined || sonarrApiKey !== undefined || sonarrQualityProfileId !== undefined || sonarrRootFolderPath !== undefined
+      )) {
+        const existing = await userRepo.getArrSettings(userId)
+        const finalRadarrUrl = radarrUrl !== undefined ? radarrUrl : (existing?.radarrUrl ?? null)
+        const finalRadarrApiKey = radarrApiKey !== undefined
+          ? (radarrApiKey === '••••••••' ? (existing?.radarrApiKey ?? null) : radarrApiKey)
+          : (existing?.radarrApiKey ?? null)
+        const finalRadarrQualityProfileId = radarrQualityProfileId !== undefined ? Number(radarrQualityProfileId) : (existing?.radarrQualityProfileId ?? 1)
+        const finalRadarrRootFolderPath = radarrRootFolderPath !== undefined ? radarrRootFolderPath : (existing?.radarrRootFolderPath ?? null)
+
+        const finalSonarrUrl = sonarrUrl !== undefined ? sonarrUrl : (existing?.sonarrUrl ?? null)
+        const finalSonarrApiKey = sonarrApiKey !== undefined
+          ? (sonarrApiKey === '••••••••' ? (existing?.sonarrApiKey ?? null) : sonarrApiKey)
+          : (existing?.sonarrApiKey ?? null)
+        const finalSonarrQualityProfileId = sonarrQualityProfileId !== undefined ? Number(sonarrQualityProfileId) : (existing?.sonarrQualityProfileId ?? 1)
+        const finalSonarrRootFolderPath = sonarrRootFolderPath !== undefined ? sonarrRootFolderPath : (existing?.sonarrRootFolderPath ?? null)
+
+        await userRepo.updateArrSettings(userId, {
+          radarrUrl: finalRadarrUrl || null,
+          radarrApiKey: finalRadarrApiKey || null,
+          radarrQualityProfileId: finalRadarrQualityProfileId || 1,
+          radarrRootFolderPath: finalRadarrRootFolderPath || null,
+          sonarrUrl: finalSonarrUrl || null,
+          sonarrApiKey: finalSonarrApiKey || null,
+          sonarrQualityProfileId: finalSonarrQualityProfileId || 1,
+          sonarrRootFolderPath: finalSonarrRootFolderPath || null,
         })
       }
 

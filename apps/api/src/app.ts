@@ -11,6 +11,7 @@ import { registerAuthRoutes } from './routes/auth.js'
 import { registerOAuthRoutes } from './routes/oauth.js'
 import { registerSyncRoutes } from './routes/sync.js'
 import { registerSettingsRoutes } from './routes/settings.js'
+import { registerArrRoutes } from './routes/arr.js'
 
 export interface AppDeps {
   userRepo?: UserRepo
@@ -19,6 +20,7 @@ export interface AppDeps {
   jellyfinRepo?: JellyfinRepo
   recapRepo?: RecapRepo
   triggerBackgroundRecap?: (userId: string, tmdbId: number, mediaType: 'movie' | 'tv') => Promise<void>
+  arrService?: any
 }
 
 export async function createApp(deps?: AppDeps): Promise<FastifyInstance> {
@@ -51,6 +53,10 @@ export async function createApp(deps?: AppDeps): Promise<FastifyInstance> {
       deps.triggerBackgroundRecap,
     )
     registerSettingsRoutes(app, deps.jellyfinRepo, deps.userRepo)
+  }
+
+  if (deps?.arrService) {
+    registerArrRoutes(app, deps.arrService)
   }
 
   return app

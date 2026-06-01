@@ -1,4 +1,6 @@
 'use client'
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import type { TmdbSearchResult } from '@mywatch/tmdb'
 import type { WatchStatus } from '@mywatch/core'
@@ -13,6 +15,38 @@ interface Props {
 }
 
 export function MediaCard({ result, existingStatus, onAdd }: Props) {
+  const { data: session } = useSession()
+  const [arrStatus, setArrStatus] = useState<{
+    monitored: boolean
+    hasFile: boolean
+    isDownloading: boolean
+    downloadPercent: number | null
+  } | null>(null)
+
+  useEffect(() => {
+    if (!session?.apiToken) return
+    const tmdbId = result.id
+    const mediaType = result.media_type
+    
+    let active = true
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+    
+    fetch(`${apiBase}/api/arr/status?tmdbId=${tmdbId}&mediaType=${mediaType}`, {
+      headers: { Authorization: `Bearer ${session.apiToken}` }
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (active && data) {
+          setArrStatus(data)
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      active = false
+    }
+  }, [result.id, result.media_type, session?.apiToken])
+
   const title = result.media_type === 'movie' ? result.title : result.name
   const year =
     result.media_type === 'movie'
@@ -69,13 +103,37 @@ export function MediaCard({ result, existingStatus, onAdd }: Props) {
           <span>★ {result.vote_average.toFixed(1)}</span>
         </div>
 
-        <div className="mt-1">
-          {existingStatus ? (
+        <div className="mt-1 flex flex-wrap gap-2 items-center">
+          {existingStatus && (
             <StatusBadge status={existingStatus} />
-          ) : (
+          )}
+
+          {arrStatus?.hasFile && (
+            <span
+              className="text-[10px] font-extrabold tracking-[0.04em] uppercase px-[7px] py-[2.5px] rounded-full flex items-center gap-1"
+              style={{ background: 'rgba(34,197,94,.15)', color: 'var(--green)' }}
+            >
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-0.5">
+                <polyline points="20 6 9 17 4 12" style={{ transform: 'scale(0.8) translate(1px, 1px)' }} />
+              </svg>
+              Available
+            </span>
+          )}
+
+          {arrStatus?.isDownloading && (
+            <span
+              className="text-[10px] font-extrabold tracking-[0.04em] uppercase px-[7px] py-[2.5px] rounded-full flex items-center gap-1.5 animate-pulse"
+              style={{ background: 'rgba(245,158,11,.15)', color: 'var(--amber)' }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+              Downloading {arrStatus.downloadPercent != null ? `(${arrStatus.downloadPercent}%)` : ''}
+            </span>
+          )}
+
+          {!existingStatus && !arrStatus?.hasFile && !arrStatus?.isDownloading && (
             <button
               onClick={() => onAdd(result)}
-              className="text-[var(--text-11)] font-semibold px-[10px] py-[3px] rounded-full border-none cursor-pointer"
+              className="text-[var(--text-11)] font-semibold px-[10px] py-[3px] rounded-full border-none cursor-pointer transition-colors duration-100"
               style={{ background: 'var(--accent)', color: '#fff' }}
               onMouseEnter={(e) => (e.currentTarget.style.background = '#4f46e5')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}

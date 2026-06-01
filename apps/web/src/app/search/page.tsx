@@ -84,6 +84,19 @@ export default function SearchPage() {
       quitAt: status === 'quit' ? now : null,
       deletedAt: null,
     })
+
+    if (session?.apiToken) {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+      fetch(`${apiBase}/api/arr/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.apiToken}`
+        },
+        body: JSON.stringify({ tmdbId: result.id, mediaType: result.media_type }),
+      }).catch(err => console.error('Failed to trigger Arr request:', err))
+    }
+
     setPending(null)
   }
 

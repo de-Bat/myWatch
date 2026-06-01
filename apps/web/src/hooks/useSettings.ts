@@ -32,6 +32,14 @@ export interface AppSettings {
   jellyfinUrl: string
   jellyfinApiKey: string
   jellyfinUserId: string
+  radarrUrl: string
+  radarrApiKey: string
+  radarrQualityProfileId: number
+  radarrRootFolderPath: string
+  sonarrUrl: string
+  sonarrApiKey: string
+  sonarrQualityProfileId: number
+  sonarrRootFolderPath: string
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -58,6 +66,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
   jellyfinUrl: '',
   jellyfinApiKey: '',
   jellyfinUserId: '',
+  radarrUrl: '',
+  radarrApiKey: '',
+  radarrQualityProfileId: 1,
+  radarrRootFolderPath: '',
+  sonarrUrl: '',
+  sonarrApiKey: '',
+  sonarrQualityProfileId: 1,
+  sonarrRootFolderPath: '',
 }
 
 const FONT_SIZES: Record<FontSize, string> = {

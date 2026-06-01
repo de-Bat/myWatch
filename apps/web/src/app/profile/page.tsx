@@ -127,6 +127,16 @@ export default function SettingsPage() {
   const [jellyfinPolling, setJellyfinPolling] = useState(false)
   const [serverCredsStatus, setServerCredsStatus] = useState<'unknown' | 'set' | 'missing'>('unknown')
 
+  const [radarrUrlInput, setRadarrUrlInput] = useState('')
+  const [radarrApiKeyInput, setRadarrApiKeyInput] = useState('')
+  const [radarrQualityProfileIdInput, setRadarrQualityProfileIdInput] = useState(1)
+  const [radarrRootFolderPathInput, setRadarrRootFolderPathInput] = useState('')
+
+  const [sonarrUrlInput, setSonarrUrlInput] = useState('')
+  const [sonarrApiKeyInput, setSonarrApiKeyInput] = useState('')
+  const [sonarrQualityProfileIdInput, setSonarrQualityProfileIdInput] = useState(1)
+  const [sonarrRootFolderPathInput, setSonarrRootFolderPathInput] = useState('')
+
   // ── PWA debug state ──────────────────────────────────────────────────────────
   const [pwaLogs, setPwaLogs] = useState<{ text: string; kind: 'ok' | 'warn' | 'info' }[]>([])
 
@@ -262,6 +272,14 @@ export default function SettingsPage() {
         llmApiKey?: string
         llmModel?: string
         recapMinInterval?: number
+        radarrUrl?: string
+        radarrApiKey?: string
+        radarrQualityProfileId?: number
+        radarrRootFolderPath?: string
+        sonarrUrl?: string
+        sonarrApiKey?: string
+        sonarrQualityProfileId?: number
+        sonarrRootFolderPath?: string
       }) => {
         setServerCredsStatus(data.hasCredentials ? 'set' : 'missing')
         if (data.llmProvider) setLlmProvider(data.llmProvider)
@@ -270,6 +288,16 @@ export default function SettingsPage() {
         if (data.llmModel) setLlmModelInput(data.llmModel)
         if (data.recapMinInterval) setRecapMinIntervalInput(data.recapMinInterval)
 
+        if (data.radarrUrl) setRadarrUrlInput(data.radarrUrl)
+        if (data.radarrApiKey) setRadarrApiKeyInput(data.radarrApiKey)
+        if (data.radarrQualityProfileId) setRadarrQualityProfileIdInput(data.radarrQualityProfileId)
+        if (data.radarrRootFolderPath) setRadarrRootFolderPathInput(data.radarrRootFolderPath)
+
+        if (data.sonarrUrl) setSonarrUrlInput(data.sonarrUrl)
+        if (data.sonarrApiKey) setSonarrApiKeyInput(data.sonarrApiKey)
+        if (data.sonarrQualityProfileId) setSonarrQualityProfileIdInput(data.sonarrQualityProfileId)
+        if (data.sonarrRootFolderPath) setSonarrRootFolderPathInput(data.sonarrRootFolderPath)
+
         // Sync to local settings hook
         update({
           llmProvider: data.llmProvider ?? 'gemini',
@@ -277,6 +305,14 @@ export default function SettingsPage() {
           llmApiKey: data.llmApiKey ?? '',
           llmModel: data.llmModel ?? 'gpt-4o-mini',
           recapMinInterval: data.recapMinInterval ?? 5,
+          radarrUrl: data.radarrUrl ?? '',
+          radarrApiKey: data.radarrApiKey ?? '',
+          radarrQualityProfileId: data.radarrQualityProfileId ?? 1,
+          radarrRootFolderPath: data.radarrRootFolderPath ?? '',
+          sonarrUrl: data.sonarrUrl ?? '',
+          sonarrApiKey: data.sonarrApiKey ?? '',
+          sonarrQualityProfileId: data.sonarrQualityProfileId ?? 1,
+          sonarrRootFolderPath: data.sonarrRootFolderPath ?? '',
         })
       })
       .catch(() => setServerCredsStatus('unknown'))
@@ -307,6 +343,27 @@ export default function SettingsPage() {
     setJellyfinUserIdInput(settings.jellyfinUserId)
     setJellyfinApiKeyInput(settings.jellyfinApiKey)
   }, [settings.jellyfinUrl, settings.jellyfinUserId, settings.jellyfinApiKey])
+
+  useEffect(() => {
+    setRadarrUrlInput(settings.radarrUrl ?? '')
+    setRadarrApiKeyInput(settings.radarrApiKey ?? '')
+    setRadarrQualityProfileIdInput(settings.radarrQualityProfileId ?? 1)
+    setRadarrRootFolderPathInput(settings.radarrRootFolderPath ?? '')
+
+    setSonarrUrlInput(settings.sonarrUrl ?? '')
+    setSonarrApiKeyInput(settings.sonarrApiKey ?? '')
+    setSonarrQualityProfileIdInput(settings.sonarrQualityProfileId ?? 1)
+    setSonarrRootFolderPathInput(settings.sonarrRootFolderPath ?? '')
+  }, [
+    settings.radarrUrl,
+    settings.radarrApiKey,
+    settings.radarrQualityProfileId,
+    settings.radarrRootFolderPath,
+    settings.sonarrUrl,
+    settings.sonarrApiKey,
+    settings.sonarrQualityProfileId,
+    settings.sonarrRootFolderPath,
+  ])
 
   function saveTmdbKey() {
     update({ tmdbApiKey: tmdbKeyInput.trim() })
@@ -401,6 +458,61 @@ export default function SettingsPage() {
       const msg = err instanceof Error ? err.message : String(err)
       setJellyfinPullLog(prev => [...prev, `❌ Network error: ${msg}`])
       toast('Network error saving Jellyfin settings', 'error')
+    }
+  }
+
+  async function saveArrSettings() {
+    const rUrl = radarrUrlInput.trim()
+    const rKey = radarrApiKeyInput.trim()
+    const rProfile = Number(radarrQualityProfileIdInput) || 1
+    const rPath = radarrRootFolderPathInput.trim()
+
+    const sUrl = sonarrUrlInput.trim()
+    const sKey = sonarrApiKeyInput.trim()
+    const sProfile = Number(sonarrQualityProfileIdInput) || 1
+    const sPath = sonarrRootFolderPathInput.trim()
+
+    // Save locally
+    update({
+      radarrUrl: rUrl,
+      radarrApiKey: rKey,
+      radarrQualityProfileId: rProfile,
+      radarrRootFolderPath: rPath,
+      sonarrUrl: sUrl,
+      sonarrApiKey: sKey,
+      sonarrQualityProfileId: sProfile,
+      sonarrRootFolderPath: sPath,
+    })
+
+    if (!session?.apiToken) {
+      toast('Arr settings saved locally (not logged in)', 'success')
+      return
+    }
+
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+      const res = await fetch(`${apiBase}/api/user/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.apiToken}` },
+        body: JSON.stringify({
+          radarrUrl: rUrl,
+          radarrApiKey: rKey,
+          radarrQualityProfileId: rProfile,
+          radarrRootFolderPath: rPath,
+          sonarrUrl: sUrl,
+          sonarrApiKey: sKey,
+          sonarrQualityProfileId: sProfile,
+          sonarrRootFolderPath: sPath,
+        }),
+      })
+
+      if (!res.ok) {
+        toast('Failed to save Arr settings to server', 'error')
+      } else {
+        toast('Arr settings saved to server', 'success')
+      }
+    } catch (err) {
+      toast('Network error saving Arr settings to server', 'error')
     }
   }
 
@@ -989,6 +1101,130 @@ export default function SettingsPage() {
                 ))}
               </div>
             )}
+          </div>
+        </Section>
+
+        {/* Arr Stack Integrations */}
+        <Section title="Arr Stack Integrations (Sonarr & Radarr)">
+          <div className="px-4 py-3 space-y-4">
+            <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
+              Connect with your Radarr (movies) and Sonarr (TV shows) services to automatically request downloads and monitor download progress.
+            </p>
+
+            {/* Radarr Settings */}
+            <div className="space-y-3">
+              <div style={{ borderBottom: '1px solid var(--border2)' }} className="pb-1.5 flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>Radarr (Movies)</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Radarr Server URL</span>
+                  <input
+                    type="text"
+                    value={radarrUrlInput}
+                    onChange={(e) => setRadarrUrlInput(e.target.value)}
+                    placeholder="e.g. http://localhost:7878"
+                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>API Key</span>
+                  <input
+                    type="password"
+                    value={radarrApiKeyInput}
+                    onChange={(e) => setRadarrApiKeyInput(e.target.value)}
+                    placeholder="Enter API key…"
+                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Quality Profile ID</span>
+                  <input
+                    type="number"
+                    value={radarrQualityProfileIdInput}
+                    onChange={(e) => setRadarrQualityProfileIdInput(Number(e.target.value))}
+                    placeholder="e.g. 1"
+                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Root Folder Path</span>
+                  <input
+                    type="text"
+                    value={radarrRootFolderPathInput}
+                    onChange={(e) => setRadarrRootFolderPathInput(e.target.value)}
+                    placeholder="e.g. /data/media/movies"
+                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Sonarr Settings */}
+            <div className="space-y-3 pt-3" style={{ borderTop: '1px solid var(--border2)' }}>
+              <div style={{ borderBottom: '1px solid var(--border2)' }} className="pb-1.5 flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>Sonarr (TV Shows)</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Sonarr Server URL</span>
+                  <input
+                    type="text"
+                    value={sonarrUrlInput}
+                    onChange={(e) => setSonarrUrlInput(e.target.value)}
+                    placeholder="e.g. http://localhost:8989"
+                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>API Key</span>
+                  <input
+                    type="password"
+                    value={sonarrApiKeyInput}
+                    onChange={(e) => setSonarrApiKeyInput(e.target.value)}
+                    placeholder="Enter API key…"
+                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Quality Profile ID</span>
+                  <input
+                    type="number"
+                    value={sonarrQualityProfileIdInput}
+                    onChange={(e) => setSonarrQualityProfileIdInput(Number(e.target.value))}
+                    placeholder="e.g. 1"
+                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Root Folder Path</span>
+                  <input
+                    type="text"
+                    value={sonarrRootFolderPathInput}
+                    onChange={(e) => setSonarrRootFolderPathInput(e.target.value)}
+                    placeholder="e.g. /data/media/tv"
+                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <button
+              onClick={saveArrSettings}
+              className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-semibold cursor-pointer border-none transition-all duration-100 mt-2"
+              style={{ background: 'var(--accent)', color: '#fff' }}
+            >
+              Save Arr Settings
+            </button>
           </div>
         </Section>
 

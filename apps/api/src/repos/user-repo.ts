@@ -47,6 +47,19 @@ export interface UserRepo {
     llmModel: string | null
     recapMinInterval: number
   } | null>
+  updateArrSettings(userId: string, settings: ArrSettings): Promise<void>
+  getArrSettings(userId: string): Promise<ArrSettings | null>
+}
+
+export interface ArrSettings {
+  radarrUrl: string | null
+  radarrApiKey: string | null
+  radarrQualityProfileId: number
+  radarrRootFolderPath: string | null
+  sonarrUrl: string | null
+  sonarrApiKey: string | null
+  sonarrQualityProfileId: number
+  sonarrRootFolderPath: string | null
 }
 
 interface UserRow {
@@ -218,6 +231,51 @@ export function createUserRepo(sql: Sql): UserRepo {
         llmApiKey: rows[0].llm_api_key,
         llmModel: rows[0].llm_model,
         recapMinInterval: rows[0].recap_min_interval || 5,
+      }
+    },
+
+    async updateArrSettings(userId, settings) {
+      await sql`
+        UPDATE users
+        SET radarr_url = ${settings.radarrUrl},
+            radarr_api_key = ${settings.radarrApiKey},
+            radarr_quality_profile_id = ${settings.radarrQualityProfileId},
+            radarr_root_folder_path = ${settings.radarrRootFolderPath},
+            sonarr_url = ${settings.sonarrUrl},
+            sonarr_api_key = ${settings.sonarrApiKey},
+            sonarr_quality_profile_id = ${settings.sonarrQualityProfileId},
+            sonarr_root_folder_path = ${settings.sonarrRootFolderPath}
+        WHERE id = ${userId}
+      `
+    },
+
+    async getArrSettings(userId) {
+      const rows = await sql<{
+        radarr_url: string | null
+        radarr_api_key: string | null
+        radarr_quality_profile_id: number | null
+        radarr_root_folder_path: string | null
+        sonarr_url: string | null
+        sonarr_api_key: string | null
+        sonarr_quality_profile_id: number | null
+        sonarr_root_folder_path: string | null
+      }[]>`
+        SELECT radarr_url, radarr_api_key, radarr_quality_profile_id, radarr_root_folder_path,
+               sonarr_url, sonarr_api_key, sonarr_quality_profile_id, sonarr_root_folder_path
+        FROM users
+        WHERE id = ${userId}
+        LIMIT 1
+      `
+      if (!rows[0]) return null
+      return {
+        radarrUrl: rows[0].radarr_url,
+        radarrApiKey: rows[0].radarr_api_key,
+        radarrQualityProfileId: rows[0].radarr_quality_profile_id ?? 1,
+        radarrRootFolderPath: rows[0].radarr_root_folder_path,
+        sonarrUrl: rows[0].sonarr_url,
+        sonarrApiKey: rows[0].sonarr_api_key,
+        sonarrQualityProfileId: rows[0].sonarr_quality_profile_id ?? 1,
+        sonarrRootFolderPath: rows[0].sonarr_root_folder_path,
       }
     },
   }
