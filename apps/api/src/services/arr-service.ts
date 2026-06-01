@@ -175,11 +175,6 @@ export function createArrService(userRepo: UserRepo) {
         return { success: false, message: 'Radarr/Sonarr credentials are not configured on the server.' }
       }
 
-      const meta = await getTmdbMeta(tmdbId, mediaType)
-      if (!meta) {
-        return { success: false, message: 'Failed to load media details from TMDB.' }
-      }
-
       if (mediaType === 'movie') {
         const { radarrUrl, radarrApiKey, radarrQualityProfileId = 1, radarrRootFolderPath } = settings
         if (!radarrUrl || !radarrApiKey || !radarrRootFolderPath) {
@@ -188,13 +183,11 @@ export function createArrService(userRepo: UserRepo) {
 
         const cleanUrl = radarrUrl.replace(/\/$/, '')
 
-        // Check if movie already exists
-        const movieUrl = `${cleanUrl}/api/v3/movie?tmdbId=${tmdbId}&apikey=${radarrApiKey}`
-        const movieRes = await fetch(movieUrl)
-        if (movieRes.ok) {
-          const movies = (await movieRes.json()) as any[]
+        // Check if movie already exists in Radarr
+        const existingRes = await fetch(`${cleanUrl}/api/v3/movie?tmdbId=${tmdbId}&apikey=${radarrApiKey}`)
+        if (existingRes.ok) {
+          const movies = (await existingRes.json()) as any[]
           if (movies[0]) {
-            // Already tracked, update to monitored
             const movie = movies[0]
             if (!movie.monitored) {
               movie.monitored = true
@@ -208,64 +201,68 @@ export function createArrService(userRepo: UserRepo) {
           }
         }
 
-        // Fetch quality profiles to get language profile if needed
-        let languageProfileId = 1
-        try {
-          const lpRes = await fetch(`${cleanUrl}/api/v3/languageprofile?apikey=${radarrApiKey}`)
-          if (lpRes.ok) {
-            const profiles = (await lpRes.json()) as any[]
-            if (profiles.length > 0) languageProfileId = profiles[0].id
-          }
-        } catch { /* ignore, languageProfileId defaults to 1 */ }
+        // Use Radarr's own lookup — no TMDB key needed on the backend
+        const lookupRes = await fetch(`${cleanUrl}/api/v3/movie/lookup/tmdb?tmdbId=${tmdbId}&apikey=${radarrApiKey}`)
+        if (!lookupRes.ok) {
+          return { success: false, message: `Radarr lookup failed (${lookupRes.status}). Check Radarr connectivity.` }
+        }
+        const lookupMovie = (await lookupRes.json()) as any
 
-        // Add new movie
+        // Get quality profile ID from settings or first available profile
+        let qualityProfileId = radarrQualityProfileId
+        if (!qualityProfileId) {
+          try {
+            const qpRes = await fetch(`${cleanUrl}/api/v3/qualityprofile?apikey=${radarrApiKey}`)
+            if (qpRes.ok) {
+              const profiles = (await qpRes.json()) as any[]
+              if (profiles.length > 0) qualityProfileId = profiles[0].id
+            }
+          } catch { /* ignore */ }
+        }
+
+        // Merge lookup result with required add options
         const addPayload = {
-          title: meta.title,
-          qualityProfileId: radarrQualityProfileId,
-          languageProfileId,
-          titleSlug: `${meta.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${tmdbId}`,
-          images: meta.posterPath ? [{ coverType: 'poster', url: meta.posterPath, remoteUrl: meta.posterPath }] : [],
-          tmdbId: tmdbId,
-          year: meta.year,
+          ...lookupMovie,
+          qualityProfileId,
           rootFolderPath: radarrRootFolderPath,
           monitored: true,
-          addOptions: {
-            searchForMovie: true,
-          },
+          addOptions: { searchForMovie: true },
         }
-        console.log('[arr-service] Adding movie to Radarr:', JSON.stringify(addPayload))
-        const addMovieRes = await fetch(`${cleanUrl}/api/v3/movie?apikey=${radarrApiKey}`, {
+        console.log('[arr-service] Adding movie to Radarr (lookup-based):', JSON.stringify({ tmdbId, title: lookupMovie.title }))
+
+        const addRes = await fetch(`${cleanUrl}/api/v3/movie?apikey=${radarrApiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(addPayload),
         })
 
-        if (!addMovieRes.ok) {
-          const errText = await addMovieRes.text()
-          console.error(`[arr-service] Radarr POST /movie failed (${addMovieRes.status}):`, errText)
-          return { success: false, message: `Radarr error (${addMovieRes.status}): ${errText}` }
+        if (!addRes.ok) {
+          const errText = await addRes.text()
+          console.error(`[arr-service] Radarr POST /movie failed (${addRes.status}):`, errText)
+          return { success: false, message: `Radarr error (${addRes.status}): ${errText}` }
         }
 
-        return { success: true, message: 'Successfully requested movie download on Radarr.' }
+        return { success: true, message: `"${lookupMovie.title}" requested on Radarr — searching for a release now.` }
+
       } else {
-        // TV Show
+        // TV Show via Sonarr
         const { sonarrUrl, sonarrApiKey, sonarrQualityProfileId = 1, sonarrRootFolderPath } = settings
         if (!sonarrUrl || !sonarrApiKey || !sonarrRootFolderPath) {
           return { success: false, message: 'Sonarr URL, API key, and root folder path must be configured in Settings.' }
         }
 
-        const tvdbId = await getTvdbId(tmdbId)
-        if (!tvdbId) {
-          return { success: false, message: 'Sonarr requires a TVDB ID, but TMDB could not resolve one for this show.' }
-        }
-
         const cleanUrl = sonarrUrl.replace(/\/$/, '')
 
-        // Check if series already exists
-        const seriesUrl = `${cleanUrl}/api/v3/series?apikey=${sonarrApiKey}`
-        const seriesRes = await fetch(seriesUrl)
-        if (seriesRes.ok) {
-          const seriesList = (await seriesRes.json()) as any[]
+        // Resolve TVDB ID via TMDB (Sonarr uses TVDB)
+        const tvdbId = await getTvdbId(tmdbId)
+        if (!tvdbId) {
+          return { success: false, message: 'Could not resolve TVDB ID from TMDB. Check your TMDB API key in the API environment.' }
+        }
+
+        // Check if series already exists in Sonarr
+        const existingRes = await fetch(`${cleanUrl}/api/v3/series?apikey=${sonarrApiKey}`)
+        if (existingRes.ok) {
+          const seriesList = (await existingRes.json()) as any[]
           const series = seriesList.find((s: any) => s.tvdbId === tvdbId)
           if (series) {
             if (!series.monitored) {
@@ -280,47 +277,55 @@ export function createArrService(userRepo: UserRepo) {
           }
         }
 
-        // Fetch language profile for Sonarr
-        let languageProfileId = 1
-        try {
-          const lpRes = await fetch(`${cleanUrl}/api/v3/languageprofile?apikey=${sonarrApiKey}`)
-          if (lpRes.ok) {
-            const profiles = (await lpRes.json()) as any[]
-            if (profiles.length > 0) languageProfileId = profiles[0].id
-          }
-        } catch { /* ignore */ }
+        // Use Sonarr's own lookup by TVDB ID — no TMDB key needed
+        const lookupRes = await fetch(`${cleanUrl}/api/v3/series/lookup?term=tvdb%3A${tvdbId}&apikey=${sonarrApiKey}`)
+        if (!lookupRes.ok) {
+          return { success: false, message: `Sonarr lookup failed (${lookupRes.status}). Check Sonarr connectivity.` }
+        }
+        const lookupResults = (await lookupRes.json()) as any[]
+        const lookupSeries = lookupResults[0]
+        if (!lookupSeries) {
+          return { success: false, message: `Series not found in Sonarr lookup for TVDB ID ${tvdbId}.` }
+        }
 
-        // Add new series
+        // Get quality profile
+        let qualityProfileId = sonarrQualityProfileId
+        if (!qualityProfileId) {
+          try {
+            const qpRes = await fetch(`${cleanUrl}/api/v3/qualityprofile?apikey=${sonarrApiKey}`)
+            if (qpRes.ok) {
+              const profiles = (await qpRes.json()) as any[]
+              if (profiles.length > 0) qualityProfileId = profiles[0].id
+            }
+          } catch { /* ignore */ }
+        }
+
+        // Merge lookup result with required add options
         const addPayload = {
-          title: meta.title,
-          qualityProfileId: sonarrQualityProfileId,
-          languageProfileId,
-          titleSlug: `${meta.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${tvdbId}`,
-          images: meta.posterPath ? [{ coverType: 'poster', url: meta.posterPath, remoteUrl: meta.posterPath }] : [],
-          tvdbId: tvdbId,
-          year: meta.year,
+          ...lookupSeries,
+          qualityProfileId,
           rootFolderPath: sonarrRootFolderPath,
           monitored: true,
-          seasons: [],
           addOptions: {
             searchForMissingEpisodes: true,
             monitor: 'all',
           },
         }
-        console.log('[arr-service] Adding series to Sonarr:', JSON.stringify(addPayload))
-        const addSeriesRes = await fetch(`${cleanUrl}/api/v3/series?apikey=${sonarrApiKey}`, {
+        console.log('[arr-service] Adding series to Sonarr (lookup-based):', JSON.stringify({ tvdbId, title: lookupSeries.title }))
+
+        const addRes = await fetch(`${cleanUrl}/api/v3/series?apikey=${sonarrApiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(addPayload),
         })
 
-        if (!addSeriesRes.ok) {
-          const errText = await addSeriesRes.text()
-          console.error(`[arr-service] Sonarr POST /series failed (${addSeriesRes.status}):`, errText)
-          return { success: false, message: `Sonarr error (${addSeriesRes.status}): ${errText}` }
+        if (!addRes.ok) {
+          const errText = await addRes.text()
+          console.error(`[arr-service] Sonarr POST /series failed (${addRes.status}):`, errText)
+          return { success: false, message: `Sonarr error (${addRes.status}): ${errText}` }
         }
 
-        return { success: true, message: 'Successfully requested series download on Sonarr.' }
+        return { success: true, message: `"${lookupSeries.title}" requested on Sonarr — searching for episodes now.` }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
