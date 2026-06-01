@@ -8,6 +8,7 @@ import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { useSettings } from '@/hooks/useSettings'
 import { StatusBadge } from './StatusBadge'
 import { ProgressTracker } from './ProgressTracker'
+import { getTvProgress } from '@/lib/progress'
 
 const TMDB_BACKDROP = 'https://image.tmdb.org/t/p/w780'
 const TMDB_POSTER = 'https://image.tmdb.org/t/p/w342'
@@ -325,17 +326,35 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
             } else if (watched) {
               bar = <div style={{ height: 4, background: 'rgba(134,239,172,.8)', borderRadius: 99 }} />
             } else {
-              const completedPct = total > 0 ? Math.round(((jellyfinProgress.watchedEpisodes ?? 0) / total) * 100) : 0
-              const inProgressPct = total > 0 && (jellyfinProgress.episodePercent ?? 0) > 0
-                ? (jellyfinProgress.episodePercent ?? 0) / total
-                : 0
+              const tvProg = getTvProgress(jellyfinProgress, meta)
+              const completedPct = tvProg.completedPct
+              const episodePct = tvProg.episodePercent
+              const hasEpisodeBar = tvProg.hasEpisodeBar
+
               bar = (
-                <div style={{ height: 4, background: 'var(--surface2)', borderRadius: 99, position: 'relative', overflow: 'hidden' }}>
-                  {completedPct > 0 && (
-                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${completedPct}%`, background: 'rgba(251,191,36,.9)', transition: 'width 300ms' }} />
-                  )}
-                  {inProgressPct > 0 && (
-                    <div style={{ position: 'absolute', left: `${completedPct}%`, top: 0, bottom: 0, width: `${inProgressPct}%`, background: 'rgba(251,191,36,.38)', transition: 'width 300ms' }} />
+                <div className="flex flex-col gap-3 w-full">
+                  {/* Series progress bar */}
+                  <div className="flex flex-col gap-[4px]">
+                    <div className="flex justify-between text-[11px]" style={{ color: 'var(--muted2)' }}>
+                      <span>Series Progress</span>
+                      <span className="font-medium tabular-nums">{completedPct}%</span>
+                    </div>
+                    <div style={{ height: 4, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden' }}>
+                      <div style={{ width: `${completedPct}%`, height: '100%', background: 'rgba(251,191,36,.9)', transition: 'width 300ms' }} />
+                    </div>
+                  </div>
+
+                  {/* Episode progress bar */}
+                  {hasEpisodeBar && (
+                    <div className="flex flex-col gap-[4px] mt-[2px]">
+                      <div className="flex justify-between text-[11px]" style={{ color: 'var(--muted2)' }}>
+                        <span>Episode {jellyfinProgress.episode ?? ''} Progress</span>
+                        <span className="font-medium tabular-nums">{episodePct}%</span>
+                      </div>
+                      <div style={{ height: 4, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden' }}>
+                        <div style={{ width: `${episodePct}%`, height: '100%', background: 'rgba(96,165,250,.9)', transition: 'width 300ms' }} />
+                      </div>
+                    </div>
                   )}
                 </div>
               )
@@ -356,19 +375,22 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                       {jellyfinProgress.moviePercent ?? 0}%
                     </span>
                   )}
-                  {!watched && !isMovie && (
-                    <span style={{ fontSize: 'var(--text-12)', color: 'var(--fg2)' }}>
-                      {jellyfinProgress.season != null && (
-                        <span style={{ color: 'var(--fg)' }}>S{jellyfinProgress.season} · E{jellyfinProgress.episode ?? '?'}</span>
-                      )}
-                      {total > 0 && (
-                        <span style={{ color: 'var(--muted2)' }}>{jellyfinProgress.season != null ? ' · ' : ''}{jellyfinProgress.watchedEpisodes ?? 0}/{total} ep</span>
-                      )}
-                      {(jellyfinProgress.episodePercent ?? 0) > 0 && (jellyfinProgress.episodePercent ?? 0) < 100 && (
-                        <span style={{ color: 'var(--amber)' }}> · {jellyfinProgress.episodePercent}%</span>
-                      )}
-                    </span>
-                  )}
+                  {!watched && !isMovie && (() => {
+                    const tvProg = getTvProgress(jellyfinProgress, meta)
+                    return (
+                      <span style={{ fontSize: 'var(--text-12)', color: 'var(--fg2)' }}>
+                        {jellyfinProgress.season != null && (
+                          <span style={{ color: 'var(--fg)' }}>S{jellyfinProgress.season} · E{jellyfinProgress.episode ?? '?'}</span>
+                        )}
+                        {tvProg.totalEpisodes > 0 && (
+                          <span style={{ color: 'var(--muted2)' }}>{jellyfinProgress.season != null ? ' · ' : ''}{tvProg.watchedEpisodes}/{tvProg.totalEpisodes} ep</span>
+                        )}
+                        {tvProg.hasEpisodeBar && (
+                          <span style={{ color: 'var(--amber)' }}> · {tvProg.episodePercent}%</span>
+                        )}
+                      </span>
+                    )
+                  })()}
                 </div>
                 {bar}
               </div>

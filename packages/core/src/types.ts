@@ -52,6 +52,10 @@ export interface MediaCache {
   voteCount: number
   runtime: number | null
   seasonsCount: number | null
+  seasons?: Array<{
+    seasonNumber: number
+    episodeCount: number
+  }> | null
   showStatus: string | null
   cachedAt: string
   watchProviders: WatchProvider[] | null

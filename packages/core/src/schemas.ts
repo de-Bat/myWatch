@@ -36,6 +36,10 @@ export const mediaCacheSchema = z.object({
   voteCount: z.number().int().nonnegative(),
   runtime: z.number().int().positive().nullable(),
   seasonsCount: z.number().int().positive().nullable(),
+  seasons: z.array(z.object({
+    seasonNumber: z.number().int().nonnegative(),
+    episodeCount: z.number().int().nonnegative(),
+  })).nullable().optional(),
   showStatus: z.string().nullable(),
   cachedAt: z.string().datetime(),
   language: z.string().optional(),

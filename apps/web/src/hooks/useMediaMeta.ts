@@ -57,8 +57,9 @@ export function useMediaMeta(tmdbId: number, mediaType: MediaType, tmdbApiKey: s
     ;(async () => {
       try {
         const cached = await db.mediaCache.get([tmdbId, mediaType])
-        // Invalidate if language has changed or if standard staleness applies
-        if (cached && !isStale(cached) && cached.language === language) {
+        // Invalidate if language has changed, if standard staleness applies, or if tv show is missing seasons info
+        const needsTvSeasons = mediaType === 'tv' && (!cached || cached.seasons === undefined || cached.seasons === null)
+        if (cached && !isStale(cached) && cached.language === language && !needsTvSeasons) {
           if (!cancelled) setMeta(cached)
           if (isProviderStale(cached.watchProvidersCachedAt ?? null)) {
             fetchAndStoreProviders(client, tmdbId, mediaType, region).then((providers) => {

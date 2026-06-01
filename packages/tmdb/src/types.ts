@@ -45,6 +45,13 @@ export interface TmdbMovieDetail {
   status: string
 }
 
+export interface TmdbTvSeason {
+  id: number
+  season_number: number
+  episode_count: number
+  name: string
+}
+
 export interface TmdbTvDetail {
   id: number
   name: string
@@ -58,6 +65,7 @@ export interface TmdbTvDetail {
   episode_run_time: number[]
   number_of_seasons: number
   status: string
+  seasons?: TmdbTvSeason[]
 }
 
 export interface TmdbPagedResponse<T> {

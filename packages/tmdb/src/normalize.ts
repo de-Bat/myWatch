@@ -45,6 +45,12 @@ export function normalizeTv(show: TmdbTvDetail, language?: string): MediaCache {
     voteCount: show.vote_count,
     runtime: avgRuntime,
     seasonsCount: show.number_of_seasons,
+    seasons: show.seasons
+      ? show.seasons.map((s) => ({
+          seasonNumber: s.season_number,
+          episodeCount: s.episode_count,
+        }))
+      : null,
     showStatus: show.status,
     cachedAt: new Date().toISOString(),
     watchProviders: null,

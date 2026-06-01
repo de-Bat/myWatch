@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation'
 import type { WatchlistItem, JellyfinProgress } from '@mywatch/core'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { useSettings } from '@/hooks/useSettings'
+import { getTvProgress } from '@/lib/progress'
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w342'
 const PROVIDER_IMG = 'https://image.tmdb.org/t/p/w45'
@@ -112,6 +113,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
             {item.mediaType === 'tv' && (() => {
               // Prefer Jellyfin progress, fallback to manual item progress
               if (jellyfinProgress && (jellyfinProgress.season != null || jellyfinProgress.watchedEpisodes != null)) {
+                const tvProg = getTvProgress(jellyfinProgress, meta)
                 return (
                   <div className="flex gap-[4px]">
                     {jellyfinProgress.season != null && (
@@ -122,20 +124,20 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
                         S{jellyfinProgress.season}·E{jellyfinProgress.episode ?? '?'}
                       </span>
                     )}
-                    {jellyfinProgress.totalEpisodes != null && jellyfinProgress.totalEpisodes > 0 && (
+                    {tvProg.totalEpisodes > 0 && (
                       <span
                         className="text-[var(--text-9)] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
                         style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }}
                       >
-                        {jellyfinProgress.watchedEpisodes ?? 0}/{jellyfinProgress.totalEpisodes}
+                        {tvProg.watchedEpisodes}/{tvProg.totalEpisodes}
                       </span>
                     )}
-                    {jellyfinProgress.episodePercent != null && jellyfinProgress.episodePercent > 0 && jellyfinProgress.episodePercent < 100 && (
+                    {tvProg.hasEpisodeBar && (
                       <span
                         className="text-[var(--text-9)] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
                         style={{ background: 'rgba(251,191,36,0.2)', color: 'var(--amber)' }}
                       >
-                        {jellyfinProgress.episodePercent}%
+                        {tvProg.episodePercent}%
                       </span>
                     )}
                   </div>
@@ -212,10 +214,10 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
           if (watched) {
             return <>{track}<div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: 'rgba(134,239,172,.9)' }} /></>
           }
-          const total = jellyfinProgress.totalEpisodes ?? 0
-          const completedPct = total > 0 ? Math.round(((jellyfinProgress.watchedEpisodes ?? 0) / total) * 100) : 0
-          const episodePct = jellyfinProgress.episodePercent ?? 0
-          const hasEpisodeBar = episodePct > 0 && episodePct < 100
+          const tvProg = getTvProgress(jellyfinProgress, meta)
+          const completedPct = tvProg.completedPct
+          const episodePct = tvProg.episodePercent
+          const hasEpisodeBar = tvProg.hasEpisodeBar
           const hasBothBars = hasEpisodeBar && completedPct > 0
           const mainBottom = hasBothBars ? 3 : 0
           return (
