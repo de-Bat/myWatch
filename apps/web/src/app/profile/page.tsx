@@ -703,9 +703,7 @@ export default function SettingsPage() {
   return (
     <div className="page-root">
       {/* Header */}
-      <header
-        className="flex items-center gap-[10px] page-header page-sticky-shell"
-      >
+      <header className="flex items-center gap-[10px] page-header page-sticky-shell">
         <button
           onClick={() => router.push('/')}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 0 }}
@@ -720,7 +718,7 @@ export default function SettingsPage() {
       </header>
 
       <div className="flex flex-col gap-4 content-area">
-        {/* Account */}
+        {/* Account — always above tabs */}
         <Section title="Account">
           {session ? (
             <>
@@ -753,221 +751,477 @@ export default function SettingsPage() {
           )}
         </Section>
 
-        {/* Sync */}
-        <Section title="Sync">
-          <Row label="Items in list">
-            <span className="text-[var(--text-13)] tabular-nums" style={{ color: 'var(--muted2)' }}>{itemCount ?? '–'}</span>
-          </Row>
-          <Row label="Pending changes">
-            <span className="text-[var(--text-13)] tabular-nums" style={{ color: 'var(--muted2)' }}>{pendingCount ?? '–'}</span>
-          </Row>
-          {lastSyncedAt && (
-            <Row label="Last synced">
-              <span className="text-[var(--text-12)]" style={{ color: 'var(--muted2)' }}>
-                {new Date(lastSyncedAt).toLocaleString()}
-              </span>
-            </Row>
-          )}
-          {error && (
-            <div className="px-4 py-2 text-[var(--text-12)]" style={{ color: 'var(--red)' }}>{error}</div>
-          )}
-          <Row label="Auto Sync">
-            <div
-              className="flex controls-row"
-              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1, flexShrink: 1, minWidth: 0 }}
-            >
-              {SYNC_INTERVAL_OPTIONS.map((o) => {
-                const active = settings.syncInterval === o.value
-                return (
+        {/* Tab bar */}
+        <div className="flex" style={{ borderBottom: '1px solid var(--border2)', gap: 0 }}>
+          {(['server', 'client', 'logs'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className="px-4 py-2 text-[var(--text-13)] font-medium capitalize border-none cursor-pointer transition-colors duration-100"
+              style={{
+                background: 'transparent',
+                color: activeTab === tab ? 'var(--fg)' : 'var(--muted)',
+                borderBottom: activeTab === tab ? '2px solid var(--accent)' : '2px solid transparent',
+                fontWeight: activeTab === tab ? 600 : 500,
+              }}>
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Server tab ── */}
+        {activeTab === 'server' && (
+          <div className="flex flex-col gap-4">
+            {/* Jellyfin */}
+            <Section title="Jellyfin">
+              <div className="px-4 py-3 space-y-3">
+                <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
+                  Connect to your Jellyfin server to overlay watch progress on cards. Requires CORS enabled in Jellyfin → Networking.
+                </p>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={jellyfinUrlInput}
+                    onChange={(e) => setJellyfinUrlInput(e.target.value)}
+                    placeholder="Server URL (e.g. http://jellyfin.local:8096)"
+                    className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                  />
+                  <input
+                    type="text"
+                    value={jellyfinUserIdInput}
+                    onChange={(e) => setJellyfinUserIdInput(e.target.value)}
+                    placeholder="User ID"
+                    className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                  />
+                  <input
+                    type="password"
+                    value={jellyfinApiKeyInput}
+                    onChange={(e) => setJellyfinApiKeyInput(e.target.value)}
+                    placeholder="API Key"
+                    className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                  />
+                </div>
+                <div className="flex gap-2">
                   <button
-                    key={o.value}
-                    onClick={() => update({ syncInterval: o.value })}
-                    className="px-3 py-[4px] text-[var(--text-12)] rounded-[4px] transition-all duration-100 cursor-pointer border-none whitespace-nowrap"
-                    style={{
-                      background: active ? 'var(--surface2)' : 'transparent',
-                      color: active ? 'var(--fg)' : 'var(--muted)',
-                      fontWeight: active ? 600 : 500,
-                    }}
+                    onClick={testJellyfin}
+                    disabled={jellyfinTesting || !jellyfinUrlInput || !jellyfinUserIdInput || !jellyfinApiKeyInput}
+                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none flex-shrink-0 transition-all duration-100 disabled:opacity-50"
+                    style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
                   >
-                    {o.label}
+                    {jellyfinTesting ? 'Testing…' : 'Test Connection'}
                   </button>
-                )
-              })}
-            </div>
-          </Row>
-          <div className="px-4 py-3">
-            {session ? (
-              <button
-                onClick={() => sync()}
-                disabled={syncing}
-                className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none disabled:opacity-50 transition-all duration-100"
-                style={{ background: 'var(--accent)', color: '#fff' }}
-              >
-                {syncing ? 'Syncing…' : 'Sync Now'}
-              </button>
-            ) : (
-              <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)' }}>Sign in to enable sync.</p>
-            )}
+                </div>
+                {jellyfinTestResult === 'ok' && (
+                  <p className="text-[var(--text-12)]" style={{ color: 'var(--green)' }}>✓ Connected successfully</p>
+                )}
+                {jellyfinTestResult === 'error' && (
+                  <p className="text-[var(--text-12)]" style={{ color: 'var(--red)' }}>Connection failed — check URL, user ID, API key, and CORS settings</p>
+                )}
+              </div>
+            </Section>
+
+            {/* TMDB API */}
+            <Section title="TMDB API">
+              <div className="px-4 py-3 space-y-2">
+                <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
+                  TMDB API key for fetching metadata. Saved to server and shared across all your clients.
+                </p>
+                <input type="password" value={tmdbApiKeyInput} onChange={e => setTmdbApiKeyInput(e.target.value)}
+                  placeholder="Enter TMDB API key…"
+                  className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                  onBlur={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                />
+              </div>
+            </Section>
+
+            {/* Sync */}
+            <Section title="Sync">
+              <Row label="Items in list">
+                <span className="text-[var(--text-13)] tabular-nums" style={{ color: 'var(--muted2)' }}>{itemCount ?? '–'}</span>
+              </Row>
+              <Row label="Pending changes">
+                <span className="text-[var(--text-13)] tabular-nums" style={{ color: 'var(--muted2)' }}>{pendingCount ?? '–'}</span>
+              </Row>
+              {lastSyncedAt && (
+                <Row label="Last synced">
+                  <span className="text-[var(--text-12)]" style={{ color: 'var(--muted2)' }}>
+                    {new Date(lastSyncedAt).toLocaleString()}
+                  </span>
+                </Row>
+              )}
+              {error && (
+                <div className="px-4 py-2 text-[var(--text-12)]" style={{ color: 'var(--red)' }}>{error}</div>
+              )}
+              <Row label="Auto Sync">
+                <div
+                  className="flex controls-row"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1, flexShrink: 1, minWidth: 0 }}
+                >
+                  {SYNC_INTERVAL_OPTIONS.map((o) => {
+                    const active = syncIntervalInput === o.value
+                    return (
+                      <button
+                        key={o.value}
+                        onClick={() => setSyncIntervalInput(o.value)}
+                        className="px-3 py-[4px] text-[var(--text-12)] rounded-[4px] transition-all duration-100 cursor-pointer border-none whitespace-nowrap"
+                        style={{
+                          background: active ? 'var(--surface2)' : 'transparent',
+                          color: active ? 'var(--fg)' : 'var(--muted)',
+                          fontWeight: active ? 600 : 500,
+                        }}
+                      >
+                        {o.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </Row>
+              <div className="px-4 py-3">
+                {session ? (
+                  <button
+                    onClick={() => sync()}
+                    disabled={syncing}
+                    className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none disabled:opacity-50 transition-all duration-100"
+                    style={{ background: 'var(--accent)', color: '#fff' }}
+                  >
+                    {syncing ? 'Syncing…' : 'Sync Now'}
+                  </button>
+                ) : (
+                  <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)' }}>Sign in to enable sync.</p>
+                )}
+              </div>
+            </Section>
+
+            {/* AI & Recap Settings */}
+            <Section title="AI & Recap Settings">
+              <div className="px-4 py-3 space-y-3">
+                <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
+                  Configure your AI provider to generate progress-based spoiler-free recaps of movies and TV shows.
+                </p>
+
+                <div className="flex flex-col gap-3">
+                  {/* Provider Selection */}
+                  <div className="flex items-center justify-between py-1.5 gap-3" style={{ borderBottom: '1px solid var(--border2)' }}>
+                    <span className="text-[var(--text-13)] font-medium" style={{ color: 'var(--fg2)' }}>AI Provider</span>
+                    <div
+                      className="flex"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
+                    >
+                      {[
+                        { value: 'gemini', label: 'Gemini' },
+                        { value: 'openai', label: 'OpenAI-Compatible' },
+                      ].map((p) => {
+                        const active = llmProvider === p.value
+                        return (
+                          <button
+                            key={p.value}
+                            type="button"
+                            onClick={() => setLlmProvider(p.value as 'gemini' | 'openai')}
+                            className="px-3 py-[4px] text-[var(--text-12)] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                            style={{
+                              background: active ? 'var(--surface2)' : 'transparent',
+                              color: active ? 'var(--fg)' : 'var(--muted)',
+                              fontWeight: active ? 600 : 500,
+                            }}
+                          >
+                            {p.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Conditional inputs */}
+                  {llmProvider === 'gemini' ? (
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted2)' }}>Gemini API Key</span>
+                      <input
+                        type="password"
+                        value={llmApiKeyInput}
+                        onChange={(e) => setLlmApiKeyInput(e.target.value)}
+                        placeholder="Enter Google AI Studio API key…"
+                        className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                        style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                      />
+                      <span className="text-[10px]" style={{ color: 'var(--muted2)' }}>Stored safely on your device. Generates recaps using gemini-1.5-flash.</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted2)' }}>Base URL</span>
+                        <input
+                          type="text"
+                          value={llmBaseUrlInput}
+                          onChange={(e) => setLlmBaseUrlInput(e.target.value)}
+                          placeholder="e.g. https://api.openai.com/v1 or http://localhost:11434/v1"
+                          className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                          style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                        />
+                        <span className="text-[10px]" style={{ color: 'var(--muted2)' }}>Use your own OpenAI endpoint, Ollama, LM Studio, Groq, or OpenRouter.</span>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted2)' }}>API Key</span>
+                        <input
+                          type="password"
+                          value={llmApiKeyInput}
+                          onChange={(e) => setLlmApiKeyInput(e.target.value)}
+                          placeholder="Enter API key…"
+                          className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                          style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted2)' }}>Model Name</span>
+                        <input
+                          type="text"
+                          value={llmModelInput}
+                          onChange={(e) => setLlmModelInput(e.target.value)}
+                          placeholder="e.g. gpt-4o-mini, llama3, mistral"
+                          className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                          style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recap interval slider */}
+                  <div className="flex flex-col gap-1.5 py-1.5" style={{ borderTop: '1px solid var(--border2)' }}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--text-13)] font-medium" style={{ color: 'var(--fg2)' }}>Recap Minimal Progress Interval</span>
+                      <span className="text-[var(--text-13)] font-bold text-center w-8" style={{ color: 'var(--accent2)' }}>{recapMinIntervalInput}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="20"
+                      step="1"
+                      value={recapMinIntervalInput}
+                      onChange={(e) => setRecapMinIntervalInput(Number(e.target.value))}
+                      className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                      style={{ accentColor: 'var(--accent)' }}
+                    />
+                    <span className="text-[10px]" style={{ color: 'var(--muted2)' }}>
+                      Minimum movie progress watched percentage delta required to request a fresh recap (saving API costs).
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            {/* Radarr */}
+            <Section title="Radarr">
+              <div className="px-4 py-3 space-y-3">
+                <div style={{ borderBottom: '1px solid var(--border2)' }} className="pb-1.5 flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>Radarr (Movies)</span>
+                  <button
+                    type="button"
+                    onClick={testRadarr}
+                    disabled={radarrTesting || !radarrUrlInput || !radarrApiKeyInput}
+                    className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold cursor-pointer border-none disabled:opacity-50 transition-all duration-100 flex items-center gap-1"
+                    style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+                  >
+                    {radarrTesting ? 'Testing…' : 'Test Connection'}
+                  </button>
+                </div>
+                {radarrTestResult === 'ok' && (
+                  <p className="text-[11px]" style={{ color: 'var(--green)' }}>✓ Connected to Radarr successfully</p>
+                )}
+                {radarrTestResult === 'error' && (
+                  <p className="text-[11px]" style={{ color: 'var(--red)', lineHeight: 1.4 }}>Connection failed: {radarrTestError}</p>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Radarr Server URL</span>
+                    <input
+                      type="text"
+                      value={radarrUrlInput}
+                      onChange={(e) => setRadarrUrlInput(e.target.value)}
+                      placeholder="e.g. http://localhost:7878"
+                      className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>API Key</span>
+                    <input
+                      type="password"
+                      value={radarrApiKeyInput}
+                      onChange={(e) => setRadarrApiKeyInput(e.target.value)}
+                      placeholder="Enter API key…"
+                      className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Quality Profile ID</span>
+                    <input
+                      type="number"
+                      value={radarrQualityProfileIdInput}
+                      onChange={(e) => setRadarrQualityProfileIdInput(Number(e.target.value))}
+                      placeholder="e.g. 1"
+                      className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Root Folder Path</span>
+                    <input
+                      type="text"
+                      value={radarrRootFolderPathInput}
+                      onChange={(e) => setRadarrRootFolderPathInput(e.target.value)}
+                      placeholder="e.g. /data/media/movies"
+                      className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            {/* Sonarr */}
+            <Section title="Sonarr">
+              <div className="px-4 py-3 space-y-3">
+                <div style={{ borderBottom: '1px solid var(--border2)' }} className="pb-1.5 flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>Sonarr (TV Shows)</span>
+                  <button
+                    type="button"
+                    onClick={testSonarr}
+                    disabled={sonarrTesting || !sonarrUrlInput || !sonarrApiKeyInput}
+                    className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold cursor-pointer border-none disabled:opacity-50 transition-all duration-100 flex items-center gap-1"
+                    style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+                  >
+                    {sonarrTesting ? 'Testing…' : 'Test Connection'}
+                  </button>
+                </div>
+                {sonarrTestResult === 'ok' && (
+                  <p className="text-[11px]" style={{ color: 'var(--green)' }}>✓ Connected to Sonarr successfully</p>
+                )}
+                {sonarrTestResult === 'error' && (
+                  <p className="text-[11px]" style={{ color: 'var(--red)', lineHeight: 1.4 }}>Connection failed: {sonarrTestError}</p>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Sonarr Server URL</span>
+                    <input
+                      type="text"
+                      value={sonarrUrlInput}
+                      onChange={(e) => setSonarrUrlInput(e.target.value)}
+                      placeholder="e.g. http://localhost:8989"
+                      className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>API Key</span>
+                    <input
+                      type="password"
+                      value={sonarrApiKeyInput}
+                      onChange={(e) => setSonarrApiKeyInput(e.target.value)}
+                      placeholder="Enter API key…"
+                      className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Quality Profile ID</span>
+                    <input
+                      type="number"
+                      value={sonarrQualityProfileIdInput}
+                      onChange={(e) => setSonarrQualityProfileIdInput(Number(e.target.value))}
+                      placeholder="e.g. 1"
+                      className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Root Folder Path</span>
+                    <input
+                      type="text"
+                      value={sonarrRootFolderPathInput}
+                      onChange={(e) => setSonarrRootFolderPathInput(e.target.value)}
+                      placeholder="e.g. /data/media/tv"
+                      className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            {/* Unified Save button */}
+            <button
+              onClick={saveServerSettings}
+              disabled={!isDirty || saving}
+              className="w-full py-2.5 rounded-[8px] text-[var(--text-13)] font-semibold cursor-pointer border-none transition-all duration-150 disabled:opacity-40"
+              style={{ background: isDirty ? 'var(--accent)' : 'var(--surface2)', color: isDirty ? '#fff' : 'var(--muted)' }}
+            >
+              {saving ? 'Saving…' : isDirty ? 'Save Server Settings' : 'No Changes'}
+            </button>
           </div>
-        </Section>
+        )}
 
-        {/* Appearance */}
-        <Section title="Appearance">
-          <Row label="Language">
-            <div
-              className="flex"
-              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
-            >
-              {[
-                { value: 'en-US', label: 'English' },
-                { value: 'he-IL', label: 'Hebrew' },
-              ].map((lang) => {
-                const active = settings.language === lang.value
-                return (
-                  <button
-                    key={lang.value}
-                    onClick={() => update({ language: lang.value })}
-                    className="px-3 py-[4px] text-[var(--text-12)] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none"
-                    style={{
-                      background: active ? 'var(--surface2)' : 'transparent',
-                      color: active ? 'var(--fg)' : 'var(--muted)',
-                      fontWeight: active ? 600 : 500,
-                    }}
-                  >
-                    {lang.label}
-                  </button>
-                )
-              })}
-            </div>
-          </Row>
-          <Row label="Theme">
-            <div
-              className="flex"
-              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
-            >
-              {(['dark', 'light'] as const).map((t) => {
-                const active = settings.theme === t
-                return (
-                  <button
-                    key={t}
-                    onClick={() => update({ theme: t })}
-                    className="px-3 py-[4px] text-[var(--text-12)] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none capitalize"
-                    style={{
-                      background: active ? 'var(--surface2)' : 'transparent',
-                      color: active ? 'var(--fg)' : 'var(--muted)',
-                      fontWeight: active ? 600 : 500,
-                    }}
-                  >
-                    {t}
-                  </button>
-                )
-              })}
-            </div>
-          </Row>
-          <Row label="Font">
-            <div
-              className="flex"
-              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
-            >
-              {FONT_OPTIONS.map((f) => {
-                const active = settings.font === f.value
-                return (
-                  <button
-                    key={f.value}
-                    onClick={() => update({ font: f.value })}
-                    className="px-3 py-[4px] text-[var(--text-12)] rounded-[4px] transition-all duration-100 cursor-pointer border-none"
-                    style={{
-                      background: active ? 'var(--surface2)' : 'transparent',
-                      color: active ? 'var(--fg)' : 'var(--muted)',
-                      fontWeight: active ? 600 : 500,
-                    }}
-                  >
-                    {f.label}
-                  </button>
-                )
-              })}
-            </div>
-          </Row>
-          <Row label="Font Size">
-            <div
-              className="flex"
-              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
-            >
-              {FONT_SIZE_OPTIONS.map((f) => {
-                const active = settings.fontSize === f.value
-                return (
-                  <button
-                    key={f.value}
-                    onClick={() => update({ fontSize: f.value })}
-                    className="px-3 py-[4px] text-[var(--text-12)] rounded-[4px] transition-all duration-100 cursor-pointer border-none"
-                    style={{
-                      background: active ? 'var(--surface2)' : 'transparent',
-                      color: active ? 'var(--fg)' : 'var(--muted)',
-                      fontWeight: active ? 600 : 500,
-                    }}
-                  >
-                    {f.label}
-                  </button>
-                )
-              })}
-            </div>
-          </Row>
-        </Section>
-
-        {/* TMDB */}
-        <Section title="TMDB API">
-          <div className="px-4 py-3 space-y-2">
-            <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
-              Override the server TMDB key. Stored locally, never sent to the server.
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="password"
-                value={tmdbKeyInput}
-                onChange={(e) => setTmdbKeyInput(e.target.value)}
-                placeholder="Enter API key…"
-                className="flex-1 px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
-                onKeyDown={(e) => { if (e.key === 'Enter') saveTmdbKey() }}
-              />
-              <button
-                onClick={saveTmdbKey}
-                className="px-3 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none flex-shrink-0 transition-all duration-100"
-                style={{ background: 'var(--accent)', color: '#fff' }}
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </Section>
-
-        {/* AI & Recap Settings */}
-        <Section title="AI & Recap Settings">
-          <div className="px-4 py-3 space-y-3">
-            <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
-              Configure your AI provider to generate progress-based spoiler-free recaps of movies and TV shows.
-            </p>
-            
-            <div className="flex flex-col gap-3">
-              {/* Provider Selection */}
-              <div className="flex items-center justify-between py-1.5 gap-3" style={{ borderBottom: '1px solid var(--border2)' }}>
-                <span className="text-[var(--text-13)] font-medium" style={{ color: 'var(--fg2)' }}>AI Provider</span>
+        {/* ── Client tab ── */}
+        {activeTab === 'client' && (
+          <div className="flex flex-col gap-4">
+            {/* Appearance */}
+            <Section title="Appearance">
+              <Row label="Theme">
+                <div
+                  className="flex"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
+                >
+                  {(['dark', 'light'] as const).map((t) => {
+                    const active = settings.theme === t
+                    return (
+                      <button
+                        key={t}
+                        onClick={() => update({ theme: t })}
+                        className="px-3 py-[4px] text-[var(--text-12)] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none capitalize"
+                        style={{
+                          background: active ? 'var(--surface2)' : 'transparent',
+                          color: active ? 'var(--fg)' : 'var(--muted)',
+                          fontWeight: active ? 600 : 500,
+                        }}
+                      >
+                        {t}
+                      </button>
+                    )
+                  })}
+                </div>
+              </Row>
+              <Row label="Language">
                 <div
                   className="flex"
                   style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
                 >
                   {[
-                    { value: 'gemini', label: 'Gemini' },
-                    { value: 'openai', label: 'OpenAI-Compatible' },
-                  ].map((p) => {
-                    const active = llmProvider === p.value
+                    { value: 'en-US', label: 'English' },
+                    { value: 'he-IL', label: 'Hebrew' },
+                  ].map((lang) => {
+                    const active = settings.language === lang.value
                     return (
                       <button
-                        key={p.value}
-                        type="button"
-                        onClick={() => setLlmProvider(p.value as 'gemini' | 'openai')}
+                        key={lang.value}
+                        onClick={() => update({ language: lang.value })}
                         className="px-3 py-[4px] text-[var(--text-12)] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none"
                         style={{
                           background: active ? 'var(--surface2)' : 'transparent',
@@ -975,524 +1229,248 @@ export default function SettingsPage() {
                           fontWeight: active ? 600 : 500,
                         }}
                       >
-                        {p.label}
+                        {lang.label}
                       </button>
                     )
                   })}
                 </div>
-              </div>
-
-              {/* Conditional inputs */}
-              {llmProvider === 'gemini' ? (
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted2)' }}>Gemini API Key</span>
-                  <input
-                    type="password"
-                    value={geminiKeyInput}
-                    onChange={(e) => setGeminiKeyInput(e.target.value)}
-                    placeholder="Enter Google AI Studio API key…"
-                    className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
-                  />
-                  <span className="text-[10px]" style={{ color: 'var(--muted2)' }}>Stored safely on your device. Generates recaps using gemini-1.5-flash.</span>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted2)' }}>Base URL</span>
-                    <input
-                      type="text"
-                      value={llmBaseUrlInput}
-                      onChange={(e) => setLlmBaseUrlInput(e.target.value)}
-                      placeholder="e.g. https://api.openai.com/v1 or http://localhost:11434/v1"
-                      className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                      onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
-                    />
-                    <span className="text-[10px]" style={{ color: 'var(--muted2)' }}>Use your own OpenAI endpoint, Ollama, LM Studio, Groq, or OpenRouter.</span>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted2)' }}>API Key</span>
-                    <input
-                      type="password"
-                      value={llmApiKeyInput}
-                      onChange={(e) => setLlmApiKeyInput(e.target.value)}
-                      placeholder="Enter API key…"
-                      className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                      onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted2)' }}>Model Name</span>
-                    <input
-                      type="text"
-                      value={llmModelInput}
-                      onChange={(e) => setLlmModelInput(e.target.value)}
-                      placeholder="e.g. gpt-4o-mini, llama3, mistral"
-                      className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                      onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Progress Interval bounds */}
-              <div className="flex flex-col gap-1.5 py-1.5" style={{ borderTop: '1px solid var(--border2)' }}>
-                <div className="flex justify-between items-center">
-                  <span className="text-[var(--text-13)] font-medium" style={{ color: 'var(--fg2)' }}>Recap Minimal Progress Interval</span>
-                  <span className="text-[var(--text-13)] font-bold text-center w-8" style={{ color: 'var(--accent2)' }}>{recapMinIntervalInput}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="20"
-                  step="1"
-                  value={recapMinIntervalInput}
-                  onChange={(e) => setRecapMinIntervalInput(Number(e.target.value))}
-                  className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
-                  style={{ accentColor: 'var(--accent)' }}
-                />
-                <span className="text-[10px]" style={{ color: 'var(--muted2)' }}>
-                  Minimum movie progress watched percentage delta required to request a fresh recap (saving API costs).
-                </span>
-              </div>
-
-              {/* Save Trigger */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (llmProvider === 'gemini') {
-                    update({
-                      llmProvider: 'gemini',
-                      geminiApiKey: geminiKeyInput.trim(),
-                      recapMinInterval: Number(recapMinIntervalInput) || 5,
-                    })
-                    toast('AI settings saved', 'success')
-                  } else {
-                    saveLlmSettings()
-                  }
-                }}
-                className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-semibold cursor-pointer border-none transition-all duration-100 mt-2"
-                style={{ background: 'var(--accent)', color: '#fff' }}
-              >
-                Save AI Settings
-              </button>
-            </div>
-          </div>
-        </Section>
-
-        {/* Jellyfin */}
-        <Section title="Jellyfin">
-          <div className="px-4 py-3 space-y-3">
-            <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
-              Connect to your Jellyfin server to overlay watch progress on cards. Requires CORS enabled in Jellyfin → Networking.
-            </p>
-            <div className="flex flex-col gap-2">
-              <input
-                type="text"
-                value={jellyfinUrlInput}
-                onChange={(e) => setJellyfinUrlInput(e.target.value)}
-                placeholder="Server URL (e.g. http://jellyfin.local:8096)"
-                className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
-              />
-              <input
-                type="text"
-                value={jellyfinUserIdInput}
-                onChange={(e) => setJellyfinUserIdInput(e.target.value)}
-                placeholder="User ID"
-                className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
-              />
-              <input
-                type="password"
-                value={jellyfinApiKeyInput}
-                onChange={(e) => setJellyfinApiKeyInput(e.target.value)}
-                placeholder="API Key"
-                className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={testJellyfin}
-                disabled={jellyfinTesting || !jellyfinUrlInput || !jellyfinUserIdInput || !jellyfinApiKeyInput}
-                className="px-3 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none flex-shrink-0 transition-all duration-100 disabled:opacity-50"
-                style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
-              >
-                {jellyfinTesting ? 'Testing…' : 'Test'}
-              </button>
-              <button
-                onClick={saveJellyfin}
-                className="flex-1 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
-                style={{ background: 'var(--accent)', color: '#fff' }}
-              >
-                Save
-              </button>
-            </div>
-            {jellyfinTestResult === 'ok' && (
-              <p className="text-[var(--text-12)]" style={{ color: 'var(--green)' }}>✓ Connected successfully</p>
-            )}
-            {jellyfinTestResult === 'error' && (
-              <p className="text-[var(--text-12)]" style={{ color: 'var(--red)' }}>Connection failed — check URL, user ID, API key, and CORS settings</p>
-            )}
-          </div>
-        </Section>
-
-        {/* Jellyfin Debug */}
-        <Section title="Jellyfin Debug">
-          <Row label="Server credentials">
-            <span className="text-[var(--text-12)]" style={{ color: serverCredsStatus === 'set' ? 'var(--green)' : serverCredsStatus === 'missing' ? 'var(--red)' : 'var(--muted2)' }}>
-              {serverCredsStatus === 'set' ? '✓ Configured' : serverCredsStatus === 'missing' ? '✗ Not set — go save Jellyfin settings above' : '…'}
-            </span>
-          </Row>
-          <Row label="Local progress records">
-            <span className="text-[var(--text-13)] tabular-nums" style={{ color: (jellyfinProgressCount ?? 0) > 0 ? 'var(--green)' : 'var(--red)' }}>
-              {jellyfinProgressCount ?? 0}
-            </span>
-          </Row>
-          {(jellyfinProgressItems ?? []).slice(0, 5).map(p => (
-            <div key={`${p.tmdbId}-${p.mediaType}`} className="px-4 py-1 text-[var(--text-11)] tabular-nums" style={{ color: 'var(--muted2)', fontFamily: 'monospace' }}>
-              tmdb:{p.tmdbId} ({p.mediaType}) → <span style={{ color: p.jellyfinStatus === 'watching' ? 'var(--amber)' : p.jellyfinStatus === 'watched' ? 'var(--green)' : 'var(--muted2)' }}>{p.jellyfinStatus}</span>
-              {p.season != null && ` S${p.season}·E${p.episode}`}
-              {p.totalEpisodes != null && ` ${p.watchedEpisodes ?? 0}/${p.totalEpisodes}ep`}
-              {p.moviePercent != null && ` ${p.moviePercent}%`}
-            </div>
-          ))}
-          {(jellyfinProgressCount ?? 0) > 5 && (
-            <div className="px-4 py-1 text-[var(--text-11)]" style={{ color: 'var(--muted2)' }}>…and {(jellyfinProgressCount ?? 0) - 5} more</div>
-          )}
-          <div className="px-4 py-3 flex flex-col gap-2">
-            <button
-              onClick={pollJellyfinNow}
-              disabled={jellyfinPolling || jellyfinPulling}
-              className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-semibold cursor-pointer border-none disabled:opacity-50 transition-all"
-              style={{ background: 'var(--accent)', color: '#fff' }}
-            >
-              {jellyfinPolling ? 'Polling…' : '▶ Poll Jellyfin Now (Server → Local)'}
-            </button>
-            <button
-              onClick={() => forcePullJellyfin()}
-              disabled={jellyfinPulling || jellyfinPolling}
-              className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none disabled:opacity-50 transition-all"
-              style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
-            >
-              {jellyfinPulling ? 'Pulling…' : 'Pull from Backend DB Only'}
-            </button>
-            {jellyfinPullLog.length > 0 && (
-              <div className="flex flex-col gap-1 p-2 rounded-[6px]" style={{ background: 'var(--bg)', border: '1px solid var(--border2)' }}>
-                {jellyfinPullLog.map((line, i) => (
-                  <span key={i} className="text-[var(--text-11)]" style={{ color: 'var(--fg2)', fontFamily: 'monospace' }}>{line}</span>
-                ))}
-              </div>
-            )}
-          </div>
-        </Section>
-
-        {/* Arr Stack Integrations */}
-        <Section title="Arr Stack Integrations (Sonarr & Radarr)">
-          <div className="px-4 py-3 space-y-4">
-            <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
-              Connect with your Radarr (movies) and Sonarr (TV shows) services to automatically request downloads and monitor download progress.
-            </p>
-
-            {/* Radarr Settings */}
-            <div className="space-y-3">
-              <div style={{ borderBottom: '1px solid var(--border2)' }} className="pb-1.5 flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>Radarr (Movies)</span>
-                <button
-                  type="button"
-                  onClick={testRadarr}
-                  disabled={radarrTesting || !radarrUrlInput || !radarrApiKeyInput}
-                  className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold cursor-pointer border-none disabled:opacity-50 transition-all duration-100 flex items-center gap-1"
-                  style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+              </Row>
+              <Row label="Font">
+                <div
+                  className="flex"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
                 >
-                  {radarrTesting ? 'Testing…' : 'Test Connection'}
-                </button>
-              </div>
-              {radarrTestResult === 'ok' && (
-                <p className="text-[11px]" style={{ color: 'var(--green)' }}>✓ Connected to Radarr successfully</p>
-              )}
-              {radarrTestResult === 'error' && (
-                <p className="text-[11px]" style={{ color: 'var(--red)', lineHeight: 1.4 }}>Connection failed: {radarrTestError}</p>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Radarr Server URL</span>
-                  <input
-                    type="text"
-                    value={radarrUrlInput}
-                    onChange={(e) => setRadarrUrlInput(e.target.value)}
-                    placeholder="e.g. http://localhost:7878"
-                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>API Key</span>
-                  <input
-                    type="password"
-                    value={radarrApiKeyInput}
-                    onChange={(e) => setRadarrApiKeyInput(e.target.value)}
-                    placeholder="Enter API key…"
-                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Quality Profile ID</span>
-                  <input
-                    type="number"
-                    value={radarrQualityProfileIdInput}
-                    onChange={(e) => setRadarrQualityProfileIdInput(Number(e.target.value))}
-                    placeholder="e.g. 1"
-                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Root Folder Path</span>
-                  <input
-                    type="text"
-                    value={radarrRootFolderPathInput}
-                    onChange={(e) => setRadarrRootFolderPathInput(e.target.value)}
-                    placeholder="e.g. /data/media/movies"
-                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Sonarr Settings */}
-            <div className="space-y-3 pt-3" style={{ borderTop: '1px solid var(--border2)' }}>
-              <div style={{ borderBottom: '1px solid var(--border2)' }} className="pb-1.5 flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>Sonarr (TV Shows)</span>
-                <button
-                  type="button"
-                  onClick={testSonarr}
-                  disabled={sonarrTesting || !sonarrUrlInput || !sonarrApiKeyInput}
-                  className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold cursor-pointer border-none disabled:opacity-50 transition-all duration-100 flex items-center gap-1"
-                  style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
-                >
-                  {sonarrTesting ? 'Testing…' : 'Test Connection'}
-                </button>
-              </div>
-              {sonarrTestResult === 'ok' && (
-                <p className="text-[11px]" style={{ color: 'var(--green)' }}>✓ Connected to Sonarr successfully</p>
-              )}
-              {sonarrTestResult === 'error' && (
-                <p className="text-[11px]" style={{ color: 'var(--red)', lineHeight: 1.4 }}>Connection failed: {sonarrTestError}</p>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Sonarr Server URL</span>
-                  <input
-                    type="text"
-                    value={sonarrUrlInput}
-                    onChange={(e) => setSonarrUrlInput(e.target.value)}
-                    placeholder="e.g. http://localhost:8989"
-                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>API Key</span>
-                  <input
-                    type="password"
-                    value={sonarrApiKeyInput}
-                    onChange={(e) => setSonarrApiKeyInput(e.target.value)}
-                    placeholder="Enter API key…"
-                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Quality Profile ID</span>
-                  <input
-                    type="number"
-                    value={sonarrQualityProfileIdInput}
-                    onChange={(e) => setSonarrQualityProfileIdInput(Number(e.target.value))}
-                    placeholder="e.g. 1"
-                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Root Folder Path</span>
-                  <input
-                    type="text"
-                    value={sonarrRootFolderPathInput}
-                    onChange={(e) => setSonarrRootFolderPathInput(e.target.value)}
-                    placeholder="e.g. /data/media/tv"
-                    className="px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
-                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <button
-              onClick={saveArrSettings}
-              className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-semibold cursor-pointer border-none transition-all duration-100 mt-2"
-              style={{ background: 'var(--accent)', color: '#fff' }}
-            >
-              Save Arr Settings
-            </button>
-          </div>
-        </Section>
-
-        {/* Card Display */}
-        <Section title="Card Display">
-          {(Object.keys(CARD_META_LABELS) as Array<keyof CardMetaSettings>).map((key) => (
-            <Row key={key} label={CARD_META_LABELS[key]}>
-              <Toggle
-                on={settings.cardMeta[key]}
-                onToggle={() => {
-                  updateCardMeta({ [key]: !settings.cardMeta[key] })
-                  toast('Saved', 'success', 1500)
-                }}
-              />
-            </Row>
-          ))}
-        </Section>
-
-        {/* PWA Debug */}
-        <Section title="PWA Debug">
-          <div className="px-4 py-3 flex flex-col gap-2">
-            <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
-              Checks whether this app is running as an installed PWA. Open this page from your home screen to see standalone mode confirmed.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setPwaLogs([])
-                  // re-run by toggling a counter — simplest way without extracting fn
-                  addPwaLog('🔄 Manual refresh — re-running PWA checks…', 'info')
-
-                  // display-mode
-                  const isStandalone =
-                    window.matchMedia('(display-mode: standalone)').matches ||
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (navigator as any).standalone === true
-                  addPwaLog(
-                    isStandalone
-                      ? '✅ display-mode: standalone — running as installed PWA'
-                      : '⚠️ display-mode: browser — NOT running as installed PWA',
-                    isStandalone ? 'ok' : 'warn',
-                  )
-                  for (const mode of ['standalone', 'fullscreen', 'minimal-ui', 'browser']) {
-                    if (window.matchMedia(`(display-mode: ${mode})`).matches)
-                      addPwaLog(`ℹ️ matchMedia(display-mode: ${mode}) → true`, 'info')
-                  }
-
-                  // navigator.standalone (iOS)
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const navStandalone = (navigator as any).standalone
-                  if (navStandalone !== undefined) {
-                    addPwaLog(
-                      navStandalone
-                        ? '✅ navigator.standalone = true (iOS)'
-                        : '⚠️ navigator.standalone = false (iOS browser)',
-                      navStandalone ? 'ok' : 'warn',
+                  {FONT_OPTIONS.map((f) => {
+                    const active = settings.font === f.value
+                    return (
+                      <button
+                        key={f.value}
+                        onClick={() => update({ font: f.value })}
+                        className="px-3 py-[4px] text-[var(--text-12)] rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                        style={{
+                          background: active ? 'var(--surface2)' : 'transparent',
+                          color: active ? 'var(--fg)' : 'var(--muted)',
+                          fontWeight: active ? 600 : 500,
+                        }}
+                      >
+                        {f.label}
+                      </button>
                     )
-                  } else {
-                    addPwaLog('ℹ️ navigator.standalone = undefined (non-iOS)', 'info')
-                  }
+                  })}
+                </div>
+              </Row>
+              <Row label="Font Size">
+                <div
+                  className="flex"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
+                >
+                  {FONT_SIZE_OPTIONS.map((f) => {
+                    const active = settings.fontSize === f.value
+                    return (
+                      <button
+                        key={f.value}
+                        onClick={() => update({ fontSize: f.value })}
+                        className="px-3 py-[4px] text-[var(--text-12)] rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                        style={{
+                          background: active ? 'var(--surface2)' : 'transparent',
+                          color: active ? 'var(--fg)' : 'var(--muted)',
+                          fontWeight: active ? 600 : 500,
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </Row>
+            </Section>
 
-                  // SW
-                  if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistration().then((reg) => {
-                      if (!reg) { addPwaLog('⚠️ No SW registration', 'warn'); return }
-                      addPwaLog(`✅ SW registered — scope: ${reg.scope}`, 'ok')
-                      if (reg.active)     addPwaLog(`ℹ️ SW active: state="${reg.active.state}"`, 'info')
-                      if (reg.waiting)    addPwaLog(`ℹ️ SW waiting: state="${reg.waiting.state}"`, 'info')
-                      if (reg.installing) addPwaLog(`ℹ️ SW installing: state="${reg.installing.state}"`, 'info')
-                      if (navigator.serviceWorker.controller)
-                        addPwaLog(`✅ SW controller: ${navigator.serviceWorker.controller.scriptURL}`, 'ok')
-                      else
-                        addPwaLog('⚠️ No SW controller (reload may be needed)', 'warn')
-                    }).catch((e) => addPwaLog(`❌ SW error: ${e}`, 'warn'))
-                  } else {
-                    addPwaLog('❌ serviceWorker API not available', 'warn')
-                  }
-
-                  // manifest
-                  const ml = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
-                  addPwaLog(ml ? `✅ manifest: ${ml.href}` : '⚠️ No manifest link found', ml ? 'ok' : 'warn')
-
-                  // secure origin
-                  const sec = location.protocol === 'https:' || ['localhost','127.0.0.1'].includes(location.hostname)
-                  addPwaLog(
-                    sec ? `✅ Secure origin: ${location.protocol}//${location.host}` : `❌ NOT secure: ${location.protocol}//${location.host}`,
-                    sec ? 'ok' : 'warn',
-                  )
-                }}
-                className="flex-1 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
-                style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
-              >
-                🔄 Refresh
-              </button>
-              <button
-                onClick={() => {
-                  const logText = pwaLogs.map((l) => l.text).join('\n')
-                  navigator.clipboard.writeText(logText)
-                  toast('Logs copied to clipboard', 'success', 2000)
-                }}
-                disabled={pwaLogs.length === 0}
-                className="flex-1 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100 disabled:opacity-50"
-                style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
-              >
-                📋 Copy Logs
-              </button>
-            </div>
-            {pwaLogs.length > 0 && (
-              <div className="flex flex-col gap-[3px] p-2 rounded-[6px]" style={{ background: 'var(--bg)', border: '1px solid var(--border2)' }}>
-                {pwaLogs.map((log, i) => (
-                  <span
-                    key={i}
-                    className="text-[var(--text-11)]"
-                    style={{
-                      fontFamily: 'monospace',
-                      color: log.kind === 'ok' ? 'var(--green)' : log.kind === 'warn' ? 'var(--amber)' : 'var(--fg2)',
+            {/* Card Display */}
+            <Section title="Card Display">
+              {(Object.keys(CARD_META_LABELS) as Array<keyof CardMetaSettings>).map((key) => (
+                <Row key={key} label={CARD_META_LABELS[key]}>
+                  <Toggle
+                    on={settings.cardMeta[key]}
+                    onToggle={() => {
+                      updateCardMeta({ [key]: !settings.cardMeta[key] })
+                      toast('Saved', 'success', 1500)
                     }}
-                  >
-                    {log.text}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </Section>
+                  />
+                </Row>
+              ))}
+            </Section>
 
-        {/* Data */}
-        <Section title="Data">
-          <div className="px-4 py-3">
-            <button
-              onClick={handleClearCache}
-              className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
-              style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
-            >
-              Clear Media Cache
-            </button>
+            {/* Data */}
+            <Section title="Data">
+              <div className="px-4 py-3">
+                <button
+                  onClick={handleClearCache}
+                  className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
+                  style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+                >
+                  Clear Media Cache
+                </button>
+              </div>
+            </Section>
           </div>
-        </Section>
+        )}
+
+        {/* ── Logs tab ── */}
+        {activeTab === 'logs' && (
+          <div className="flex flex-col gap-4">
+            {/* Jellyfin Debug */}
+            <Section title="Jellyfin Debug">
+              <Row label="Server credentials">
+                <span className="text-[var(--text-12)]" style={{ color: serverCredsStatus === 'set' ? 'var(--green)' : serverCredsStatus === 'missing' ? 'var(--red)' : 'var(--muted2)' }}>
+                  {serverCredsStatus === 'set' ? '✓ Configured' : serverCredsStatus === 'missing' ? '✗ Not set — configure in Server tab' : '…'}
+                </span>
+              </Row>
+              <Row label="Local progress records">
+                <span className="text-[var(--text-13)] tabular-nums" style={{ color: (jellyfinProgressCount ?? 0) > 0 ? 'var(--green)' : 'var(--red)' }}>
+                  {jellyfinProgressCount ?? 0}
+                </span>
+              </Row>
+              {(jellyfinProgressItems ?? []).slice(0, 5).map(p => (
+                <div key={`${p.tmdbId}-${p.mediaType}`} className="px-4 py-1 text-[var(--text-11)] tabular-nums" style={{ color: 'var(--muted2)', fontFamily: 'monospace' }}>
+                  tmdb:{p.tmdbId} ({p.mediaType}) → <span style={{ color: p.jellyfinStatus === 'watching' ? 'var(--amber)' : p.jellyfinStatus === 'watched' ? 'var(--green)' : 'var(--muted2)' }}>{p.jellyfinStatus}</span>
+                  {p.season != null && ` S${p.season}·E${p.episode}`}
+                  {p.totalEpisodes != null && ` ${p.watchedEpisodes ?? 0}/${p.totalEpisodes}ep`}
+                  {p.moviePercent != null && ` ${p.moviePercent}%`}
+                </div>
+              ))}
+              {(jellyfinProgressCount ?? 0) > 5 && (
+                <div className="px-4 py-1 text-[var(--text-11)]" style={{ color: 'var(--muted2)' }}>…and {(jellyfinProgressCount ?? 0) - 5} more</div>
+              )}
+              <div className="px-4 py-3 flex flex-col gap-2">
+                <button
+                  onClick={pollJellyfinNow}
+                  disabled={jellyfinPolling || jellyfinPulling}
+                  className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-semibold cursor-pointer border-none disabled:opacity-50 transition-all"
+                  style={{ background: 'var(--accent)', color: '#fff' }}
+                >
+                  {jellyfinPolling ? 'Polling…' : '▶ Poll Jellyfin Now (Server → Local)'}
+                </button>
+                <button
+                  onClick={() => forcePullJellyfin()}
+                  disabled={jellyfinPulling || jellyfinPolling}
+                  className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none disabled:opacity-50 transition-all"
+                  style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+                >
+                  {jellyfinPulling ? 'Pulling…' : 'Pull from Backend DB Only'}
+                </button>
+                {jellyfinPullLog.length > 0 && (
+                  <div className="flex flex-col gap-1 p-2 rounded-[6px]" style={{ background: 'var(--bg)', border: '1px solid var(--border2)' }}>
+                    {jellyfinPullLog.map((line, i) => (
+                      <span key={i} className="text-[var(--text-11)]" style={{ color: 'var(--fg2)', fontFamily: 'monospace' }}>{line}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Section>
+
+            {/* PWA Debug */}
+            <Section title="PWA Debug">
+              <div className="px-4 py-3 flex flex-col gap-2">
+                <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
+                  Checks whether this app is running as an installed PWA. Open this page from your home screen to see standalone mode confirmed.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setPwaLogs([])
+                      addPwaLog('🔄 Manual refresh — re-running PWA checks…', 'info')
+
+                      const isStandalone =
+                        window.matchMedia('(display-mode: standalone)').matches ||
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        (navigator as any).standalone === true
+                      addPwaLog(
+                        isStandalone
+                          ? '✅ display-mode: standalone — running as installed PWA'
+                          : '⚠️ display-mode: browser — NOT running as installed PWA',
+                        isStandalone ? 'ok' : 'warn',
+                      )
+                      for (const mode of ['standalone', 'fullscreen', 'minimal-ui', 'browser']) {
+                        if (window.matchMedia(`(display-mode: ${mode})`).matches)
+                          addPwaLog(`ℹ️ matchMedia(display-mode: ${mode}) → true`, 'info')
+                      }
+
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const navStandalone = (navigator as any).standalone
+                      if (navStandalone !== undefined) {
+                        addPwaLog(
+                          navStandalone
+                            ? '✅ navigator.standalone = true (iOS)'
+                            : '⚠️ navigator.standalone = false (iOS browser)',
+                          navStandalone ? 'ok' : 'warn',
+                        )
+                      } else {
+                        addPwaLog('ℹ️ navigator.standalone = undefined (non-iOS)', 'info')
+                      }
+
+                      if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistration().then((reg) => {
+                          if (!reg) { addPwaLog('⚠️ No SW registration', 'warn'); return }
+                          addPwaLog(`✅ SW registered — scope: ${reg.scope}`, 'ok')
+                          if (reg.active)     addPwaLog(`ℹ️ SW active: state="${reg.active.state}"`, 'info')
+                          if (reg.waiting)    addPwaLog(`ℹ️ SW waiting: state="${reg.waiting.state}"`, 'info')
+                          if (reg.installing) addPwaLog(`ℹ️ SW installing: state="${reg.installing.state}"`, 'info')
+                          if (navigator.serviceWorker.controller)
+                            addPwaLog(`✅ SW controller: ${navigator.serviceWorker.controller.scriptURL}`, 'ok')
+                          else
+                            addPwaLog('⚠️ No SW controller (reload may be needed)', 'warn')
+                        }).catch((e) => addPwaLog(`❌ SW error: ${e}`, 'warn'))
+                      } else {
+                        addPwaLog('❌ serviceWorker API not available', 'warn')
+                      }
+
+                      const ml = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
+                      addPwaLog(ml ? `✅ manifest: ${ml.href}` : '⚠️ No manifest link found', ml ? 'ok' : 'warn')
+
+                      const sec = location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname)
+                      addPwaLog(
+                        sec ? `✅ Secure origin: ${location.protocol}//${location.host}` : `❌ NOT secure: ${location.protocol}//${location.host}`,
+                        sec ? 'ok' : 'warn',
+                      )
+                    }}
+                    className="flex-1 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
+                    style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+                  >
+                    🔄 Refresh
+                  </button>
+                  <button
+                    onClick={() => {
+                      const logText = pwaLogs.map((l) => l.text).join('\n')
+                      navigator.clipboard.writeText(logText)
+                      toast('Logs copied to clipboard', 'success', 2000)
+                    }}
+                    disabled={pwaLogs.length === 0}
+                    className="flex-1 py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100 disabled:opacity-50"
+                    style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+                  >
+                    📋 Copy Logs
+                  </button>
+                </div>
+                {pwaLogs.length > 0 && (
+                  <div className="flex flex-col gap-[3px] p-2 rounded-[6px]" style={{ background: 'var(--bg)', border: '1px solid var(--border2)' }}>
+                    {pwaLogs.map((log, i) => (
+                      <span
+                        key={i}
+                        className="text-[var(--text-11)]"
+                        style={{
+                          fontFamily: 'monospace',
+                          color: log.kind === 'ok' ? 'var(--green)' : log.kind === 'warn' ? 'var(--amber)' : 'var(--fg2)',
+                        }}
+                      >
+                        {log.text}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Section>
+          </div>
+        )}
       </div>
     </div>
   )
