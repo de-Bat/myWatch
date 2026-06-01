@@ -550,24 +550,24 @@ function HomePageInner() {
           <button
             onClick={() => router.push('/search')}
             title="Add"
-            className="flex items-center justify-center w-[34px] h-[34px] border-none cursor-pointer transition-all duration-100"
-            style={{ color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
+            className="flex items-center justify-center border-none cursor-pointer transition-all duration-100"
+            style={{ width: '2.43rem', height: '2.43rem', color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface)' }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
           >
-            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ width: '1.21rem', height: '1.21rem' }}>
               <line x1="10" y1="3" x2="10" y2="17" />
               <line x1="3" y1="10" x2="17" y2="10" />
             </svg>
           </button>
           {/* Search — expandable inline search */}
           <div
-            className={`flex items-center transition-all duration-300 ease-in-out ${searchOpen ? 'w-48 px-2' : 'w-[34px] justify-center'}`}
+            className={`flex items-center transition-all duration-300 ease-in-out ${searchOpen ? 'w-[13.7rem] px-2' : 'w-[2.43rem] justify-center'}`}
             style={{
               background: searchOpen ? 'var(--surface)' : 'transparent',
               border: searchOpen ? '1px solid var(--border)' : '1px solid transparent',
               borderRadius: 'var(--rsm)',
-              height: 34,
+              height: '2.43rem',
             }}
             onMouseEnter={(e) => { if (!searchOpen) { e.currentTarget.style.background = 'var(--surface)' } }}
             onMouseLeave={(e) => { if (!searchOpen) { e.currentTarget.style.background = 'transparent' } }}
@@ -576,6 +576,7 @@ function HomePageInner() {
               onClick={() => {
                 if (!searchOpen) {
                   setSearchOpen(true)
+                  setTimeout(() => searchInputRef.current?.focus(), 150)
                 } else {
                   setSearchOpen(false)
                   setSearchQuery('')
@@ -585,14 +586,14 @@ function HomePageInner() {
               className="flex items-center justify-center border-none cursor-pointer flex-shrink-0 bg-transparent"
               style={{
                 color: searchOpen ? 'var(--fg)' : 'var(--muted)',
-                width: searchOpen ? 24 : 34,
-                height: searchOpen ? 24 : 34,
+                width: searchOpen ? '1.71rem' : '2.43rem',
+                height: searchOpen ? '1.71rem' : '2.43rem',
                 padding: 0,
               }}
               onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)' }}
               onMouseLeave={(e) => { e.currentTarget.style.color = searchOpen ? 'var(--fg)' : 'var(--muted)' }}
             >
-              <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={{ width: '1.21rem', height: '1.21rem' }}>
                 <circle cx="8.5" cy="8.5" r="5.5" />
                 <line x1="13" y1="13" x2="17.5" y2="17.5" />
               </svg>
@@ -606,7 +607,7 @@ function HomePageInner() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 focus:outline-none bg-transparent border-none min-w-0"
-                style={{ color: 'var(--fg)', fontSize: 'var(--text-13)', paddingLeft: 6 }}
+                style={{ color: 'var(--fg)', fontSize: 'var(--text-13)', paddingLeft: '0.43rem' }}
                 autoFocus
               />
             )}
@@ -619,7 +620,7 @@ function HomePageInner() {
                 onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)' }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)' }}
               >
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ width: '0.86rem', height: '0.86rem' }}>
                   <line x1="3" y1="3" x2="13" y2="13" />
                   <line x1="13" y1="3" x2="3" y2="13" />
                 </svg>
@@ -630,12 +631,12 @@ function HomePageInner() {
           <button
             onClick={() => router.push('/discover')}
             title="Discover"
-            className="flex items-center justify-center w-[34px] h-[34px] border-none cursor-pointer transition-all duration-100"
-            style={{ color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
+            className="flex items-center justify-center border-none cursor-pointer transition-all duration-100"
+            style={{ width: '2.43rem', height: '2.43rem', color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface)' }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
           >
-            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1.21rem', height: '1.21rem' }}>
               <circle cx="10" cy="10" r="8" />
               <polygon points="8.5,7.5 13.5,10 8.5,12.5 6,10" fill="currentColor" stroke="none" />
             </svg>
@@ -644,12 +645,12 @@ function HomePageInner() {
           <button
             onClick={() => router.push('/playlists')}
             title="Playlists"
-            className="flex items-center justify-center w-[34px] h-[34px] border-none cursor-pointer transition-all duration-100"
-            style={{ color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
+            className="flex items-center justify-center border-none cursor-pointer transition-all duration-100"
+            style={{ width: '2.43rem', height: '2.43rem', color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface)' }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
           >
-            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={{ width: '1.21rem', height: '1.21rem' }}>
               <line x1="3" y1="5" x2="17" y2="5" />
               <line x1="3" y1="10" x2="13" y2="10" />
               <line x1="3" y1="15" x2="10" y2="15" />
@@ -661,8 +662,8 @@ function HomePageInner() {
           <button
             onClick={() => updateSettings({ language: settings.language === 'en-US' ? 'he-IL' : 'en-US' })}
             title={settings.language === 'en-US' ? 'עברית' : 'English'}
-            className="flex items-center justify-center w-[34px] h-[34px] border-none cursor-pointer transition-all duration-100 text-[11px] font-bold"
-            style={{ color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)', fontFamily: 'inherit' }}
+            className="flex items-center justify-center border-none cursor-pointer transition-all duration-100 text-[var(--text-11)] font-bold"
+            style={{ width: '2.43rem', height: '2.43rem', color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)', fontFamily: 'inherit' }}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface)' }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
           >
@@ -673,13 +674,13 @@ function HomePageInner() {
           <button
             onClick={() => updateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' })}
             title={settings.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            className="flex items-center justify-center w-[34px] h-[34px] border-none cursor-pointer transition-all duration-100"
-            style={{ color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
+            className="flex items-center justify-center border-none cursor-pointer transition-all duration-100"
+            style={{ width: '2.43rem', height: '2.43rem', color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.background = 'var(--surface)' }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
           >
             {settings.theme === 'dark' ? (
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1.21rem', height: '1.21rem' }}>
                 <circle cx="12" cy="12" r="5" />
                 <line x1="12" y1="1" x2="12" y2="3" />
                 <line x1="12" y1="21" x2="12" y2="23" />
@@ -691,7 +692,7 @@ function HomePageInner() {
                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
               </svg>
             ) : (
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1.21rem', height: '1.21rem' }}>
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
               </svg>
             )}
@@ -700,8 +701,8 @@ function HomePageInner() {
           {/* Avatar */}
           <button
             onClick={() => router.push('/profile')}
-            className="flex items-center justify-center w-[30px] h-[30px] rounded-full border-none cursor-pointer ml-[6px] flex-shrink-0 text-[var(--text-11)] font-bold"
-            style={{ background: 'var(--accent-bg)', border: '1.5px solid var(--accent)', color: 'var(--accent2)' }}
+            className="flex items-center justify-center rounded-full border-none cursor-pointer flex-shrink-0 text-[var(--text-11)] font-bold"
+            style={{ width: '2.14rem', height: '2.14rem', marginLeft: '0.43rem', background: 'var(--accent-bg)', border: '1.5px solid var(--accent)', color: 'var(--accent2)' }}
           >
             {userInitial}
           </button>
@@ -754,15 +755,16 @@ function HomePageInner() {
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s)}
-                  className="inline-flex items-center gap-[5px] whitespace-nowrap border cursor-pointer transition-all duration-[120ms]"
+                  className="inline-flex items-center whitespace-nowrap border cursor-pointer transition-all duration-[120ms]"
                   style={{
-                    padding: '5px 11px',
+                    padding: '0.35rem 0.8rem',
                     borderRadius: 'var(--pill)',
                     fontSize: 'var(--text-13)',
                     fontWeight: active ? 600 : 500,
                     background: active ? 'var(--accent)' : 'var(--surface)',
                     color: active ? '#fff' : 'var(--muted)',
                     borderColor: 'transparent',
+                    gap: '0.35rem',
                   }}
                   onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = 'var(--fg2)'; e.currentTarget.style.borderColor = 'var(--border)' } }}
                   onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'transparent' } }}
@@ -771,9 +773,9 @@ function HomePageInner() {
                   <span
                     className="text-[var(--text-10)] font-bold tabular-nums text-center"
                     style={{
-                      padding: '1px 5px',
+                      padding: '0.07rem 0.35rem',
                       borderRadius: 'var(--pill)',
-                      minWidth: 18,
+                      minWidth: '1.3rem',
                       lineHeight: 1.5,
                       background: active ? 'rgba(255,255,255,.15)' : 'var(--border2)',
                       color: active ? 'inherit' : 'var(--muted2)',
@@ -894,7 +896,7 @@ function HomePageInner() {
                       onClick={() => setTypeFilter(t)}
                       className="whitespace-nowrap border-none cursor-pointer transition-all duration-100"
                       style={{
-                        padding: '4px 10px',
+                        padding: '0.3rem 0.7rem',
                         borderRadius: 'var(--rxs)',
                         fontSize: 'var(--text-12)',
                         fontWeight: active ? 600 : 500,
@@ -914,24 +916,25 @@ function HomePageInner() {
               <div ref={sortRef} className="relative">
                 <button
                   onClick={() => setSortOpen((v) => !v)}
-                  className="flex items-center gap-[5px] whitespace-nowrap cursor-pointer transition-all duration-100"
+                  className="flex items-center whitespace-nowrap cursor-pointer transition-all duration-100"
                   style={{
-                    padding: '5px 10px',
+                    padding: '0.35rem 0.7rem',
                     borderRadius: 'var(--rsm)',
                     border: '1px solid var(--border)',
                     background: sortOpen ? 'var(--surface2)' : 'var(--surface)',
                     color: 'var(--muted)',
                     fontSize: 'var(--text-12)',
                     fontWeight: 500,
+                    gap: '0.35rem',
                   }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={{ width: '0.93rem', height: '0.93rem' }}>
                     <line x1="2" y1="4" x2="14" y2="4" />
                     <line x1="2" y1="8" x2="10" y2="8" />
                     <line x1="2" y1="12" x2="6" y2="12" />
                   </svg>
                   {SORT_OPTIONS[sortIndex].label}
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ opacity: 0.5, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>
+                  <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ width: '0.71rem', height: '0.71rem', opacity: 0.5, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>
                     <polyline points="2 3.5 5 6.5 8 3.5" />
                   </svg>
                 </button>
@@ -967,19 +970,20 @@ function HomePageInner() {
             <div ref={genreRef} className="relative">
               <button
                 onClick={() => setGenreOpen((v) => !v)}
-                className="flex items-center gap-[5px] whitespace-nowrap cursor-pointer transition-all duration-100"
+                className="flex items-center whitespace-nowrap cursor-pointer transition-all duration-100"
                 style={{
-                  padding: '5px 10px',
+                  padding: '0.35rem 0.7rem',
                   borderRadius: 'var(--rsm)',
                   border: `1px solid ${genreFilter.size > 0 ? 'var(--accent)' : 'var(--border)'}`,
                   background: genreFilter.size > 0 ? 'var(--accent-bg)' : genreOpen ? 'var(--surface2)' : 'var(--surface)',
                   color: genreFilter.size > 0 ? 'var(--accent2)' : 'var(--muted)',
                   fontSize: 'var(--text-12)',
                   fontWeight: genreFilter.size > 0 ? 600 : 500,
+                  gap: '0.35rem',
                 }}
               >
                 Genre{genreFilter.size > 0 ? ` (${genreFilter.size})` : ''}
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ opacity: 0.5, transform: genreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>
+                <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ width: '0.71rem', height: '0.71rem', opacity: 0.5, transform: genreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>
                   <polyline points="2 3.5 5 6.5 8 3.5" />
                 </svg>
               </button>
@@ -1067,14 +1071,16 @@ function HomePageInner() {
             <button
               onClick={() => setView('list')}
               title="List view"
-              className="flex items-center justify-center w-[26px] h-[26px] border-none cursor-pointer transition-all duration-100"
+              className="flex items-center justify-center border-none cursor-pointer transition-all duration-100"
               style={{
+                width: '1.86rem',
+                height: '1.86rem',
                 borderRadius: 'var(--rxs)',
                 background: viewMode === 'list' ? 'var(--surface2)' : 'transparent',
                 color: viewMode === 'list' ? 'var(--fg)' : 'var(--muted)',
               }}
             >
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={{ width: '0.93rem', height: '0.93rem' }}>
                 <rect x="2" y="3" width="12" height="3" rx="1" />
                 <rect x="2" y="8" width="12" height="3" rx="1" />
                 <rect x="2" y="13" width="8" height="3" rx="1" />
@@ -1083,14 +1089,16 @@ function HomePageInner() {
             <button
               onClick={() => setView('grid')}
               title="Grid view"
-              className="flex items-center justify-center w-[26px] h-[26px] border-none cursor-pointer transition-all duration-100"
+              className="flex items-center justify-center border-none cursor-pointer transition-all duration-100"
               style={{
+                width: '1.86rem',
+                height: '1.86rem',
                 borderRadius: 'var(--rxs)',
                 background: viewMode === 'grid' ? 'var(--surface2)' : 'transparent',
                 color: viewMode === 'grid' ? 'var(--fg)' : 'var(--muted)',
               }}
             >
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={{ width: '0.93rem', height: '0.93rem' }}>
                 <rect x="2" y="2" width="5" height="5" rx="1" />
                 <rect x="9" y="2" width="5" height="5" rx="1" />
                 <rect x="2" y="9" width="5" height="5" rx="1" />
@@ -1119,7 +1127,7 @@ function HomePageInner() {
                     onClick={() => updateSettings({ gridColumns: c })}
                     className="whitespace-nowrap border-none cursor-pointer transition-all duration-100"
                     style={{
-                      padding: '3px 7px',
+                      padding: '0.22rem 0.5rem',
                       borderRadius: 'var(--rxs)',
                       fontSize: 'var(--text-11)',
                       fontWeight: active ? 600 : 400,

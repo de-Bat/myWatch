@@ -172,13 +172,18 @@ html[data-font="mono"] body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 2.43rem;
+  height: 2.43rem;
   border-radius: var(--rsm);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--muted);
   flex-shrink: 0;
+}
+
+.mobile-filter-btn svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .mobile-select-overlay {
