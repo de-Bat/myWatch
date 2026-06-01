@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import type { WatchlistItem, JellyfinProgress } from '@mywatch/core'
 import { StatusBadge } from './StatusBadge'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
-import { usePlaylists, useAddToPlaylist } from '@/hooks/usePlaylists'
+import { usePlaylists, useAddToPlaylist, MAIN_LIST_UUID } from '@/hooks/usePlaylists'
 import { useSettings } from '@/hooks/useSettings'
 import { getTvProgress } from '@/lib/progress'
 
@@ -304,22 +304,37 @@ export function WatchlistItemCard({
         ) : (
           (playlists ?? [])
             .filter((p) => p.type === 'manual')
-            .map((p) => (
-              <button
-                key={p.id}
-                onClick={async (e) => {
-                  e.stopPropagation()
-                  await addToPlaylist(p.id, item.tmdbId, item.mediaType as 'movie' | 'tv')
-                  setCtxMenu(null)
-                }}
-                className="w-full text-left px-3 py-1.5 text-[var(--text-12)] transition-all duration-100 cursor-pointer border-none"
-                style={{ background: 'transparent', color: 'var(--fg2)' }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface2)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-              >
-                {p.name}
-              </button>
-            ))
+            .map((p) => {
+              const isMain = p.id === MAIN_LIST_UUID
+              return (
+                <button
+                  key={p.id}
+                  onClick={async (e) => {
+                    e.stopPropagation()
+                    await addToPlaylist(p.id, item.tmdbId, item.mediaType as 'movie' | 'tv')
+                    setCtxMenu(null)
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-[var(--text-12)] transition-all duration-100 cursor-pointer border-none flex items-center justify-between"
+                  style={{
+                    background: 'transparent',
+                    color: isMain ? 'var(--accent2)' : 'var(--fg2)',
+                    fontWeight: isMain ? 600 : 400,
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface2)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  <span>{p.name}</span>
+                  {isMain && (
+                    <span 
+                      className="text-[var(--text-9)] font-extrabold uppercase px-1.5 py-0.5 rounded ml-2" 
+                      style={{ background: 'var(--accent-bg)', color: 'var(--accent2)' }}
+                    >
+                      Main
+                    </span>
+                  )}
+                </button>
+              )
+            })
         )}
       </div>
     )}

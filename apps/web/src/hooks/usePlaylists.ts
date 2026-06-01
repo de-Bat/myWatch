@@ -6,11 +6,57 @@ import type { Playlist, PlaylistItem, SmartRules, WatchlistItem, MediaCache } fr
 import { db } from '@/lib/db'
 import { getLocalDeviceId } from './useWatchlist'
 
+export const ALL_LIST_UUID = '00000000-0000-0000-0000-000000000001'
+export const MAIN_LIST_UUID = '00000000-0000-0000-0000-000000000002'
+
+export async function seedDefaultPlaylists() {
+  const now = new Date().toISOString()
+  const deviceId = getLocalDeviceId()
+  
+  const allList: Playlist = {
+    id: ALL_LIST_UUID,
+    userId: '',
+    name: 'All',
+    description: 'All watchlist items',
+    type: 'smart',
+    smartRules: {},
+    sortOrder: 0,
+    isDefault: false,
+    createdAt: now,
+    updatedAt: now,
+    deviceId,
+    deletedAt: null,
+  }
+  
+  const mainList: Playlist = {
+    id: MAIN_LIST_UUID,
+    userId: '',
+    name: 'Main',
+    description: 'Primary manual watchlist',
+    type: 'manual',
+    smartRules: null,
+    sortOrder: 1,
+    isDefault: true,
+    createdAt: now,
+    updatedAt: now,
+    deviceId,
+    deletedAt: null,
+  }
+  
+  await db.playlists.bulkPut([allList, mainList])
+}
+
 export function usePlaylists() {
   return useLiveQuery(
-    () => db.playlists.filter((p) => p.deletedAt === null).toArray().then((ps) =>
-      ps.sort((a, b) => a.sortOrder - b.sortOrder)
-    ),
+    async () => {
+      const ps = await db.playlists.filter((p) => p.deletedAt === null).toArray()
+      if (ps.length === 0) {
+        await seedDefaultPlaylists()
+        const seeded = await db.playlists.filter((p) => p.deletedAt === null).toArray()
+        return seeded.sort((a, b) => a.sortOrder - b.sortOrder)
+      }
+      return ps.sort((a, b) => a.sortOrder - b.sortOrder)
+    },
     [],
   )
 }
@@ -96,6 +142,83 @@ export function useUpsertPlaylist() {
     await db.playlists.put(full)
     return full
   }, [])
+}
+
+export function useSetDefaultPlaylist() {
+  return useCallback(async (id: string) => {
+    await db.transaction('rw', db.playlists, async () => {
+      const playlists = await db.playlists.toArray()
+      for (const p of playlists) {
+        const isTarget = p.id === id
+        if (p.isDefault !== isTarget) {
+          await db.playlists.update(p.id, {
+            isDefault: isTarget,
+            updatedAt: new Date().toISOString(),
+            deviceId: getLocalDeviceId()
+          })
+        }
+      }
+    })
+  }, [])
+}
+
+export function useUpdatePlaylist() {
+  const setDefault = useSetDefaultPlaylist()
+  return useCallback(async (id: string, updates: Partial<Omit<Playlist, 'id' | 'createdAt' | 'updatedAt' | 'deviceId' | 'deletedAt'>>) => {
+    const now = new Date().toISOString()
+    const deviceId = getLocalDeviceId()
+    
+    await db.playlists.update(id, {
+      ...updates,
+      updatedAt: now,
+      deviceId,
+    })
+    
+    if (updates.isDefault) {
+      await setDefault(id)
+    }
+  }, [setDefault])
+}
+
+export function usePlaylistContentsEditor(playlistId: string) {
+  return useCallback(async (selectedTmdbIds: Set<string>) => {
+    await db.transaction('rw', db.playlistItems, async () => {
+      const existingItems = await db.playlistItems.where('playlistId').equals(playlistId).toArray()
+      const existingKeys = new Set(existingItems.map(i => `${i.tmdbId}-${i.mediaType}`))
+      
+      const toAdd: PlaylistItem[] = []
+      let position = existingItems.length
+      
+      for (const itemKey of selectedTmdbIds) {
+        if (!existingKeys.has(itemKey)) {
+          const [tmdbIdStr, mediaType] = itemKey.split('-')
+          toAdd.push({
+            id: uuidv4(),
+            playlistId,
+            tmdbId: parseInt(tmdbIdStr),
+            mediaType: mediaType as 'movie' | 'tv',
+            position: position++,
+            addedAt: new Date().toISOString()
+          })
+        }
+      }
+      
+      const toDeleteIds: string[] = []
+      for (const item of existingItems) {
+        const itemKey = `${item.tmdbId}-${item.mediaType}`
+        if (!selectedTmdbIds.has(itemKey)) {
+          toDeleteIds.push(item.id)
+        }
+      }
+      
+      if (toAdd.length > 0) {
+        await db.playlistItems.bulkAdd(toAdd)
+      }
+      if (toDeleteIds.length > 0) {
+        await db.playlistItems.bulkDelete(toDeleteIds)
+      }
+    })
+  }, [playlistId])
 }
 
 export function useDeletePlaylist() {

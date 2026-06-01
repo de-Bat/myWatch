@@ -735,7 +735,7 @@ export default function SettingsPage() {
               {jellyfinPolling ? 'Polling…' : '▶ Poll Jellyfin Now (Server → Local)'}
             </button>
             <button
-              onClick={forcePullJellyfin}
+              onClick={() => forcePullJellyfin()}
               disabled={jellyfinPulling || jellyfinPolling}
               className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none disabled:opacity-50 transition-all"
               style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}

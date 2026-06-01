@@ -76,6 +76,7 @@ export interface Playlist {
   updatedAt: string
   deletedAt: string | null
   deviceId: string
+  isDefault?: boolean
 }
 
 export interface PlaylistItem {

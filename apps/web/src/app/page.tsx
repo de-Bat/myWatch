@@ -15,6 +15,10 @@ import { GridItemCard } from '@/components/GridItemCard'
 import { MediaPanel } from '@/components/MediaPanel'
 import { db } from '@/lib/db'
 import { fuzzyFilterItems } from '@/lib/fuzzySearch'
+import { usePlaylists, useSmartPlaylistItems, ALL_LIST_UUID, MAIN_LIST_UUID } from '@/hooks/usePlaylists'
+import { EditPlaylistModal } from '@/components/EditPlaylistModal'
+import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
+import type { Playlist, WatchlistItem } from '@mywatch/core'
 
 const STATUS_TABS: Array<WatchStatus | 'all'> = ['all', 'planned', 'in_progress', 'watched', 'quit']
 const STATUS_LABELS: Record<WatchStatus | 'all', string> = {
@@ -53,6 +57,11 @@ function HomePageInner() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isOnline, setIsOnline] = useState(true)
+  const [activeListId, setActiveListId] = useState<string | null>(null)
+  const [listDropdownOpen, setListDropdownOpen] = useState(false)
+  const [editingList, setEditingList] = useState<Playlist | null>(null)
+  const [showCreateList, setShowCreateList] = useState(false)
+  const listDropdownRef = useRef<HTMLDivElement>(null)
   const sortRef = useRef<HTMLDivElement>(null)
   const genreRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -124,6 +133,16 @@ function HomePageInner() {
     return () => window.removeEventListener('keydown', onKey)
   }, [searchOpen])
 
+  useEffect(() => {
+    function close(e: MouseEvent) {
+      if (listDropdownRef.current && !listDropdownRef.current.contains(e.target as Node)) {
+        setListDropdownOpen(false)
+      }
+    }
+    if (listDropdownOpen) document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [listDropdownOpen])
+
   function setView(v: ViewMode) {
     setViewMode(v)
     localStorage.setItem(VIEW_STORAGE_KEY, v)
@@ -132,6 +151,53 @@ function HomePageInner() {
   const { settings, update: updateSettings } = useSettings()
   const { progressMap } = useJellyfinProgress()
   const allItems = useWatchlistItems()
+
+  const playlists = usePlaylists()
+
+  useEffect(() => {
+    if (playlists && activeListId === null) {
+      const defaultList = playlists.find((p) => p.isDefault)
+      if (defaultList) {
+        setActiveListId(defaultList.id)
+      } else {
+        const mainList = playlists.find((p) => p.id === MAIN_LIST_UUID)
+        if (mainList) {
+          setActiveListId(MAIN_LIST_UUID)
+        } else if (playlists.length > 0) {
+          setActiveListId(playlists[0].id)
+        }
+      }
+    }
+  }, [playlists, activeListId])
+
+  const activeList = playlists?.find((p) => p.id === activeListId) || playlists?.find((p) => p.isDefault) || playlists?.[0]
+
+  const activeManualItems = useLiveQuery(async () => {
+    if (!activeList || activeList.type !== 'manual') return null
+    if (activeList.id === ALL_LIST_UUID) return null
+    const items = await db.playlistItems.where('playlistId').equals(activeList.id).toArray()
+    items.sort((a, b) => a.position - b.position)
+    const results: WatchlistItem[] = []
+    for (const pi of items) {
+      const wi = await db.watchlistItems
+        .filter((w) => w.tmdbId === pi.tmdbId && w.mediaType === pi.mediaType && w.deletedAt === null)
+        .first()
+      if (wi) results.push(wi)
+    }
+    return results
+  }, [activeList?.id])
+
+  const activeSmartItems = useSmartPlaylistItems(
+    activeList?.type === 'smart' ? (activeList.smartRules ?? null) : null
+  )
+
+  const listItems = activeList
+    ? (activeList.id === ALL_LIST_UUID
+      ? allItems
+      : (activeList.type === 'smart' ? activeSmartItems : activeManualItems))
+    : allItems
+  
+  const baseItems = listItems ?? []
   const upsert = useUpsertItem()
   const { syncing, lastSyncedAt, error: syncError, sync } = useSync()
 
@@ -196,7 +262,7 @@ function HomePageInner() {
 
   const sortValue: SortValue = SORT_OPTIONS[sortIndex].value
 
-  const filtered = (allItems ?? []).filter((item) => {
+  const filtered = baseItems.filter((item) => {
     if (statusFilter !== 'all' && item.status !== statusFilter) return false
     if (typeFilter !== 'all' && item.mediaType !== typeFilter) return false
     return true
@@ -246,11 +312,11 @@ function HomePageInner() {
     : genreFiltered
 
   const statusCounts: Record<WatchStatus | 'all', number> = {
-    all: (allItems ?? []).length,
-    planned: (allItems ?? []).filter((i) => i.status === 'planned').length,
-    in_progress: (allItems ?? []).filter((i) => i.status === 'in_progress').length,
-    watched: (allItems ?? []).filter((i) => i.status === 'watched').length,
-    quit: (allItems ?? []).filter((i) => i.status === 'quit').length,
+    all: baseItems.length,
+    planned: baseItems.filter((i) => i.status === 'planned').length,
+    in_progress: baseItems.filter((i) => i.status === 'in_progress').length,
+    watched: baseItems.filter((i) => i.status === 'watched').length,
+    quit: baseItems.filter((i) => i.status === 'quit').length,
   }
 
   const userInitial = session?.user?.name?.[0]?.toUpperCase() ?? 'U'
@@ -296,32 +362,187 @@ function HomePageInner() {
               myWatch
             </span>
           )}
-          <h1
-            className="flex items-center gap-[7px] whitespace-nowrap"
-            style={{ fontSize: 'var(--text-17)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}
-          >
-            My List
-            {isMobile && !isOnline && (
-              <span
-                className="text-[var(--text-9)] font-bold tracking-[0.06em] uppercase px-[6px] py-[2px] rounded-[4px]"
-                style={{ background: 'rgba(239,68,68,.15)', color: 'var(--red)', letterSpacing: '0.05em' }}
-              >
-                Offline
-              </span>
-            )}
-            <span
-              className="text-[var(--text-11)] font-semibold tabular-nums"
-              style={{
-                color: 'var(--muted2)',
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--pill)',
-                padding: '1px 7px',
-              }}
+          {/* Lists Dropdown */}
+          <div ref={listDropdownRef} className="relative z-40">
+            <button
+              onClick={() => setListDropdownOpen((v) => !v)}
+              className="flex items-center gap-[6px] whitespace-nowrap cursor-pointer transition-all duration-100 hover:opacity-90 select-none bg-transparent border-none p-0 text-left"
             >
-              {displayed.length}
-            </span>
-          </h1>
+              <h1
+                className="flex items-center gap-[7px] whitespace-nowrap"
+                style={{
+                  fontSize: 'var(--text-17)',
+                  fontWeight: 700,
+                  letterSpacing: '-0.03em',
+                  color: activeList?.id === MAIN_LIST_UUID ? 'var(--accent2)' : 'var(--fg)',
+                }}
+              >
+                <span>{activeList?.name ?? 'My List'}</span>
+                {activeList?.id === MAIN_LIST_UUID && (
+                  <span
+                    className="text-[var(--text-9)] font-extrabold uppercase tracking-[0.05em] px-[5px] py-[1.5px] rounded-[3px] flex-shrink-0"
+                    style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--green)' }}
+                  >
+                    Main
+                  </span>
+                )}
+                {isMobile && !isOnline && (
+                  <span
+                    className="text-[var(--text-9)] font-bold tracking-[0.06em] uppercase px-[6px] py-[2px] rounded-[4px]"
+                    style={{ background: 'rgba(239,68,68,.15)', color: 'var(--red)', letterSpacing: '0.05em' }}
+                  >
+                    Offline
+                  </span>
+                )}
+                <span
+                  className="text-[var(--text-11)] font-semibold tabular-nums"
+                  style={{
+                    color: activeList?.id === MAIN_LIST_UUID ? 'var(--accent2)' : 'var(--muted2)',
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--pill)',
+                    padding: '1px 7px',
+                  }}
+                >
+                  {displayed.length}
+                </span>
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 10 10"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  style={{
+                    opacity: 0.7,
+                    transform: listDropdownOpen ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 150ms',
+                    color: activeList?.id === MAIN_LIST_UUID ? 'var(--accent2)' : 'var(--fg)',
+                  }}
+                >
+                  <polyline points="2 3.5 5 6.5 8 3.5" />
+                </svg>
+              </h1>
+            </button>
+
+            {listDropdownOpen && (
+              <div
+                className="absolute top-full left-0 mt-[8px] z-50 rounded-[10px] py-1.5 min-w-[240px] max-h-[380px] overflow-y-auto"
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  boxShadow: '0 10px 30px rgba(0,0,0,.4)',
+                }}
+              >
+                <div
+                  className="px-3 py-1 text-[var(--text-9h)] font-bold tracking-[0.08em] uppercase"
+                  style={{ color: 'var(--muted2)' }}
+                >
+                  Switch List
+                </div>
+
+                <div className="py-1">
+                  {(playlists ?? []).map((p) => {
+                    const isSelected = p.id === activeList?.id
+                    const isMain = p.id === MAIN_LIST_UUID
+                    return (
+                      <div
+                        key={p.id}
+                        className="group flex items-center justify-between px-3 py-1.5 transition-all duration-100 hover:bg-[var(--surface2)]"
+                      >
+                        <button
+                          onClick={() => {
+                            setActiveListId(p.id)
+                            setListDropdownOpen(false)
+                          }}
+                          className="flex-1 text-left border-none bg-transparent cursor-pointer flex items-center gap-2 min-w-0"
+                          style={{
+                            color: isSelected ? 'var(--fg)' : 'var(--fg2)',
+                            fontWeight: isSelected ? 600 : 400,
+                          }}
+                        >
+                          <span
+                            className="truncate text-[var(--text-13)]"
+                            style={{
+                              color: isMain ? 'var(--accent2)' : isSelected ? 'var(--fg)' : 'var(--fg2)',
+                              fontWeight: isMain || isSelected ? 600 : 400,
+                            }}
+                          >
+                            {p.name}
+                          </span>
+                          {isMain && (
+                            <span
+                              className="text-[var(--text-9)] font-extrabold uppercase px-[4px] py-[0.5px] rounded-[2px]"
+                              style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--green)' }}
+                            >
+                              Main
+                            </span>
+                          )}
+                          {p.isDefault && (
+                            <span
+                              className="text-[var(--text-9)] font-bold"
+                              style={{ color: 'var(--amber)' }}
+                              title="Default list"
+                            >
+                              ★
+                            </span>
+                          )}
+                        </button>
+
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <span
+                            className="text-[var(--text-10)] font-medium px-1.5 py-0.5 rounded-full border"
+                            style={{
+                              background: 'var(--surface)',
+                              borderColor: 'var(--border2)',
+                              color: 'var(--muted2)',
+                            }}
+                          >
+                            {p.type === 'smart' ? 'Smart' : 'Manual'}
+                          </span>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingList(p)
+                              setListDropdownOpen(false)
+                            }}
+                            className="p-1 rounded hover:bg-[var(--surface3)] border-none bg-transparent cursor-pointer text-[var(--text-11)]"
+                            style={{ color: 'var(--muted)' }}
+                            title="Edit List Settings"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M11 2a2.121 2.121 0 0 1 3 3L5 14H2v-3L11 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                <div className="border-t" style={{ borderColor: 'var(--border2)', margin: '4px 0' }} />
+
+                <button
+                  onClick={() => {
+                    setShowCreateList(true)
+                    setListDropdownOpen(false)
+                  }}
+                  className="w-full text-left px-3 py-2 text-[var(--text-12)] font-semibold transition-all duration-100 cursor-pointer border-none flex items-center gap-1.5"
+                  style={{ background: 'transparent', color: 'var(--accent2)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface2)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                    <line x1="7" y1="2" x2="7" y2="12" />
+                    <line x1="2" y1="7" x2="12" y2="7" />
+                  </svg>
+                  Create New List
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <nav className="flex items-center gap-[2px] flex-shrink-0">
@@ -975,6 +1196,20 @@ function HomePageInner() {
           mediaType={panel.mediaType}
           jellyfinProgress={progressMap?.get(`${panel.tmdbId}-${panel.mediaType}`) ?? undefined}
           onClose={() => setPanel(null)}
+        />
+      )}
+
+      {editingList && (
+        <EditPlaylistModal
+          playlist={editingList}
+          onClose={() => setEditingList(null)}
+        />
+      )}
+
+      {showCreateList && (
+        <CreatePlaylistModal
+          onClose={() => setShowCreateList(false)}
+          onCreated={(id) => setActiveListId(id)}
         />
       )}
     </div>
