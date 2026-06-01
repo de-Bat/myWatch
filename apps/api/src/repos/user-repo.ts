@@ -38,6 +38,8 @@ export interface UserRepo {
       llmApiKey: string | null
       llmModel: string | null
       recapMinInterval: number
+      tmdbApiKey: string | null
+      syncInterval: number
     },
   ): Promise<void>
   getLlmSettings(userId: string): Promise<{
@@ -46,6 +48,8 @@ export interface UserRepo {
     llmApiKey: string | null
     llmModel: string | null
     recapMinInterval: number
+    tmdbApiKey: string | null
+    syncInterval: number
   } | null>
   updateArrSettings(userId: string, settings: ArrSettings): Promise<void>
   getArrSettings(userId: string): Promise<ArrSettings | null>
@@ -206,7 +210,9 @@ export function createUserRepo(sql: Sql): UserRepo {
             llm_base_url = ${settings.llmBaseUrl},
             llm_api_key = ${settings.llmApiKey},
             llm_model = ${settings.llmModel},
-            recap_min_interval = ${settings.recapMinInterval}
+            recap_min_interval = ${settings.recapMinInterval},
+            tmdb_api_key = ${settings.tmdbApiKey},
+            sync_interval = ${settings.syncInterval}
         WHERE id = ${userId}
       `
     },
@@ -218,8 +224,11 @@ export function createUserRepo(sql: Sql): UserRepo {
         llm_api_key: string | null
         llm_model: string | null
         recap_min_interval: number
+        tmdb_api_key: string | null
+        sync_interval: number
       }[]>`
-        SELECT llm_provider, llm_base_url, llm_api_key, llm_model, recap_min_interval
+        SELECT llm_provider, llm_base_url, llm_api_key, llm_model, recap_min_interval,
+               tmdb_api_key, sync_interval
         FROM users
         WHERE id = ${userId}
         LIMIT 1
@@ -231,6 +240,8 @@ export function createUserRepo(sql: Sql): UserRepo {
         llmApiKey: rows[0].llm_api_key,
         llmModel: rows[0].llm_model,
         recapMinInterval: rows[0].recap_min_interval || 5,
+        tmdbApiKey: rows[0].tmdb_api_key,
+        syncInterval: rows[0].sync_interval ?? 5,
       }
     },
 
