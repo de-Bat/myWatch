@@ -24,7 +24,7 @@ const STATUS_TABS: Array<WatchStatus | 'all'> = ['all', 'planned', 'in_progress'
 const STATUS_LABELS: Record<WatchStatus | 'all', string> = {
   all: 'All',
   planned: 'Planned',
-  in_progress: 'In Progress',
+  in_progress: 'Watching',
   watched: 'Watched',
   quit: 'Quit',
 }
@@ -49,9 +49,9 @@ function HomePageInner() {
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
   const [sortIndex, setSortIndex] = useState(0)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
-  const [sortOpen, setSortOpen] = useState(true)
+  const [sortOpen, setSortOpen] = useState(false)
   const [genreFilter, setGenreFilter] = useState<Set<string>>(new Set())
-  const [genreOpen, setGenreOpen] = useState(true)
+  const [genreOpen, setGenreOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [panel, setPanel] = useState<{ tmdbId: number; mediaType: MediaType } | null>(null)
   const [isMobile, setIsMobile] = useState(false)
@@ -931,11 +931,30 @@ function HomePageInner() {
                     gap: '0.35rem',
                   }}
                 >
-                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={{ width: '0.93rem', height: '0.93rem' }}>
-                    <line x1="2" y1="4" x2="14" y2="4" />
-                    <line x1="2" y1="8" x2="10" y2="8" />
-                    <line x1="2" y1="12" x2="6" y2="12" />
-                  </svg>
+                  {SORT_OPTIONS[sortIndex].value === 'updated' && (
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '0.93rem', height: '0.93rem' }}>
+                      <circle cx="8" cy="8" r="5.5" />
+                      <polyline points="8 5.5 8 8 10 9.5" />
+                    </svg>
+                  )}
+                  {SORT_OPTIONS[sortIndex].value === 'rating' && (
+                    <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: '0.93rem', height: '0.93rem' }}>
+                      <path d="M8 2l1.6 3.3 3.6.5-2.6 2.5.6 3.6L8 10.3l-3.2 1.6.6-3.6L2.8 5.8l3.6-.5z" />
+                    </svg>
+                  )}
+                  {SORT_OPTIONS[sortIndex].value === 'title' && (
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" style={{ width: '0.93rem', height: '0.93rem' }}>
+                      <line x1="2" y1="4" x2="14" y2="4" />
+                      <line x1="2" y1="8" x2="10" y2="8" />
+                      <line x1="2" y1="12" x2="6" y2="12" />
+                    </svg>
+                  )}
+                  {SORT_OPTIONS[sortIndex].value === 'type' && (
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '0.93rem', height: '0.93rem' }}>
+                      <rect x="2" y="4" width="12" height="8" rx="1.5" />
+                      <polyline points="6 7 8 9 10 7" />
+                    </svg>
+                  )}
                   {SORT_OPTIONS[sortIndex].label}
                   <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ width: '0.71rem', height: '0.71rem', opacity: 0.5, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>
                     <polyline points="2 3.5 5 6.5 8 3.5" />
