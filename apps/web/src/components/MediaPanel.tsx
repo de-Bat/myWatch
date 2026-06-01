@@ -19,7 +19,7 @@ const TMDB_LOGO = 'https://image.tmdb.org/t/p/w45'
 const STATUSES: WatchStatus[] = ['planned', 'in_progress', 'watched', 'quit']
 const STATUS_LABELS: Record<WatchStatus, string> = {
   planned: 'Planned',
-  in_progress: 'In Progress',
+  in_progress: 'Watching',
   watched: 'Watched',
   quit: 'Quit',
 }
@@ -57,6 +57,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
   const [visible, setVisible] = useState(false)
   const [rating, setRating] = useState<number | null>(null)
   const [notes, setNotes] = useState('')
+  const [noteEditing, setNoteEditing] = useState(false)
   const [season, setSeason] = useState<number | null>(null)
   const [episode, setEpisode] = useState<number | null>(null)
   const [customPlatforms, setCustomPlatforms] = useState<string[]>([])
@@ -684,20 +685,6 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
             </div>
           )}
 
-          {/* Progress (TV in_progress) */}
-          {mediaType === 'tv' && existingItem?.status === 'in_progress' && (
-            <div className="flex flex-col gap-[8px]">
-              <div className="flex justify-between items-center">
-                <SectionLabel>Progress</SectionLabel>
-              </div>
-              <ProgressTracker
-                season={season}
-                episode={episode}
-                onChange={(s, e) => { setSeason(s); setEpisode(e) }}
-              />
-            </div>
-          )}
-
           {/* AI Progress Recap inline under progress tracking */}
           {canShowRecap && !watched && (
             <div className="mt-4 flex flex-col gap-2">
@@ -815,21 +802,52 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
           {/* Notes */}
           <div className="flex flex-col gap-[8px]">
             <SectionLabel>Notes</SectionLabel>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              placeholder="Your thoughts…"
-              className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none resize-none"
-              style={{
-                background: 'var(--surface)',
-                border: '1px solid var(--border2)',
-                color: 'var(--fg)',
-                lineHeight: 1.5,
-              }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border2)' }}
-            />
+            {noteEditing ? (
+              <div className="flex flex-col gap-[6px]">
+                <textarea
+                  autoFocus
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                  placeholder="Your thoughts…"
+                  className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none resize-none"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--accent)', color: 'var(--fg)', lineHeight: 1.5 }}
+                />
+                <button
+                  onClick={() => setNoteEditing(false)}
+                  className="self-start text-[var(--text-12)] cursor-pointer border-none px-0 bg-transparent"
+                  style={{ color: 'var(--muted)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg2)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)' }}
+                >
+                  Done
+                </button>
+              </div>
+            ) : notes ? (
+              <div className="flex flex-col gap-[6px]">
+                <p
+                  className="text-[var(--text-13)] rounded-[6px] px-3 py-2 whitespace-pre-wrap cursor-pointer"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border2)', color: 'var(--fg)', lineHeight: 1.5 }}
+                  onClick={() => setNoteEditing(true)}
+                >
+                  {notes}
+                </p>
+              </div>
+            ) : (
+              <button
+                onClick={() => setNoteEditing(true)}
+                className="flex items-center gap-[6px] px-[10px] py-[7px] rounded-[6px] text-[var(--text-12)] font-medium cursor-pointer border-none w-fit transition-all duration-100"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border2)', color: 'var(--muted)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--border2)' }}
+              >
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '0.8rem', height: '0.8rem' }}>
+                  <line x1="8" y1="3" x2="8" y2="13" />
+                  <line x1="3" y1="8" x2="13" y2="8" />
+                </svg>
+                Add Note
+              </button>
+            )}
           </div>
 
           <Divider />
