@@ -1,4 +1,4 @@
-import type { User, WatchlistItem, JellyfinProgress } from '@mywatch/core'
+import type { User, WatchlistItem, JellyfinProgress, ProgressRecap } from '@mywatch/core'
 
 // Server-side (Auth.js callbacks, API routes): use INTERNAL_API_URL so the
 // Next.js container reaches the API container via Docker's internal network.
@@ -77,7 +77,12 @@ export const apiClient = {
       })
     },
     pull(since: string, token: string) {
-      return apiFetch<{ items: WatchlistItem[]; jellyfinProgress?: JellyfinProgress[]; pulledAt: string }>(
+      return apiFetch<{
+        items: WatchlistItem[]
+        jellyfinProgress?: JellyfinProgress[]
+        progressRecaps?: ProgressRecap[]
+        pulledAt: string
+      }>(
         `/sync/pull?since=${encodeURIComponent(since)}`,
         { token },
       )

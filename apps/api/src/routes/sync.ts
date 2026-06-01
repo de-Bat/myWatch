@@ -6,6 +6,9 @@ import type { JellyfinRepo } from '../repos/jellyfin-repo.js'
 import { authenticate } from '../middleware/authenticate.js'
 import { sseBus } from '../utils/sse-bus.js'
 
+import type { RecapRepo } from '../repos/recap-repo.js'
+import type { ProgressRecap } from '@mywatch/core'
+
 async function authenticateQuery(req: FastifyRequest, reply: FastifyReply) {
   const { token } = req.query as { token?: string }
   if (!token) return reply.status(401).send({ error: 'Unauthorized' })
@@ -29,6 +32,7 @@ interface PullResponse {
   playlists: Playlist[]
   playlistItems: PlaylistItem[]
   jellyfinProgress?: JellyfinProgress[]
+  progressRecaps?: ProgressRecap[]
   pulledAt: string
 }
 
@@ -37,6 +41,8 @@ export function registerSyncRoutes(
   watchlistRepo: WatchlistRepo,
   playlistRepo: PlaylistRepo,
   jellyfinRepo: JellyfinRepo,
+  recapRepo?: RecapRepo,
+  triggerBackgroundRecap?: (userId: string, tmdbId: number, mediaType: 'movie' | 'tv') => Promise<void>,
 ) {
   app.post<{ Body: PushBody }>(
     '/sync/push',
@@ -73,6 +79,25 @@ export function registerSyncRoutes(
       await playlistRepo.upsertPlaylistItems(playlistItems)
       await jellyfinRepo.upsertProgress(userId, jellyfinProgress)
 
+      // Trigger background recap checks asynchronously
+      if (triggerBackgroundRecap) {
+        for (const item of items) {
+          if (item.status === 'in_progress' || item.status === 'watched') {
+            triggerBackgroundRecap(userId, item.tmdbId, item.mediaType).catch((err) =>
+              console.error('[sync] manual recap trigger error:', err)
+            )
+          }
+        }
+
+        for (const jf of jellyfinProgress) {
+          if (jf.jellyfinStatus === 'watching' || jf.jellyfinStatus === 'watched') {
+            triggerBackgroundRecap(userId, jf.tmdbId, jf.mediaType).catch((err) =>
+              console.error('[sync] jellyfin recap trigger error:', err)
+            )
+          }
+        }
+      }
+
       const connId = (req.headers['x-conn-id'] as string | undefined) ?? ''
       const pushedAt = new Date().toISOString()
       sseBus.emit(userId, connId, { pushedAt })
@@ -95,15 +120,23 @@ export function registerSyncRoutes(
       }
 
       const userId = req.user.sub
-      const [items, playlists, playlistItems, jellyfinProgress] = await Promise.all([
+      const [items, playlists, playlistItems, jellyfinProgress, progressRecaps] = await Promise.all([
         watchlistRepo.findSince(userId, since),
         playlistRepo.findPlaylistsSince(userId, since),
         playlistRepo.findPlaylistItemsSince(userId, since),
         jellyfinRepo.findSince(userId, since),
+        recapRepo ? recapRepo.findSince(userId, since) : Promise.resolve([]),
       ])
       const pulledAt = new Date().toISOString()
 
-      return reply.send({ items, playlists, playlistItems, jellyfinProgress, pulledAt } satisfies PullResponse)
+      return reply.send({
+        items,
+        playlists,
+        playlistItems,
+        jellyfinProgress,
+        progressRecaps,
+        pulledAt,
+      } satisfies PullResponse)
     },
   )
 

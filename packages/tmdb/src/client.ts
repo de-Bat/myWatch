@@ -52,12 +52,17 @@ export class TmdbClient {
   }
 
   async getMovie(tmdbId: number, language?: string): Promise<TmdbMovieDetail> {
-    const data = await this.get<TmdbMovieDetail>(`/movie/${tmdbId}`, language ? { language } : {})
-    if (language && language !== 'en-US' && (!data.overview || !data.title)) {
+    const params: Record<string, string> = { append_to_response: 'videos' }
+    if (language) params.language = language
+    const data = await this.get<TmdbMovieDetail>(`/movie/${tmdbId}`, params)
+    if (language && language !== 'en-US' && (!data.overview || !data.title || !data.videos?.results?.length)) {
       try {
-        const fallback = await this.get<TmdbMovieDetail>(`/movie/${tmdbId}`, { language: 'en-US' })
+        const fallback = await this.get<TmdbMovieDetail>(`/movie/${tmdbId}`, { language: 'en-US', append_to_response: 'videos' })
         data.overview = data.overview || fallback.overview
         data.title = data.title || fallback.title
+        if (!data.videos?.results?.length) {
+          data.videos = fallback.videos
+        }
       } catch (e) {
         // ignore fallback errors
       }
@@ -66,12 +71,17 @@ export class TmdbClient {
   }
 
   async getTv(tmdbId: number, language?: string): Promise<TmdbTvDetail> {
-    const data = await this.get<TmdbTvDetail>(`/tv/${tmdbId}`, language ? { language } : {})
-    if (language && language !== 'en-US' && (!data.overview || !data.name)) {
+    const params: Record<string, string> = { append_to_response: 'videos' }
+    if (language) params.language = language
+    const data = await this.get<TmdbTvDetail>(`/tv/${tmdbId}`, params)
+    if (language && language !== 'en-US' && (!data.overview || !data.name || !data.videos?.results?.length)) {
       try {
-        const fallback = await this.get<TmdbTvDetail>(`/tv/${tmdbId}`, { language: 'en-US' })
+        const fallback = await this.get<TmdbTvDetail>(`/tv/${tmdbId}`, { language: 'en-US', append_to_response: 'videos' })
         data.overview = data.overview || fallback.overview
         data.name = data.name || fallback.name
+        if (!data.videos?.results?.length) {
+          data.videos = fallback.videos
+        }
       } catch (e) {
         // ignore fallback errors
       }

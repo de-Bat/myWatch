@@ -3,6 +3,7 @@ import { createApp } from '../src/app.js'
 import type { UserRepo, UserRecord } from '../src/repos/user-repo.js'
 import type { WatchlistRepo } from '../src/repos/watchlist-repo.js'
 import type { PlaylistRepo } from '../src/repos/playlist-repo.js'
+import type { JellyfinRepo } from '../src/repos/jellyfin-repo.js'
 import type { WatchlistItem } from '@mywatch/core'
 import { SseBus, sseBus } from '../src/utils/sse-bus.js'
 
@@ -43,6 +44,12 @@ function makeUserRepo(): UserRepo {
     findById: vi.fn().mockResolvedValue(mockUser),
     create: vi.fn().mockResolvedValue(mockUser),
     findOrCreateOAuth: vi.fn().mockResolvedValue(mockUser),
+    updatePassword: vi.fn().mockResolvedValue(undefined),
+    markResetTokenUsed: vi.fn().mockResolvedValue(undefined),
+    createResetToken: vi.fn().mockResolvedValue('token'),
+    findResetToken: vi.fn().mockResolvedValue(null),
+    updateLlmSettings: vi.fn().mockResolvedValue(undefined),
+    getLlmSettings: vi.fn().mockResolvedValue(null),
   }
 }
 
@@ -59,6 +66,15 @@ function makePlaylistRepo(): PlaylistRepo {
     upsertPlaylistItems: vi.fn().mockResolvedValue(undefined),
     findPlaylistsSince: vi.fn().mockResolvedValue([]),
     findPlaylistItemsSince: vi.fn().mockResolvedValue([]),
+  }
+}
+
+function makeJellyfinRepo(): JellyfinRepo {
+  return {
+    upsertProgress: vi.fn().mockResolvedValue(undefined),
+    findSince: vi.fn().mockResolvedValue([]),
+    updateUserCredentials: vi.fn().mockResolvedValue(undefined),
+    getAllConfiguredUsers: vi.fn().mockResolvedValue([]),
   }
 }
 
@@ -110,7 +126,12 @@ describe('SseBus', () => {
 describe('POST /sync/push', () => {
   it('upserts items and returns pushedAt', async () => {
     const watchlistRepo = makeWatchlistRepo()
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
+    const app = await createApp({
+      userRepo: makeUserRepo(),
+      watchlistRepo,
+      playlistRepo: makePlaylistRepo(),
+      jellyfinRepo: makeJellyfinRepo(),
+    })
     const token = getAuthToken(app)
 
     const res = await app.inject({
@@ -128,7 +149,12 @@ describe('POST /sync/push', () => {
   })
 
   it('returns 401 without token', async () => {
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo(), playlistRepo: makePlaylistRepo() })
+    const app = await createApp({
+      userRepo: makeUserRepo(),
+      watchlistRepo: makeWatchlistRepo(),
+      playlistRepo: makePlaylistRepo(),
+      jellyfinRepo: makeJellyfinRepo(),
+    })
     const res = await app.inject({
       method: 'POST',
       url: '/sync/push',
@@ -139,7 +165,12 @@ describe('POST /sync/push', () => {
 
   it('rejects items belonging to a different user', async () => {
     const watchlistRepo = makeWatchlistRepo()
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
+    const app = await createApp({
+      userRepo: makeUserRepo(),
+      watchlistRepo,
+      playlistRepo: makePlaylistRepo(),
+      jellyfinRepo: makeJellyfinRepo(),
+    })
     const token = getAuthToken(app)
 
     const foreignItem: WatchlistItem = { ...mockItem, userId: 'ffffffff-ffff-ffff-ffff-ffffffffffff' }
@@ -154,7 +185,12 @@ describe('POST /sync/push', () => {
 
   it('accepts empty items array', async () => {
     const watchlistRepo = makeWatchlistRepo()
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
+    const app = await createApp({
+      userRepo: makeUserRepo(),
+      watchlistRepo,
+      playlistRepo: makePlaylistRepo(),
+      jellyfinRepo: makeJellyfinRepo(),
+    })
     const token = getAuthToken(app)
 
     const res = await app.inject({
@@ -168,7 +204,12 @@ describe('POST /sync/push', () => {
 
   it('does NOT emit SSE event back to the pushing connection', async () => {
     const watchlistRepo = makeWatchlistRepo()
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
+    const app = await createApp({
+      userRepo: makeUserRepo(),
+      watchlistRepo,
+      playlistRepo: makePlaylistRepo(),
+      jellyfinRepo: makeJellyfinRepo(),
+    })
     const token = getAuthToken(app)
 
     const selfReceived: string[] = []
@@ -188,7 +229,12 @@ describe('POST /sync/push', () => {
 
   it('emits SSE event to other connections after push', async () => {
     const watchlistRepo = makeWatchlistRepo()
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
+    const app = await createApp({
+      userRepo: makeUserRepo(),
+      watchlistRepo,
+      playlistRepo: makePlaylistRepo(),
+      jellyfinRepo: makeJellyfinRepo(),
+    })
     const token = getAuthToken(app)
 
     const sent: string[] = []
@@ -211,13 +257,23 @@ describe('POST /sync/push', () => {
 
 describe('GET /sync/events', () => {
   it('returns 401 without token', async () => {
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo(), playlistRepo: makePlaylistRepo() })
+    const app = await createApp({
+      userRepo: makeUserRepo(),
+      watchlistRepo: makeWatchlistRepo(),
+      playlistRepo: makePlaylistRepo(),
+      jellyfinRepo: makeJellyfinRepo(),
+    })
     const res = await app.inject({ method: 'GET', url: '/sync/events' })
     expect(res.statusCode).toBe(401)
   })
 
   it('returns SSE connected event with connId', async () => {
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo(), playlistRepo: makePlaylistRepo() })
+    const app = await createApp({
+      userRepo: makeUserRepo(),
+      watchlistRepo: makeWatchlistRepo(),
+      playlistRepo: makePlaylistRepo(),
+      jellyfinRepo: makeJellyfinRepo(),
+    })
     const token = getAuthToken(app)
 
     const res = await app.inject({
@@ -239,7 +295,12 @@ describe('GET /sync/events', () => {
 describe('GET /sync/pull', () => {
   it('returns items updated since given timestamp', async () => {
     const watchlistRepo = makeWatchlistRepo()
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
+    const app = await createApp({
+      userRepo: makeUserRepo(),
+      watchlistRepo,
+      playlistRepo: makePlaylistRepo(),
+      jellyfinRepo: makeJellyfinRepo(),
+    })
     const token = getAuthToken(app)
     const since = '2024-01-01T00:00:00.000Z'
 
@@ -258,7 +319,12 @@ describe('GET /sync/pull', () => {
   })
 
   it('returns 401 without token', async () => {
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo(), playlistRepo: makePlaylistRepo() })
+    const app = await createApp({
+      userRepo: makeUserRepo(),
+      watchlistRepo: makeWatchlistRepo(),
+      playlistRepo: makePlaylistRepo(),
+      jellyfinRepo: makeJellyfinRepo(),
+    })
     const res = await app.inject({
       method: 'GET',
       url: '/sync/pull?since=2024-01-01T00:00:00.000Z',
@@ -267,7 +333,12 @@ describe('GET /sync/pull', () => {
   })
 
   it('returns 400 when since param is missing', async () => {
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo: makeWatchlistRepo(), playlistRepo: makePlaylistRepo() })
+    const app = await createApp({
+      userRepo: makeUserRepo(),
+      watchlistRepo: makeWatchlistRepo(),
+      playlistRepo: makePlaylistRepo(),
+      jellyfinRepo: makeJellyfinRepo(),
+    })
     const token = getAuthToken(app)
     const res = await app.inject({
       method: 'GET',
@@ -279,7 +350,12 @@ describe('GET /sync/pull', () => {
 
   it('uses epoch (1970) when since=0 to pull all items', async () => {
     const watchlistRepo = makeWatchlistRepo()
-    const app = await createApp({ userRepo: makeUserRepo(), watchlistRepo, playlistRepo: makePlaylistRepo() })
+    const app = await createApp({
+      userRepo: makeUserRepo(),
+      watchlistRepo,
+      playlistRepo: makePlaylistRepo(),
+      jellyfinRepo: makeJellyfinRepo(),
+    })
     const token = getAuthToken(app)
 
     const res = await app.inject({

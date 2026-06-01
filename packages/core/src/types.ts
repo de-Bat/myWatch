@@ -62,6 +62,7 @@ export interface MediaCache {
   watchProvidersRegion: string | null
   watchProvidersCachedAt: string | null
   language?: string
+  youtubeTrailerKey?: string | null
 }
 
 export interface Playlist {
@@ -108,3 +109,14 @@ export interface JellyfinProgress {
   totalEpisodes?: number | null
   updatedAt?: string
 }
+
+export interface ProgressRecap {
+  tmdbId: number
+  mediaType: MediaType
+  progressPercent: number | null
+  progressSeason: number | null
+  progressEpisode: number | null
+  recapText: string
+  updatedAt: string
+}
+

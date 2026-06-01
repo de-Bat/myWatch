@@ -9,6 +9,8 @@ import { useSettings } from '@/hooks/useSettings'
 import { StatusBadge } from './StatusBadge'
 import { ProgressTracker } from './ProgressTracker'
 import { getTvProgress } from '@/lib/progress'
+import { db } from '@/lib/db'
+import { useLiveQuery } from 'dexie-react-hooks'
 
 const TMDB_BACKDROP = 'https://image.tmdb.org/t/p/w780'
 const TMDB_POSTER = 'https://image.tmdb.org/t/p/w342'
@@ -45,7 +47,7 @@ interface Props {
 
 export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Props) {
   const { data: session } = useSession()
-  const { settings } = useSettings()
+  const { settings, update } = useSettings()
   const meta = useMediaMeta(tmdbId, mediaType, settings.tmdbApiKey, settings.language)
   const existingItem = useWatchlistItem(tmdbId, mediaType)
   const upsert = useUpsertItem()
@@ -61,6 +63,32 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
   const [customInput, setCustomInput] = useState('')
   const [showCustomInput, setShowCustomInput] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  const [isRevealed, setIsRevealed] = useState(false)
+  useEffect(() => {
+    setIsRevealed(false)
+  }, [tmdbId, mediaType])
+
+  const dbRecap = useLiveQuery(() => {
+    return db.progressRecaps.get([tmdbId, mediaType])
+  }, [tmdbId, mediaType])
+
+  // Determine if recap is available and what the progress is
+  const hasJellyfinProgress = jellyfinProgress && jellyfinProgress.jellyfinStatus === 'watching'
+  const isMovieProgress = mediaType === 'movie' && (
+    (hasJellyfinProgress && jellyfinProgress.moviePercent != null && jellyfinProgress.moviePercent > 0) ||
+    (existingItem?.status === 'watched')
+  )
+  const isTvProgress = mediaType === 'tv' && (
+    (hasJellyfinProgress && jellyfinProgress.season != null && jellyfinProgress.episode != null) ||
+    (existingItem?.status === 'in_progress' && season != null && episode != null)
+  )
+
+  const watched = existingItem?.status === 'watched' || jellyfinProgress?.jellyfinStatus === 'watched'
+  const recapPercent = isMovieProgress ? (jellyfinProgress?.moviePercent ?? (existingItem?.status === 'watched' ? 100 : null)) : null
+  const recapSeason = isTvProgress ? (jellyfinProgress?.season ?? season) : null
+  const recapEpisode = isTvProgress ? (jellyfinProgress?.episode ?? episode) : null
+  const canShowRecap = isMovieProgress || isTvProgress
 
   // Animate in
   useEffect(() => {
@@ -271,6 +299,36 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                   ))}
                 </div>
               )}
+
+              {/* YouTube Trailer */}
+              {meta?.youtubeTrailerKey && (
+                <a
+                  href={`https://www.youtube.com/watch?v=${meta.youtubeTrailerKey}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-[10px] py-[5px] rounded-[6px] text-[11px] font-bold w-fit mt-[4px] transition-all duration-100 no-underline cursor-pointer"
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    color: '#f87171',
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'
+                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.45)'
+                    e.currentTarget.style.color = '#fff'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)'
+                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.25)'
+                    e.currentTarget.style.color = '#f87171'
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.163c-.272-1.016-1.07-1.815-2.085-2.087C19.578 3.53 12 3.53 12 3.53s-7.578 0-9.413.546c-1.015.272-1.813 1.071-2.085 2.087C0 7.998 0 12 0 12s0 4.002.502 5.837c.272 1.016 1.07 1.815 2.085 2.087 1.835.547 9.413.547 9.413.547s7.578 0 9.413-.547c1.015-.272 1.813-1.071 2.085-2.087C24 16.002 24 12 24 12s0-4.002-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                  </svg>
+                  Watch Trailer
+                </a>
+              )}
             </div>
           </div>
 
@@ -400,12 +458,103 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
           {/* Progress (TV in_progress) */}
           {mediaType === 'tv' && existingItem?.status === 'in_progress' && (
             <div className="flex flex-col gap-[8px]">
-              <SectionLabel>Progress</SectionLabel>
+              <div className="flex justify-between items-center">
+                <SectionLabel>Progress</SectionLabel>
+              </div>
               <ProgressTracker
                 season={season}
                 episode={episode}
                 onChange={(s, e) => { setSeason(s); setEpisode(e) }}
               />
+            </div>
+          )}
+
+          {/* AI Progress Recap inline under progress tracking */}
+          {canShowRecap && !watched && (
+            <div className="mt-4 flex flex-col gap-2">
+              {!dbRecap ? (
+                <div 
+                  className="rounded-[8px] p-3 text-center border animate-pulse flex items-center justify-center gap-2"
+                  style={{
+                    background: 'rgba(99, 102, 241, 0.03)',
+                    borderColor: 'rgba(99, 102, 241, 0.1)',
+                  }}
+                >
+                  <span 
+                    className="w-1.5 h-1.5 rounded-full inline-block animate-ping"
+                    style={{ background: 'var(--accent2)' }}
+                  ></span>
+                  <span className="text-[11px] font-bold" style={{ color: 'var(--accent2)' }}>
+                    AI is writing your spoiler-free recap in the background...
+                  </span>
+                </div>
+              ) : (
+                <div 
+                  className="flex flex-col gap-2 relative overflow-hidden rounded-[8px] p-4 transition-all duration-300"
+                  style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border2)',
+                  }}
+                >
+                  <div className="flex justify-between items-center text-[10px] font-extrabold uppercase tracking-[0.08em]"
+                       style={{ color: 'var(--accent2)' }}>
+                    <span>✨ Progress Recap</span>
+                    <span style={{ color: 'var(--muted)' }}>
+                      {dbRecap.mediaType === 'movie' 
+                        ? `Up to ${dbRecap.progressPercent}%`
+                        : `Up to S${dbRecap.progressSeason} E${dbRecap.progressEpisode}`
+                      }
+                    </span>
+                  </div>
+
+                  <div className="relative">
+                    <div 
+                      className="text-[12px] leading-relaxed select-none transition-all duration-500 ease-in-out"
+                      style={{
+                        filter: isRevealed ? 'none' : 'blur(10px)',
+                        opacity: isRevealed ? 1 : 0.25,
+                        transition: 'filter 0.4s ease, opacity 0.4s ease',
+                      }}
+                    >
+                      {dbRecap.recapText}
+                    </div>
+
+                    {!isRevealed && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-1">
+                        <div className="text-[11px] font-bold text-center" style={{ color: 'var(--fg2)' }}>
+                          ⚠️ Spoiler Alert (up to {dbRecap.mediaType === 'movie' 
+                            ? `${dbRecap.progressPercent}%`
+                            : `S${dbRecap.progressSeason} E${dbRecap.progressEpisode}`
+                          })
+                        </div>
+                        <button
+                          onClick={() => setIsRevealed(true)}
+                          className="px-3 py-1 text-[10px] font-extrabold tracking-wider uppercase cursor-pointer rounded-[4px] border-none"
+                          style={{
+                            background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%)',
+                            color: '#ffffff',
+                            boxShadow: '0 2px 8px rgba(99, 102, 241, 0.2)',
+                          }}
+                        >
+                          Reveal Recap
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {isRevealed && (
+                    <div className="flex justify-end mt-1">
+                      <button
+                        onClick={() => setIsRevealed(false)}
+                        className="text-[9px] font-extrabold tracking-[0.05em] uppercase hover:underline border-none cursor-pointer bg-transparent"
+                        style={{ color: 'var(--muted)' }}
+                      >
+                        Hide Recap
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -570,6 +719,8 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
           )}
         </div>
         </div>{/* end scrollable */}
+
+
       </div>
     </>
   )

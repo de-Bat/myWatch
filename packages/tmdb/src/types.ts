@@ -43,6 +43,13 @@ export interface TmdbMovieDetail {
   vote_count: number
   runtime: number | null
   status: string
+  videos?: {
+    results: Array<{
+      key: string
+      site: string
+      type: string
+    }>
+  }
 }
 
 export interface TmdbTvSeason {
@@ -66,6 +73,13 @@ export interface TmdbTvDetail {
   number_of_seasons: number
   status: string
   seasons?: TmdbTvSeason[]
+  videos?: {
+    results: Array<{
+      key: string
+      site: string
+      type: string
+    }>
+  }
 }
 
 export interface TmdbPagedResponse<T> {

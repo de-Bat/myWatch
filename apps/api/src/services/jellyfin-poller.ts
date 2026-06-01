@@ -2,7 +2,11 @@ import { fetchJellyfinProgress } from '@mywatch/core'
 import type { JellyfinRepo } from '../repos/jellyfin-repo.js'
 import { sseBus } from '../utils/sse-bus.js'
 
-export function startJellyfinPoller(repo: JellyfinRepo, intervalMs = 15 * 60 * 1000) {
+export function startJellyfinPoller(
+  repo: JellyfinRepo,
+  triggerBackgroundRecap?: (userId: string, tmdbId: number, mediaType: 'movie' | 'tv') => Promise<void>,
+  intervalMs = 15 * 60 * 1000,
+) {
   let active = true
 
   async function poll() {
@@ -21,6 +25,17 @@ export function startJellyfinPoller(repo: JellyfinRepo, intervalMs = 15 * 60 * 1
             
             // Broadcast sync event to force clients to pull new jellyfin_progress
             sseBus.emit(user.id, 'jellyfin-poller', { pushedAt: new Date().toISOString() })
+
+            // Trigger background recap checks
+            if (triggerBackgroundRecap) {
+              for (const item of items) {
+                if (item.jellyfinStatus === 'watching' || item.jellyfinStatus === 'watched') {
+                  triggerBackgroundRecap(user.id, item.tmdbId, item.mediaType).catch((err) =>
+                    console.error('[jellyfin-poller] recap trigger error:', err)
+                  )
+                }
+              }
+            }
           }
         } catch (err) {
           console.error(`Failed to poll Jellyfin for user ${user.id}:`, err)

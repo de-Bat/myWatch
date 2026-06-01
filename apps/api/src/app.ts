@@ -6,6 +6,7 @@ import type { UserRepo } from './repos/user-repo.js'
 import type { WatchlistRepo } from './repos/watchlist-repo.js'
 import type { PlaylistRepo } from './repos/playlist-repo.js'
 import type { JellyfinRepo } from './repos/jellyfin-repo.js'
+import type { RecapRepo } from './repos/recap-repo.js'
 import { registerAuthRoutes } from './routes/auth.js'
 import { registerOAuthRoutes } from './routes/oauth.js'
 import { registerSyncRoutes } from './routes/sync.js'
@@ -16,6 +17,8 @@ export interface AppDeps {
   watchlistRepo?: WatchlistRepo
   playlistRepo?: PlaylistRepo
   jellyfinRepo?: JellyfinRepo
+  recapRepo?: RecapRepo
+  triggerBackgroundRecap?: (userId: string, tmdbId: number, mediaType: 'movie' | 'tv') => Promise<void>
 }
 
 export async function createApp(deps?: AppDeps): Promise<FastifyInstance> {
@@ -39,8 +42,15 @@ export async function createApp(deps?: AppDeps): Promise<FastifyInstance> {
   }
 
   if (deps?.watchlistRepo && deps?.playlistRepo && deps?.jellyfinRepo) {
-    registerSyncRoutes(app, deps.watchlistRepo, deps.playlistRepo, deps.jellyfinRepo)
-    registerSettingsRoutes(app, deps.jellyfinRepo)
+    registerSyncRoutes(
+      app,
+      deps.watchlistRepo,
+      deps.playlistRepo,
+      deps.jellyfinRepo,
+      deps.recapRepo,
+      deps.triggerBackgroundRecap,
+    )
+    registerSettingsRoutes(app, deps.jellyfinRepo, deps.userRepo)
   }
 
   return app

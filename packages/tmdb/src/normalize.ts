@@ -2,6 +2,10 @@ import type { MediaCache } from '@mywatch/core'
 import type { TmdbMovieDetail, TmdbTvDetail } from './types'
 
 export function normalizeMovie(movie: TmdbMovieDetail, language?: string): MediaCache {
+  const videos = movie.videos?.results ?? []
+  const trailer = videos.find((v) => v.site === 'YouTube' && v.type === 'Trailer') || videos.find((v) => v.site === 'YouTube')
+  const youtubeTrailerKey = trailer ? trailer.key : null
+
   return {
     tmdbId: movie.id,
     mediaType: 'movie',
@@ -21,6 +25,7 @@ export function normalizeMovie(movie: TmdbMovieDetail, language?: string): Media
     watchProvidersRegion: null,
     watchProvidersCachedAt: null,
     language,
+    youtubeTrailerKey,
   }
 }
 
@@ -31,6 +36,10 @@ export function normalizeTv(show: TmdbTvDetail, language?: string): MediaCache {
           show.episode_run_time.reduce((a, b) => a + b, 0) / show.episode_run_time.length,
         )
       : null
+
+  const videos = show.videos?.results ?? []
+  const trailer = videos.find((v) => v.site === 'YouTube' && v.type === 'Trailer') || videos.find((v) => v.site === 'YouTube')
+  const youtubeTrailerKey = trailer ? trailer.key : null
 
   return {
     tmdbId: show.id,
@@ -57,5 +66,6 @@ export function normalizeTv(show: TmdbTvDetail, language?: string): MediaCache {
     watchProvidersRegion: null,
     watchProvidersCachedAt: null,
     language,
+    youtubeTrailerKey,
   }
 }

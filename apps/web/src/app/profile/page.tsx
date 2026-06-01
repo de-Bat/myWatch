@@ -111,6 +111,12 @@ export default function SettingsPage() {
   const { settings, update, updateCardMeta } = useSettings()
   const { toast } = useToast()
   const [tmdbKeyInput, setTmdbKeyInput] = useState('')
+  const [geminiKeyInput, setGeminiKeyInput] = useState('')
+  const [llmProvider, setLlmProvider] = useState<'gemini' | 'openai'>('gemini')
+  const [llmBaseUrlInput, setLlmBaseUrlInput] = useState('')
+  const [llmApiKeyInput, setLlmApiKeyInput] = useState('')
+  const [llmModelInput, setLlmModelInput] = useState('')
+  const [recapMinIntervalInput, setRecapMinIntervalInput] = useState<number>(5)
   const [jellyfinUrlInput, setJellyfinUrlInput] = useState('')
   const [jellyfinUserIdInput, setJellyfinUserIdInput] = useState('')
   const [jellyfinApiKeyInput, setJellyfinApiKeyInput] = useState('')
@@ -242,22 +248,59 @@ export default function SettingsPage() {
   const jellyfinProgressCount = useLiveQuery(() => db.jellyfinProgress.count())
   const jellyfinProgressItems = useLiveQuery(() => db.jellyfinProgress.toArray())
 
-  // Check if server has credentials saved
+  // Check if server has credentials and LLM settings saved
   useEffect(() => {
     if (!session?.apiToken) return
     fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/user/settings`, {
       headers: { Authorization: `Bearer ${session.apiToken}` }
     })
       .then(r => r.json())
-      .then((data: { hasCredentials?: boolean }) => {
+      .then((data: {
+        hasCredentials?: boolean
+        llmProvider?: 'gemini' | 'openai'
+        llmBaseUrl?: string
+        llmApiKey?: string
+        llmModel?: string
+        recapMinInterval?: number
+      }) => {
         setServerCredsStatus(data.hasCredentials ? 'set' : 'missing')
+        if (data.llmProvider) setLlmProvider(data.llmProvider)
+        if (data.llmBaseUrl) setLlmBaseUrlInput(data.llmBaseUrl)
+        if (data.llmApiKey) setLlmApiKeyInput(data.llmApiKey)
+        if (data.llmModel) setLlmModelInput(data.llmModel)
+        if (data.recapMinInterval) setRecapMinIntervalInput(data.recapMinInterval)
+
+        // Sync to local settings hook
+        update({
+          llmProvider: data.llmProvider ?? 'gemini',
+          llmBaseUrl: data.llmBaseUrl ?? 'https://api.openai.com/v1',
+          llmApiKey: data.llmApiKey ?? '',
+          llmModel: data.llmModel ?? 'gpt-4o-mini',
+          recapMinInterval: data.recapMinInterval ?? 5,
+        })
       })
       .catch(() => setServerCredsStatus('unknown'))
-  }, [session?.apiToken])
+  }, [session?.apiToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setTmdbKeyInput(settings.tmdbApiKey)
   }, [settings.tmdbApiKey])
+
+  useEffect(() => {
+    setGeminiKeyInput(settings.geminiApiKey ?? '')
+    setLlmProvider(settings.llmProvider ?? 'gemini')
+    setLlmBaseUrlInput(settings.llmBaseUrl ?? 'https://api.openai.com/v1')
+    setLlmApiKeyInput(settings.llmApiKey ?? '')
+    setLlmModelInput(settings.llmModel ?? 'gpt-4o-mini')
+    setRecapMinIntervalInput(settings.recapMinInterval ?? 5)
+  }, [
+    settings.geminiApiKey,
+    settings.llmProvider,
+    settings.llmBaseUrl,
+    settings.llmApiKey,
+    settings.llmModel,
+    settings.recapMinInterval,
+  ])
 
   useEffect(() => {
     setJellyfinUrlInput(settings.jellyfinUrl)
@@ -268,6 +311,56 @@ export default function SettingsPage() {
   function saveTmdbKey() {
     update({ tmdbApiKey: tmdbKeyInput.trim() })
     toast('API key saved', 'success')
+  }
+
+  function saveGeminiKey() {
+    update({ geminiApiKey: geminiKeyInput.trim() })
+    toast('Gemini API key saved', 'success')
+  }
+
+  async function saveLlmSettings() {
+    const provider = llmProvider
+    const baseUrl = llmBaseUrlInput.trim()
+    const apiKey = llmApiKeyInput.trim()
+    const model = llmModelInput.trim()
+    const interval = Number(recapMinIntervalInput) || 5
+
+    // Save locally
+    update({
+      llmProvider: provider,
+      llmBaseUrl: baseUrl,
+      llmApiKey: apiKey,
+      llmModel: model,
+      recapMinInterval: interval,
+    })
+
+    if (!session?.apiToken) {
+      toast('AI settings saved locally (not logged in)', 'success')
+      return
+    }
+
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+      const res = await fetch(`${apiBase}/api/user/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.apiToken}` },
+        body: JSON.stringify({
+          llmProvider: provider,
+          llmBaseUrl: baseUrl,
+          llmApiKey: apiKey,
+          llmModel: model,
+          recapMinInterval: interval,
+        }),
+      })
+
+      if (!res.ok) {
+        toast('Failed to save AI settings to server', 'error')
+      } else {
+        toast('AI settings saved to server', 'success')
+      }
+    } catch (err) {
+      toast('Network error saving AI settings to server', 'error')
+    }
   }
 
   async function saveJellyfin() {
@@ -633,6 +726,153 @@ export default function SettingsPage() {
                 style={{ background: 'var(--accent)', color: '#fff' }}
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </Section>
+
+        {/* AI & Recap Settings */}
+        <Section title="AI & Recap Settings">
+          <div className="px-4 py-3 space-y-3">
+            <p className="text-[var(--text-12)]" style={{ color: 'var(--muted2)', lineHeight: 1.5 }}>
+              Configure your AI provider to generate progress-based spoiler-free recaps of movies and TV shows.
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              {/* Provider Selection */}
+              <div className="flex items-center justify-between py-1.5 gap-3" style={{ borderBottom: '1px solid var(--border2)' }}>
+                <span className="text-[var(--text-13)] font-medium" style={{ color: 'var(--fg2)' }}>AI Provider</span>
+                <div
+                  className="flex"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
+                >
+                  {[
+                    { value: 'gemini', label: 'Gemini' },
+                    { value: 'openai', label: 'OpenAI-Compatible' },
+                  ].map((p) => {
+                    const active = llmProvider === p.value
+                    return (
+                      <button
+                        key={p.value}
+                        type="button"
+                        onClick={() => setLlmProvider(p.value as 'gemini' | 'openai')}
+                        className="px-3 py-[4px] text-[var(--text-12)] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                        style={{
+                          background: active ? 'var(--surface2)' : 'transparent',
+                          color: active ? 'var(--fg)' : 'var(--muted)',
+                          fontWeight: active ? 600 : 500,
+                        }}
+                      >
+                        {p.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Conditional inputs */}
+              {llmProvider === 'gemini' ? (
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted2)' }}>Gemini API Key</span>
+                  <input
+                    type="password"
+                    value={geminiKeyInput}
+                    onChange={(e) => setGeminiKeyInput(e.target.value)}
+                    placeholder="Enter Google AI Studio API key…"
+                    className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                  />
+                  <span className="text-[10px]" style={{ color: 'var(--muted2)' }}>Stored safely on your device. Generates recaps using gemini-1.5-flash.</span>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted2)' }}>Base URL</span>
+                    <input
+                      type="text"
+                      value={llmBaseUrlInput}
+                      onChange={(e) => setLlmBaseUrlInput(e.target.value)}
+                      placeholder="e.g. https://api.openai.com/v1 or http://localhost:11434/v1"
+                      className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                      onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                    />
+                    <span className="text-[10px]" style={{ color: 'var(--muted2)' }}>Use your own OpenAI endpoint, Ollama, LM Studio, Groq, or OpenRouter.</span>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted2)' }}>API Key</span>
+                    <input
+                      type="password"
+                      value={llmApiKeyInput}
+                      onChange={(e) => setLlmApiKeyInput(e.target.value)}
+                      placeholder="Enter API key…"
+                      className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                      onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted2)' }}>Model Name</span>
+                    <input
+                      type="text"
+                      value={llmModelInput}
+                      onChange={(e) => setLlmModelInput(e.target.value)}
+                      placeholder="e.g. gpt-4o-mini, llama3, mistral"
+                      className="w-full px-3 py-2 rounded-[6px] text-[var(--text-13)] focus:outline-none"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                      onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Progress Interval bounds */}
+              <div className="flex flex-col gap-1.5 py-1.5" style={{ borderTop: '1px solid var(--border2)' }}>
+                <div className="flex justify-between items-center">
+                  <span className="text-[var(--text-13)] font-medium" style={{ color: 'var(--fg2)' }}>Recap Minimal Progress Interval</span>
+                  <span className="text-[var(--text-13)] font-bold text-center w-8" style={{ color: 'var(--accent2)' }}>{recapMinIntervalInput}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="20"
+                  step="1"
+                  value={recapMinIntervalInput}
+                  onChange={(e) => setRecapMinIntervalInput(Number(e.target.value))}
+                  className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                  style={{ accentColor: 'var(--accent)' }}
+                />
+                <span className="text-[10px]" style={{ color: 'var(--muted2)' }}>
+                  Minimum movie progress watched percentage delta required to request a fresh recap (saving API costs).
+                </span>
+              </div>
+
+              {/* Save Trigger */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (llmProvider === 'gemini') {
+                    update({
+                      llmProvider: 'gemini',
+                      geminiApiKey: geminiKeyInput.trim(),
+                      recapMinInterval: Number(recapMinIntervalInput) || 5,
+                    })
+                    toast('AI settings saved', 'success')
+                  } else {
+                    saveLlmSettings()
+                  }
+                }}
+                className="w-full py-2 rounded-[6px] text-[var(--text-13)] font-semibold cursor-pointer border-none transition-all duration-100 mt-2"
+                style={{ background: 'var(--accent)', color: '#fff' }}
+              >
+                Save AI Settings
               </button>
             </div>
           </div>

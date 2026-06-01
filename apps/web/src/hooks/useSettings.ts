@@ -17,6 +17,12 @@ export type GridColumns = 2 | 3 | 4 | 5 | 'auto'
 export interface AppSettings {
   theme: 'dark' | 'light'
   tmdbApiKey: string
+  geminiApiKey: string
+  llmProvider: 'gemini' | 'openai'
+  llmBaseUrl: string
+  llmApiKey: string
+  llmModel: string
+  recapMinInterval: number
   language: string
   font: FontFamily
   fontSize: FontSize
@@ -31,6 +37,12 @@ export interface AppSettings {
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
   tmdbApiKey: '',
+  geminiApiKey: '',
+  llmProvider: 'gemini',
+  llmBaseUrl: 'https://api.openai.com/v1',
+  llmApiKey: '',
+  llmModel: 'gpt-4o-mini',
+  recapMinInterval: 5,
   language: 'en-US',
   font: 'system',
   fontSize: 'md',

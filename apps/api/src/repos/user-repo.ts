@@ -30,6 +30,23 @@ export interface UserRepo {
   findResetToken(token: string): Promise<{ token: string; userId: string; expiresAt: string; usedAt: string | null } | null>
   updatePassword(userId: string, passwordHash: string): Promise<void>
   markResetTokenUsed(token: string): Promise<void>
+  updateLlmSettings(
+    userId: string,
+    settings: {
+      llmProvider: 'gemini' | 'openai'
+      llmBaseUrl: string | null
+      llmApiKey: string | null
+      llmModel: string | null
+      recapMinInterval: number
+    },
+  ): Promise<void>
+  getLlmSettings(userId: string): Promise<{
+    llmProvider: 'gemini' | 'openai'
+    llmBaseUrl: string | null
+    llmApiKey: string | null
+    llmModel: string | null
+    recapMinInterval: number
+  } | null>
 }
 
 interface UserRow {
@@ -167,6 +184,41 @@ export function createUserRepo(sql: Sql): UserRepo {
         UPDATE password_reset_tokens SET used_at = NOW()
         WHERE token = ${token}::uuid
       `
+    },
+
+    async updateLlmSettings(userId, settings) {
+      await sql`
+        UPDATE users
+        SET llm_provider = ${settings.llmProvider},
+            llm_base_url = ${settings.llmBaseUrl},
+            llm_api_key = ${settings.llmApiKey},
+            llm_model = ${settings.llmModel},
+            recap_min_interval = ${settings.recapMinInterval}
+        WHERE id = ${userId}
+      `
+    },
+
+    async getLlmSettings(userId) {
+      const rows = await sql<{
+        llm_provider: 'gemini' | 'openai'
+        llm_base_url: string | null
+        llm_api_key: string | null
+        llm_model: string | null
+        recap_min_interval: number
+      }[]>`
+        SELECT llm_provider, llm_base_url, llm_api_key, llm_model, recap_min_interval
+        FROM users
+        WHERE id = ${userId}
+        LIMIT 1
+      `
+      if (!rows[0]) return null
+      return {
+        llmProvider: rows[0].llm_provider || 'gemini',
+        llmBaseUrl: rows[0].llm_base_url,
+        llmApiKey: rows[0].llm_api_key,
+        llmModel: rows[0].llm_model,
+        recapMinInterval: rows[0].recap_min_interval || 5,
+      }
     },
   }
 }

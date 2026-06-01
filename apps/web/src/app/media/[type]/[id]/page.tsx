@@ -180,6 +180,36 @@ export default function MediaDetailPage() {
               </div>
             )}
 
+            {/* YouTube Trailer */}
+            {meta?.youtubeTrailerKey && (
+              <a
+                href={`https://www.youtube.com/watch?v=${meta.youtubeTrailerKey}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-[10px] py-[5px] rounded-[6px] text-[11px] font-bold w-fit mt-[4px] transition-all duration-100 no-underline cursor-pointer"
+                style={{
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  color: '#f87171',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'
+                  e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.45)'
+                  e.currentTarget.style.color = '#fff'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)'
+                  e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.25)'
+                  e.currentTarget.style.color = '#f87171'
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.163c-.272-1.016-1.07-1.815-2.085-2.087C19.578 3.53 12 3.53 12 3.53s-7.578 0-9.413.546c-1.015.272-1.813 1.071-2.085 2.087C0 7.998 0 12 0 12s0 4.002.502 5.837c.272 1.016 1.07 1.815 2.085 2.087 1.835.547 9.413.547 9.413.547s7.578 0 9.413-.547c1.015-.272 1.813-1.071 2.085-2.087C24 16.002 24 12 24 12s0-4.002-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+                Watch Trailer
+              </a>
+            )}
+
             <p className="text-sm text-zinc-300">
               ★ {meta?.voteAverage.toFixed(1)} ({meta?.voteCount.toLocaleString()} votes)
             </p>
