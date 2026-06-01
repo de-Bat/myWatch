@@ -115,7 +115,22 @@ html[data-font="mono"] body {
 }
 
 .page-header {
+  display: flex;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  justify-content: space-between;
   padding: max(18px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 14px max(20px, env(safe-area-inset-left));
+}
+
+/* Globally prevent iOS Safari from auto-zooming on focus of any input/select/textarea on mobile */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="search"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
 
 .filter-bar {

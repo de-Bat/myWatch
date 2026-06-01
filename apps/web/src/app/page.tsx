@@ -282,18 +282,20 @@ function HomePageInner() {
         className="flex items-center justify-between gap-3 page-header"
       >
         <div className="flex items-center gap-[10px] min-w-0">
-          <span
-            className="text-[var(--text-13)] font-bold whitespace-nowrap"
-            style={{
-              color: 'var(--accent2)',
-              background: 'var(--accent-bg)',
-              borderRadius: 'var(--rxs)',
-              padding: '3px 8px',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            myWatch
-          </span>
+          {!isMobile && (
+            <span
+              className="text-[var(--text-13)] font-bold whitespace-nowrap"
+              style={{
+                color: 'var(--accent2)',
+                background: 'var(--accent-bg)',
+                borderRadius: 'var(--rxs)',
+                padding: '3px 8px',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              myWatch
+            </span>
+          )}
           <h1
             className="flex items-center gap-[7px] whitespace-nowrap"
             style={{ fontSize: 'var(--text-17)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}
