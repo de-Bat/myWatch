@@ -1,36 +1,50 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 export function OfflineIndicator() {
   const [isOffline, setIsOffline] = useState(false)
-  const [wasOffline, setWasOffline] = useState(false)
   const [showReconnected, setShowReconnected] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
+    setMounted(true)
     setIsOffline(!navigator.onLine)
 
     const handleOnline = () => {
       setIsOffline(false)
-      if (wasOffline) {
-        setShowReconnected(true)
-        setTimeout(() => setShowReconnected(false), 4000)
+      setShowReconnected(true)
+      
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
       }
-      setWasOffline(false)
+      
+      timeoutRef.current = setTimeout(() => {
+        setShowReconnected(false)
+      }, 4000)
     }
+
     const handleOffline = () => {
       setIsOffline(true)
-      setWasOffline(true)
       setShowReconnected(false)
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
     }
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
+
     return () => {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
     }
-  }, [wasOffline])
+  }, [])
 
+  if (!mounted) return null
   if (!isOffline && !showReconnected) return null
 
   return (
@@ -49,7 +63,7 @@ export function OfflineIndicator() {
       `}</style>
 
       <div
-        className="fixed z-[999] flex items-center gap-3 px-4 py-2.5 rounded-full text-[var(--text-12)] font-semibold shadow-[0_8px_32px_rgba(0,0,0,0.5)] border transition-all duration-300 ease-out"
+        className="fixed flex items-center gap-3 px-4 py-2.5 rounded-full text-[var(--text-12)] font-semibold shadow-[0_8px_32px_rgba(0,0,0,0.5)] border transition-all duration-300 ease-out"
         style={{
           left: '50%',
           transform: 'translateX(-50%)',
@@ -59,6 +73,7 @@ export function OfflineIndicator() {
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           color: isOffline ? '#fca5a5' : '#86efac',
+          zIndex: 99999,
         }}
       >
         {/* Pulse Dot */}
@@ -85,4 +100,5 @@ export function OfflineIndicator() {
     </>
   )
 }
+
 
