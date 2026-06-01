@@ -1,7 +1,7 @@
 'use client'
 export const dynamic = 'force-static'
 import { useSession, signOut } from 'next-auth/react'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useSync } from '@/hooks/useSync'
@@ -111,8 +111,6 @@ export default function SettingsPage() {
   const { syncing, lastSyncedAt, error, sync } = useSync()
   const { settings, update, updateCardMeta } = useSettings()
   const { toast } = useToast()
-  const [tmdbKeyInput, setTmdbKeyInput] = useState('')
-  const [geminiKeyInput, setGeminiKeyInput] = useState('')
   const [llmProvider, setLlmProvider] = useState<'gemini' | 'openai'>('gemini')
   const [llmBaseUrlInput, setLlmBaseUrlInput] = useState('')
   const [llmApiKeyInput, setLlmApiKeyInput] = useState('')
@@ -145,6 +143,51 @@ export default function SettingsPage() {
   const [sonarrTesting, setSonarrTesting] = useState(false)
   const [sonarrTestResult, setSonarrTestResult] = useState<'ok' | 'error' | null>(null)
   const [sonarrTestError, setSonarrTestError] = useState<string | null>(null)
+
+  // ── Tab + server settings dirty state ────────────────────────────────────
+  type ServerFormSnapshot = {
+    jellyfinUrl: string; jellyfinUserId: string; jellyfinApiKey: string
+    tmdbApiKey: string; syncInterval: number
+    llmProvider: 'gemini' | 'openai'; llmApiKey: string; llmBaseUrl: string
+    llmModel: string; recapMinInterval: number
+    radarrUrl: string; radarrApiKey: string; radarrQualityProfileId: number; radarrRootFolderPath: string
+    sonarrUrl: string; sonarrApiKey: string; sonarrQualityProfileId: number; sonarrRootFolderPath: string
+  }
+
+  const [activeTab, setActiveTab] = useState<'server' | 'client' | 'logs'>('server')
+  const [serverSnapshot, setServerSnapshot] = useState<ServerFormSnapshot | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [syncIntervalInput, setSyncIntervalInput] = useState<number>(settings.syncInterval ?? 5)
+  const [tmdbApiKeyInput, setTmdbApiKeyInput] = useState('')
+
+  const isDirty = useMemo(() => {
+    if (!serverSnapshot) return false
+    const current: ServerFormSnapshot = {
+      jellyfinUrl: jellyfinUrlInput,
+      jellyfinUserId: jellyfinUserIdInput,
+      jellyfinApiKey: jellyfinApiKeyInput,
+      tmdbApiKey: tmdbApiKeyInput,
+      syncInterval: syncIntervalInput,
+      llmProvider,
+      llmApiKey: llmApiKeyInput,
+      llmBaseUrl: llmBaseUrlInput,
+      llmModel: llmModelInput,
+      recapMinInterval: recapMinIntervalInput,
+      radarrUrl: radarrUrlInput,
+      radarrApiKey: radarrApiKeyInput,
+      radarrQualityProfileId: radarrQualityProfileIdInput,
+      radarrRootFolderPath: radarrRootFolderPathInput,
+      sonarrUrl: sonarrUrlInput,
+      sonarrApiKey: sonarrApiKeyInput,
+      sonarrQualityProfileId: sonarrQualityProfileIdInput,
+      sonarrRootFolderPath: sonarrRootFolderPathInput,
+    }
+    return JSON.stringify(current) !== JSON.stringify(serverSnapshot)
+  }, [serverSnapshot, jellyfinUrlInput, jellyfinUserIdInput, jellyfinApiKeyInput, tmdbApiKeyInput,
+      syncIntervalInput, llmProvider, llmApiKeyInput, llmBaseUrlInput, llmModelInput,
+      recapMinIntervalInput, radarrUrlInput, radarrApiKeyInput, radarrQualityProfileIdInput,
+      radarrRootFolderPathInput, sonarrUrlInput, sonarrApiKeyInput, sonarrQualityProfileIdInput,
+      sonarrRootFolderPathInput])
 
   // ── PWA debug state ──────────────────────────────────────────────────────────
   const [pwaLogs, setPwaLogs] = useState<{ text: string; kind: 'ok' | 'warn' | 'info' }[]>([])
@@ -270,17 +313,23 @@ export default function SettingsPage() {
   // Check if server has credentials and LLM settings saved
   useEffect(() => {
     if (!session?.apiToken) return
-    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/user/settings`, {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+    fetch(`${apiBase}/api/user/settings`, {
       headers: { Authorization: `Bearer ${session.apiToken}` }
     })
       .then(r => r.json())
       .then((data: {
         hasCredentials?: boolean
+        jellyfinUrl?: string
+        jellyfinUserId?: string
+        jellyfinApiKey?: string
         llmProvider?: 'gemini' | 'openai'
         llmBaseUrl?: string
         llmApiKey?: string
         llmModel?: string
         recapMinInterval?: number
+        tmdbApiKey?: string
+        syncInterval?: number
         radarrUrl?: string
         radarrApiKey?: string
         radarrQualityProfileId?: number
@@ -291,88 +340,87 @@ export default function SettingsPage() {
         sonarrRootFolderPath?: string
       }) => {
         setServerCredsStatus(data.hasCredentials ? 'set' : 'missing')
-        if (data.llmProvider) setLlmProvider(data.llmProvider)
-        if (data.llmBaseUrl) setLlmBaseUrlInput(data.llmBaseUrl)
-        if (data.llmApiKey) setLlmApiKeyInput(data.llmApiKey)
-        if (data.llmModel) setLlmModelInput(data.llmModel)
-        if (data.recapMinInterval) setRecapMinIntervalInput(data.recapMinInterval)
 
-        if (data.radarrUrl) setRadarrUrlInput(data.radarrUrl)
-        if (data.radarrApiKey) setRadarrApiKeyInput(data.radarrApiKey)
-        if (data.radarrQualityProfileId) setRadarrQualityProfileIdInput(data.radarrQualityProfileId)
-        if (data.radarrRootFolderPath) setRadarrRootFolderPathInput(data.radarrRootFolderPath)
+        const prov = data.llmProvider ?? 'gemini'
+        const baseUrl = data.llmBaseUrl ?? ''
+        const apiKey = data.llmApiKey ?? ''
+        const model = data.llmModel ?? ''
+        const interval = data.recapMinInterval ?? 5
+        const tmdb = data.tmdbApiKey ?? ''
+        const sync = data.syncInterval ?? 5
+        const jUrl = data.jellyfinUrl ?? ''
+        const jUid = data.jellyfinUserId ?? ''
+        const jKey = data.jellyfinApiKey ?? ''
+        const rUrl = data.radarrUrl ?? ''
+        const rKey = data.radarrApiKey ?? ''
+        const rProf = data.radarrQualityProfileId ?? 1
+        const rPath = data.radarrRootFolderPath ?? ''
+        const sUrl = data.sonarrUrl ?? ''
+        const sKey = data.sonarrApiKey ?? ''
+        const sProf = data.sonarrQualityProfileId ?? 1
+        const sPath = data.sonarrRootFolderPath ?? ''
 
-        if (data.sonarrUrl) setSonarrUrlInput(data.sonarrUrl)
-        if (data.sonarrApiKey) setSonarrApiKeyInput(data.sonarrApiKey)
-        if (data.sonarrQualityProfileId) setSonarrQualityProfileIdInput(data.sonarrQualityProfileId)
-        if (data.sonarrRootFolderPath) setSonarrRootFolderPathInput(data.sonarrRootFolderPath)
+        setLlmProvider(prov)
+        setLlmBaseUrlInput(baseUrl)
+        setLlmApiKeyInput(apiKey)
+        setLlmModelInput(model)
+        setRecapMinIntervalInput(interval)
+        setTmdbApiKeyInput(tmdb)
+        setSyncIntervalInput(sync)
+        setJellyfinUrlInput(jUrl)
+        setJellyfinUserIdInput(jUid)
+        setJellyfinApiKeyInput(jKey)
+        setRadarrUrlInput(rUrl)
+        setRadarrApiKeyInput(rKey)
+        setRadarrQualityProfileIdInput(rProf)
+        setRadarrRootFolderPathInput(rPath)
+        setSonarrUrlInput(sUrl)
+        setSonarrApiKeyInput(sKey)
+        setSonarrQualityProfileIdInput(sProf)
+        setSonarrRootFolderPathInput(sPath)
 
-        // Sync to local settings hook
+        const snapshot: ServerFormSnapshot = {
+          jellyfinUrl: jUrl, jellyfinUserId: jUid, jellyfinApiKey: jKey,
+          tmdbApiKey: tmdb, syncInterval: sync,
+          llmProvider: prov, llmApiKey: apiKey, llmBaseUrl: baseUrl,
+          llmModel: model, recapMinInterval: interval,
+          radarrUrl: rUrl, radarrApiKey: rKey, radarrQualityProfileId: rProf, radarrRootFolderPath: rPath,
+          sonarrUrl: sUrl, sonarrApiKey: sKey, sonarrQualityProfileId: sProf, sonarrRootFolderPath: sPath,
+        }
+        setServerSnapshot(snapshot)
+
         update({
-          llmProvider: data.llmProvider ?? 'gemini',
-          llmBaseUrl: data.llmBaseUrl ?? 'https://api.openai.com/v1',
-          llmApiKey: data.llmApiKey ?? '',
-          llmModel: data.llmModel ?? 'gpt-4o-mini',
-          recapMinInterval: data.recapMinInterval ?? 5,
-          radarrUrl: data.radarrUrl ?? '',
-          radarrApiKey: data.radarrApiKey ?? '',
-          radarrQualityProfileId: data.radarrQualityProfileId ?? 1,
-          radarrRootFolderPath: data.radarrRootFolderPath ?? '',
-          sonarrUrl: data.sonarrUrl ?? '',
-          sonarrApiKey: data.sonarrApiKey ?? '',
-          sonarrQualityProfileId: data.sonarrQualityProfileId ?? 1,
-          sonarrRootFolderPath: data.sonarrRootFolderPath ?? '',
+          llmProvider: prov, llmBaseUrl: baseUrl, llmApiKey: apiKey,
+          llmModel: model, recapMinInterval: interval,
+          tmdbApiKey: tmdb, syncInterval: sync,
+          jellyfinUrl: jUrl, jellyfinUserId: jUid, jellyfinApiKey: jKey,
+          radarrUrl: rUrl, radarrApiKey: rKey, radarrQualityProfileId: rProf, radarrRootFolderPath: rPath,
+          sonarrUrl: sUrl, sonarrApiKey: sKey, sonarrQualityProfileId: sProf, sonarrRootFolderPath: sPath,
         })
+
+        // Auto-sync any pending offline saves
+        const pending = localStorage.getItem('mywatch_pending_server_settings')
+        if (pending) {
+          try {
+            const pendingData = JSON.parse(pending)
+            fetch(`${apiBase}/api/user/settings`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.apiToken}` },
+              body: JSON.stringify(pendingData),
+            }).then(r => {
+              if (r.ok) {
+                localStorage.removeItem('mywatch_pending_server_settings')
+                toast('Offline changes synced to server', 'success')
+              }
+            }).catch(() => {/* silently retry next load */})
+          } catch {
+            localStorage.removeItem('mywatch_pending_server_settings')
+          }
+        }
       })
       .catch(() => setServerCredsStatus('unknown'))
   }, [session?.apiToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    setTmdbKeyInput(settings.tmdbApiKey)
-  }, [settings.tmdbApiKey])
-
-  useEffect(() => {
-    setGeminiKeyInput(settings.geminiApiKey ?? '')
-    setLlmProvider(settings.llmProvider ?? 'gemini')
-    setLlmBaseUrlInput(settings.llmBaseUrl ?? 'https://api.openai.com/v1')
-    setLlmApiKeyInput(settings.llmApiKey ?? '')
-    setLlmModelInput(settings.llmModel ?? 'gpt-4o-mini')
-    setRecapMinIntervalInput(settings.recapMinInterval ?? 5)
-  }, [
-    settings.geminiApiKey,
-    settings.llmProvider,
-    settings.llmBaseUrl,
-    settings.llmApiKey,
-    settings.llmModel,
-    settings.recapMinInterval,
-  ])
-
-  useEffect(() => {
-    setJellyfinUrlInput(settings.jellyfinUrl)
-    setJellyfinUserIdInput(settings.jellyfinUserId)
-    setJellyfinApiKeyInput(settings.jellyfinApiKey)
-  }, [settings.jellyfinUrl, settings.jellyfinUserId, settings.jellyfinApiKey])
-
-  useEffect(() => {
-    setRadarrUrlInput(settings.radarrUrl ?? '')
-    setRadarrApiKeyInput(settings.radarrApiKey ?? '')
-    setRadarrQualityProfileIdInput(settings.radarrQualityProfileId ?? 1)
-    setRadarrRootFolderPathInput(settings.radarrRootFolderPath ?? '')
-
-    setSonarrUrlInput(settings.sonarrUrl ?? '')
-    setSonarrApiKeyInput(settings.sonarrApiKey ?? '')
-    setSonarrQualityProfileIdInput(settings.sonarrQualityProfileId ?? 1)
-    setSonarrRootFolderPathInput(settings.sonarrRootFolderPath ?? '')
-  }, [
-    settings.radarrUrl,
-    settings.radarrApiKey,
-    settings.radarrQualityProfileId,
-    settings.radarrRootFolderPath,
-    settings.sonarrUrl,
-    settings.sonarrApiKey,
-    settings.sonarrQualityProfileId,
-    settings.sonarrRootFolderPath,
-  ])
 
   function saveTmdbKey() {
     update({ tmdbApiKey: tmdbKeyInput.trim() })
