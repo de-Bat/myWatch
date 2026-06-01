@@ -77,7 +77,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
     setArrLoading(true)
     let active = true
     const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
-    fetch(`${apiBase}/api/arr/status?tmdbId=${tmdbId}&mediaType=${mediaType}`, {
+    fetch(`${apiBase}/api/user/arr/status?tmdbId=${tmdbId}&mediaType=${mediaType}`, {
       headers: { Authorization: `Bearer ${session.apiToken}` }
     })
       .then(r => r.ok ? r.json() : null)
@@ -99,7 +99,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
     setRequestingDownload(true)
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
-      const res = await fetch(`${apiBase}/api/arr/request`, {
+      const res = await fetch(`${apiBase}/api/user/arr/request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
           ...prev,
         }))
         // Re-fetch status to get actual state
-        const statusRes = await fetch(`${apiBase}/api/arr/status?tmdbId=${tmdbId}&mediaType=${mediaType}`, {
+        const statusRes = await fetch(`${apiBase}/api/user/arr/status?tmdbId=${tmdbId}&mediaType=${mediaType}`, {
           headers: { Authorization: `Bearer ${session.apiToken}` }
         })
         if (statusRes.ok) {

@@ -535,7 +535,7 @@ export default function SettingsPage() {
 
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
-      const res = await fetch(`${apiBase}/api/arr/test`, {
+      const res = await fetch(`${apiBase}/api/user/arr/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -580,7 +580,7 @@ export default function SettingsPage() {
 
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
-      const res = await fetch(`${apiBase}/api/arr/test`, {
+      const res = await fetch(`${apiBase}/api/user/arr/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

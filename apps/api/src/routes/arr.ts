@@ -8,7 +8,7 @@ export function registerArrRoutes(
 ) {
   // GET /api/arr/status — Retrieve monitored state and active download queues
   app.get<{ Querystring: { tmdbId: string; mediaType: 'movie' | 'tv' } }>(
-    '/api/arr/status',
+    '/api/user/arr/status',
     { preHandler: [authenticate] },
     async (req, reply) => {
       const { tmdbId, mediaType } = req.query
@@ -30,7 +30,7 @@ export function registerArrRoutes(
 
   // POST /api/arr/request — Post download requests to Radarr or Sonarr
   app.post<{ Body: { tmdbId: number; mediaType: 'movie' | 'tv' } }>(
-    '/api/arr/request',
+    '/api/user/arr/request',
     {
       preHandler: [authenticate],
       schema: {
@@ -63,7 +63,7 @@ export function registerArrRoutes(
 
   // POST /api/arr/test — Secure proxy for connection testing
   app.post<{ Body: { type: 'radarr' | 'sonarr'; url: string; apiKey: string } }>(
-    '/api/arr/test',
+    '/api/user/arr/test',
     {
       preHandler: [authenticate],
       schema: {

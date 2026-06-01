@@ -31,7 +31,7 @@ export function MediaCard({ result, existingStatus, onAdd }: Props) {
     let active = true
     const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
     
-    fetch(`${apiBase}/api/arr/status?tmdbId=${tmdbId}&mediaType=${mediaType}`, {
+    fetch(`${apiBase}/api/user/arr/status?tmdbId=${tmdbId}&mediaType=${mediaType}`, {
       headers: { Authorization: `Bearer ${session.apiToken}` }
     })
       .then(r => r.ok ? r.json() : null)

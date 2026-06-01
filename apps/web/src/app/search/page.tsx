@@ -87,7 +87,7 @@ export default function SearchPage() {
 
     if (session?.apiToken) {
       const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
-      fetch(`${apiBase}/api/arr/request`, {
+      fetch(`${apiBase}/api/user/arr/request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
