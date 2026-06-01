@@ -543,7 +543,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                         arrStatus.hasFile
                           ? { background: 'rgba(34,197,94,.15)', color: 'var(--green)' }
                           : arrStatus.isDownloading
-                          ? { background: 'rgba(245,158,11,.15)', color: 'var(--amber)' }
+                          ? { background: 'rgba(168,85,247,.15)', color: 'var(--purple)' }
                           : arrStatus.monitored
                           ? { background: 'rgba(59,130,246,.15)', color: 'var(--accent2)' }
                           : { background: 'rgba(255,255,255,.08)', color: 'var(--muted)' }
@@ -564,10 +564,10 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                     <div className="flex flex-col gap-1.5 w-full">
                       <div className="flex justify-between text-[11px]" style={{ color: 'var(--muted2)' }}>
                         <span className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-ping" />
                           Active Download
                         </span>
-                        <span className="font-semibold tabular-nums" style={{ color: 'var(--amber)' }}>
+                        <span className="font-semibold tabular-nums" style={{ color: 'var(--purple)' }}>
                           {arrStatus.downloadPercent != null ? `${arrStatus.downloadPercent}%` : '0%'}
                         </span>
                       </div>
@@ -576,7 +576,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                           style={{ 
                             width: `${arrStatus.downloadPercent ?? 0}%`, 
                             height: '100%', 
-                            background: 'rgba(251,191,36,.9)', 
+                            background: 'var(--purple)', 
                             transition: 'width 400ms ease-out-in' 
                           }} 
                         />

@@ -109,6 +109,12 @@ export class TmdbClient {
     return data.results.map((r) => ({ ...r, media_type: mediaType })) as TmdbSearchResult[]
   }
 
+  async getPopular(mediaType: MediaType): Promise<TmdbSearchResult[]> {
+    const path = mediaType === 'movie' ? '/movie/popular' : '/tv/popular'
+    const data = await this.get<TmdbPagedResponse<TmdbSearchResult>>(path)
+    return data.results.map((r) => ({ ...r, media_type: mediaType })) as TmdbSearchResult[]
+  }
+
   async getWatchProviders(
     tmdbId: number,
     mediaType: MediaType,

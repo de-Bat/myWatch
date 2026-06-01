@@ -544,12 +544,22 @@ export default function SettingsPage() {
         body: JSON.stringify({ type: 'radarr', url, apiKey }),
       })
 
-      if (res.ok) {
+      const text = await res.text()
+      let data: any = null
+      try {
+        if (text) {
+          data = JSON.parse(text)
+        }
+      } catch {
+        // Not JSON
+      }
+
+      if (res.ok && data?.success) {
         setRadarrTestResult('ok')
       } else {
-        const data = await res.json()
         setRadarrTestResult('error')
-        setRadarrTestError(data.error ?? 'Connection failed')
+        const errMsg = data?.error || data?.message || (text && text.trim().startsWith('<') ? `Invalid HTML response (Status ${res.status})` : text ? text.slice(0, 80) : `Status ${res.status}`)
+        setRadarrTestError(errMsg)
       }
     } catch (err) {
       setRadarrTestResult('error')
@@ -579,12 +589,22 @@ export default function SettingsPage() {
         body: JSON.stringify({ type: 'sonarr', url, apiKey }),
       })
 
-      if (res.ok) {
+      const text = await res.text()
+      let data: any = null
+      try {
+        if (text) {
+          data = JSON.parse(text)
+        }
+      } catch {
+        // Not JSON
+      }
+
+      if (res.ok && data?.success) {
         setSonarrTestResult('ok')
       } else {
-        const data = await res.json()
         setSonarrTestResult('error')
-        setSonarrTestError(data.error ?? 'Connection failed')
+        const errMsg = data?.error || data?.message || (text && text.trim().startsWith('<') ? `Invalid HTML response (Status ${res.status})` : text ? text.slice(0, 80) : `Status ${res.status}`)
+        setSonarrTestError(errMsg)
       }
     } catch (err) {
       setSonarrTestResult('error')
@@ -661,11 +681,20 @@ export default function SettingsPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.apiToken}` }
       })
-      const data: { success?: boolean; count?: number; error?: string } = await res.json()
-      if (!res.ok || data.error) {
-        setJellyfinPullLog(prev => [...prev, `❌ Server error: ${data.error ?? res.statusText}`])
+      const text = await res.text()
+      let data: { success?: boolean; count?: number; error?: string } = {}
+      try {
+        if (text) {
+          data = JSON.parse(text)
+        }
+      } catch {
+        // Not JSON
+      }
+      if (!res.ok || data.error || !data.success) {
+        const errorDetail = data.error ?? (text && text.trim().startsWith('<') ? `Invalid HTML response (Status ${res.status})` : text ? text.slice(0, 80) : res.statusText)
+        setJellyfinPullLog(prev => [...prev, `❌ Server error: ${errorDetail}`])
       } else {
-        setJellyfinPullLog(prev => [...prev, `✅ Server polled Jellyfin: ${data.count} records saved`])
+        setJellyfinPullLog(prev => [...prev, `✅ Server polled Jellyfin: ${data.count ?? 0} records saved`])
         setServerCredsStatus('set')
         // Now do a local pull to get the fresh data
         await forcePullJellyfin(true)

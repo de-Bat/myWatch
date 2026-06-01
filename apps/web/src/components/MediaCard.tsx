@@ -123,9 +123,9 @@ export function MediaCard({ result, existingStatus, onAdd }: Props) {
           {arrStatus?.isDownloading && (
             <span
               className="text-[10px] font-extrabold tracking-[0.04em] uppercase px-[7px] py-[2.5px] rounded-full flex items-center gap-1.5 animate-pulse"
-              style={{ background: 'rgba(245,158,11,.15)', color: 'var(--amber)' }}
+              style={{ background: 'rgba(168,85,247,.15)', color: 'var(--purple)' }}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-ping" />
               Downloading {arrStatus.downloadPercent != null ? `(${arrStatus.downloadPercent}%)` : ''}
             </span>
           )}

@@ -38,14 +38,43 @@ function Row({
   onAdd: (r: TmdbSearchResult) => void
 }) {
   if (results.length === 0) return null
+
+  const isRadarr = title.includes('Radarr')
+  const isSonarr = title.includes('Sonarr')
+
   return (
     <section>
-      <h2
-        className="mb-3"
-        style={{ fontSize: 'var(--text-13)', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}
-      >
-        {title}
-      </h2>
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <h2
+          style={{ fontSize: 'var(--text-13)', fontWeight: 600, color: 'var(--fg2)', letterSpacing: '0.06em', textTransform: 'uppercase', margin: 0 }}
+        >
+          {title.replace(' (Radarr)', '').replace(' (Sonarr)', '')}
+        </h2>
+        {isRadarr && (
+          <span 
+            className="text-[9px] font-extrabold tracking-wider px-2 py-0.5 rounded-full uppercase"
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(99,102,241,0.15) 100%)', 
+              color: 'var(--purple)',
+              border: '1px solid rgba(168,85,247,0.2)' 
+            }}
+          >
+            Radarr Ready
+          </span>
+        )}
+        {isSonarr && (
+          <span 
+            className="text-[9px] font-extrabold tracking-wider px-2 py-0.5 rounded-full uppercase"
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(168,85,247,0.15) 100%)', 
+              color: 'var(--accent2)',
+              border: '1px solid rgba(99,102,241,0.2)' 
+            }}
+          >
+            Sonarr Ready
+          </span>
+        )}
+      </div>
       <div className="flex flex-col" style={{ gap: 8 }}>
         {results.slice(0, 5).map((r) => (
           <DiscoverCard key={`${r.media_type}-${r.id}`} result={r} onAdd={onAdd} />
@@ -59,6 +88,8 @@ export default function DiscoverPage() {
   const { data: session } = useSession()
   const [trending, setTrending] = useState<TmdbSearchResult[]>([])
   const [topRated, setTopRated] = useState<TmdbSearchResult[]>([])
+  const [popularMovies, setPopularMovies] = useState<TmdbSearchResult[]>([])
+  const [popularTv, setPopularTv] = useState<TmdbSearchResult[]>([])
   const [recommendations, setRecommendations] = useState<TmdbSearchResult[]>([])
   const [pending, setPending] = useState<TmdbSearchResult | null>(null)
   const upsert = useUpsertItem()
@@ -78,6 +109,8 @@ export default function DiscoverPage() {
     const client = getClient()
     client.getTrending('week').then(setTrending).catch(() => {})
     client.getTopRated('movie').then(setTopRated).catch(() => {})
+    client.getPopular('movie').then(setPopularMovies).catch(() => {})
+    client.getPopular('tv').then(setPopularTv).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -147,6 +180,8 @@ export default function DiscoverPage() {
         {recommendations.length > 0 && (
           <Row title="Because You Watched…" results={recommendations} onAdd={setPending} />
         )}
+        <Row title="Popular Movies (Radarr)" results={popularMovies} onAdd={setPending} />
+        <Row title="Popular TV Shows (Sonarr)" results={popularTv} onAdd={setPending} />
         <Row title="Top Rated Movies" results={topRated} onAdd={setPending} />
       </div>
 
