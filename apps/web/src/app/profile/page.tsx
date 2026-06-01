@@ -422,154 +422,98 @@ export default function SettingsPage() {
   }, [session?.apiToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
 
-  function saveTmdbKey() {
-    update({ tmdbApiKey: tmdbKeyInput.trim() })
-    toast('API key saved', 'success')
-  }
+  async function saveServerSettings() {
+    setSaving(true)
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
-  function saveGeminiKey() {
-    update({ geminiApiKey: geminiKeyInput.trim() })
-    toast('Gemini API key saved', 'success')
-  }
+    const payload = {
+      jellyfinUrl: jellyfinUrlInput.trim(),
+      jellyfinUserId: jellyfinUserIdInput.trim(),
+      jellyfinApiKey: jellyfinApiKeyInput.trim(),
+      tmdbApiKey: tmdbApiKeyInput.trim(),
+      syncInterval: syncIntervalInput,
+      llmProvider,
+      llmBaseUrl: llmBaseUrlInput.trim(),
+      llmApiKey: llmApiKeyInput.trim(),
+      llmModel: llmProvider === 'gemini' ? 'gemini-1.5-flash' : llmModelInput.trim(),
+      recapMinInterval: recapMinIntervalInput,
+      radarrUrl: radarrUrlInput.trim(),
+      radarrApiKey: radarrApiKeyInput.trim(),
+      radarrQualityProfileId: Number(radarrQualityProfileIdInput) || 1,
+      radarrRootFolderPath: radarrRootFolderPathInput.trim(),
+      sonarrUrl: sonarrUrlInput.trim(),
+      sonarrApiKey: sonarrApiKeyInput.trim(),
+      sonarrQualityProfileId: Number(sonarrQualityProfileIdInput) || 1,
+      sonarrRootFolderPath: sonarrRootFolderPathInput.trim(),
+    }
 
-  async function saveLlmSettings() {
-    const provider = llmProvider
-    const baseUrl = llmBaseUrlInput.trim()
-    const apiKey = llmApiKeyInput.trim()
-    const model = llmModelInput.trim()
-    const interval = Number(recapMinIntervalInput) || 5
-
-    // Save locally
+    // Mirror to local settings for offline use by AutoSync + media components
     update({
-      llmProvider: provider,
-      llmBaseUrl: baseUrl,
-      llmApiKey: apiKey,
-      llmModel: model,
-      recapMinInterval: interval,
+      tmdbApiKey: payload.tmdbApiKey,
+      syncInterval: payload.syncInterval,
+      llmProvider: payload.llmProvider,
+      llmBaseUrl: payload.llmBaseUrl,
+      llmApiKey: payload.llmApiKey,
+      llmModel: payload.llmModel,
+      recapMinInterval: payload.recapMinInterval,
+      jellyfinUrl: payload.jellyfinUrl,
+      jellyfinUserId: payload.jellyfinUserId,
+      jellyfinApiKey: payload.jellyfinApiKey,
+      radarrUrl: payload.radarrUrl,
+      radarrApiKey: payload.radarrApiKey,
+      radarrQualityProfileId: payload.radarrQualityProfileId,
+      radarrRootFolderPath: payload.radarrRootFolderPath,
+      sonarrUrl: payload.sonarrUrl,
+      sonarrApiKey: payload.sonarrApiKey,
+      sonarrQualityProfileId: payload.sonarrQualityProfileId,
+      sonarrRootFolderPath: payload.sonarrRootFolderPath,
     })
 
     if (!session?.apiToken) {
-      toast('AI settings saved locally (not logged in)', 'success')
+      localStorage.setItem('mywatch_pending_server_settings', JSON.stringify(payload))
+      toast('Saved locally — will sync when online', 'success')
+      setSaving(false)
       return
     }
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
       const res = await fetch(`${apiBase}/api/user/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.apiToken}` },
-        body: JSON.stringify({
-          llmProvider: provider,
-          llmBaseUrl: baseUrl,
-          llmApiKey: apiKey,
-          llmModel: model,
-          recapMinInterval: interval,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (!res.ok) {
-        toast('Failed to save AI settings to server', 'error')
+        localStorage.setItem('mywatch_pending_server_settings', JSON.stringify(payload))
+        toast('Failed to save — stored locally', 'error')
       } else {
-        toast('AI settings saved to server', 'success')
-      }
-    } catch (err) {
-      toast('Network error saving AI settings to server', 'error')
-    }
-  }
-
-  async function saveJellyfin() {
-    const url = jellyfinUrlInput.trim()
-    const userId = jellyfinUserIdInput.trim()
-    const apiKey = jellyfinApiKeyInput.trim()
-
-    update({ jellyfinUrl: url, jellyfinUserId: userId, jellyfinApiKey: apiKey })
-
-    setJellyfinPullLog([`⏳ Saving to server... (url="${url}", userId="${userId}", apiKey="${apiKey ? '****' : 'EMPTY'}")`])
-
-    if (!session?.apiToken) {
-      setJellyfinPullLog(prev => [...prev, '❌ Not logged in — cannot save to server'])
-      toast('Saved locally only (not logged in)', 'error')
-      return
-    }
-
-    try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
-      setJellyfinPullLog(prev => [...prev, `🌐 API base: ${apiBase}`])
-      const res = await fetch(`${apiBase}/api/user/settings`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.apiToken}` },
-        body: JSON.stringify({ jellyfinUrl: url, jellyfinUserId: userId, jellyfinApiKey: apiKey }),
-      })
-      const text = await res.text()
-      if (!res.ok) {
-        setJellyfinPullLog(prev => [...prev, `❌ Server responded ${res.status}: ${text}`])
-        toast('Failed to save to server — check debug log', 'error')
-      } else {
-        setJellyfinPullLog(prev => [...prev, `✅ Saved to server (${res.status}): ${text}`, '⏳ Triggering immediate poll...'])
+        localStorage.removeItem('mywatch_pending_server_settings')
+        // Snapshot uses actual form values (not server-masked) so isDirty stays false after save
+        const newSnapshot = {
+          jellyfinUrl: payload.jellyfinUrl, jellyfinUserId: payload.jellyfinUserId,
+          jellyfinApiKey: payload.jellyfinApiKey,
+          tmdbApiKey: payload.tmdbApiKey,
+          syncInterval: payload.syncInterval,
+          llmProvider: payload.llmProvider, llmApiKey: payload.llmApiKey,
+          llmBaseUrl: payload.llmBaseUrl, llmModel: payload.llmModel,
+          recapMinInterval: payload.recapMinInterval,
+          radarrUrl: payload.radarrUrl, radarrApiKey: payload.radarrApiKey,
+          radarrQualityProfileId: payload.radarrQualityProfileId, radarrRootFolderPath: payload.radarrRootFolderPath,
+          sonarrUrl: payload.sonarrUrl, sonarrApiKey: payload.sonarrApiKey,
+          sonarrQualityProfileId: payload.sonarrQualityProfileId, sonarrRootFolderPath: payload.sonarrRootFolderPath,
+        }
+        setServerSnapshot(newSnapshot)
         setServerCredsStatus('set')
-        toast('Jellyfin settings saved', 'success')
-        // Trigger poll now that creds are saved
-        await pollJellyfinNow()
+        toast('Settings saved', 'success')
+        if (payload.jellyfinUrl && payload.jellyfinUserId && payload.jellyfinApiKey) {
+          await pollJellyfinNow()
+        }
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      setJellyfinPullLog(prev => [...prev, `❌ Network error: ${msg}`])
-      toast('Network error saving Jellyfin settings', 'error')
-    }
-  }
-
-  async function saveArrSettings() {
-    const rUrl = radarrUrlInput.trim()
-    const rKey = radarrApiKeyInput.trim()
-    const rProfile = Number(radarrQualityProfileIdInput) || 1
-    const rPath = radarrRootFolderPathInput.trim()
-
-    const sUrl = sonarrUrlInput.trim()
-    const sKey = sonarrApiKeyInput.trim()
-    const sProfile = Number(sonarrQualityProfileIdInput) || 1
-    const sPath = sonarrRootFolderPathInput.trim()
-
-    // Save locally
-    update({
-      radarrUrl: rUrl,
-      radarrApiKey: rKey,
-      radarrQualityProfileId: rProfile,
-      radarrRootFolderPath: rPath,
-      sonarrUrl: sUrl,
-      sonarrApiKey: sKey,
-      sonarrQualityProfileId: sProfile,
-      sonarrRootFolderPath: sPath,
-    })
-
-    if (!session?.apiToken) {
-      toast('Arr settings saved locally (not logged in)', 'success')
-      return
-    }
-
-    try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
-      const res = await fetch(`${apiBase}/api/user/settings`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.apiToken}` },
-        body: JSON.stringify({
-          radarrUrl: rUrl,
-          radarrApiKey: rKey,
-          radarrQualityProfileId: rProfile,
-          radarrRootFolderPath: rPath,
-          sonarrUrl: sUrl,
-          sonarrApiKey: sKey,
-          sonarrQualityProfileId: sProfile,
-          sonarrRootFolderPath: sPath,
-        }),
-      })
-
-      if (!res.ok) {
-        toast('Failed to save Arr settings to server', 'error')
-      } else {
-        toast('Arr settings saved to server', 'success')
-      }
-    } catch (err) {
-      toast('Network error saving Arr settings to server', 'error')
+    } catch {
+      localStorage.setItem('mywatch_pending_server_settings', JSON.stringify(payload))
+      toast('Network error — saved locally', 'error')
+    } finally {
+      setSaving(false)
     }
   }
 
