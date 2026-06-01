@@ -105,6 +105,15 @@ const SYNC_INTERVAL_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 60, label: '1 hour' },
 ]
 
+type ServerFormSnapshot = {
+  jellyfinUrl: string; jellyfinUserId: string; jellyfinApiKey: string
+  tmdbApiKey: string; syncInterval: number
+  llmProvider: 'gemini' | 'openai'; llmApiKey: string; llmBaseUrl: string
+  llmModel: string; recapMinInterval: number
+  radarrUrl: string; radarrApiKey: string; radarrQualityProfileId: number; radarrRootFolderPath: string
+  sonarrUrl: string; sonarrApiKey: string; sonarrQualityProfileId: number; sonarrRootFolderPath: string
+}
+
 export default function SettingsPage() {
   const { data: session } = useSession()
   const router = useRouter()
@@ -145,19 +154,11 @@ export default function SettingsPage() {
   const [sonarrTestError, setSonarrTestError] = useState<string | null>(null)
 
   // ── Tab + server settings dirty state ────────────────────────────────────
-  type ServerFormSnapshot = {
-    jellyfinUrl: string; jellyfinUserId: string; jellyfinApiKey: string
-    tmdbApiKey: string; syncInterval: number
-    llmProvider: 'gemini' | 'openai'; llmApiKey: string; llmBaseUrl: string
-    llmModel: string; recapMinInterval: number
-    radarrUrl: string; radarrApiKey: string; radarrQualityProfileId: number; radarrRootFolderPath: string
-    sonarrUrl: string; sonarrApiKey: string; sonarrQualityProfileId: number; sonarrRootFolderPath: string
-  }
-
   const [activeTab, setActiveTab] = useState<'server' | 'client' | 'logs'>('server')
   const [serverSnapshot, setServerSnapshot] = useState<ServerFormSnapshot | null>(null)
   const [saving, setSaving] = useState(false)
-  const [syncIntervalInput, setSyncIntervalInput] = useState<number>(settings.syncInterval ?? 5)
+  const [pendingSync, setPendingSync] = useState(false)
+  const [syncIntervalInput, setSyncIntervalInput] = useState<number>(5)
   const [tmdbApiKeyInput, setTmdbApiKeyInput] = useState('')
 
   const isDirty = useMemo(() => {
@@ -403,6 +404,7 @@ export default function SettingsPage() {
         if (pending) {
           try {
             const pendingData = JSON.parse(pending)
+            setPendingSync(true)
             fetch(`${apiBase}/api/user/settings`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.apiToken}` },
@@ -412,7 +414,7 @@ export default function SettingsPage() {
                 localStorage.removeItem('mywatch_pending_server_settings')
                 toast('Offline changes synced to server', 'success')
               }
-            }).catch(() => {/* silently retry next load */})
+            }).catch(() => {/* silently retry next load */}).finally(() => setPendingSync(false))
           } catch {
             localStorage.removeItem('mywatch_pending_server_settings')
           }
@@ -424,6 +426,7 @@ export default function SettingsPage() {
 
   async function saveServerSettings() {
     setSaving(true)
+    if (pendingSync) { setSaving(false); return }
     const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
     const payload = {
@@ -1170,11 +1173,11 @@ export default function SettingsPage() {
             {/* Unified Save button */}
             <button
               onClick={saveServerSettings}
-              disabled={!isDirty || saving}
+              disabled={!isDirty || saving || pendingSync}
               className="w-full py-2.5 rounded-[8px] text-[var(--text-13)] font-semibold cursor-pointer border-none transition-all duration-150 disabled:opacity-40"
               style={{ background: isDirty ? 'var(--accent)' : 'var(--surface2)', color: isDirty ? '#fff' : 'var(--muted)' }}
             >
-              {saving ? 'Saving…' : isDirty ? 'Save Server Settings' : 'No Changes'}
+              {saving ? 'Saving…' : pendingSync ? 'Syncing offline changes…' : isDirty ? 'Save Server Settings' : 'No Changes'}
             </button>
           </div>
         )}
