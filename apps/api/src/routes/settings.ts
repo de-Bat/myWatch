@@ -15,6 +15,8 @@ interface SettingsBody {
   llmApiKey?: string
   llmModel?: string
   recapMinInterval?: number
+  tmdbApiKey?: string
+  syncInterval?: number
   radarrUrl?: string
   radarrApiKey?: string
   radarrQualityProfileId?: number
@@ -56,6 +58,8 @@ export function registerSettingsRoutes(
         llmApiKey: llmSettings?.llmApiKey ? '••••••••' : '',
         llmModel: llmSettings?.llmModel ?? '',
         recapMinInterval: llmSettings?.recapMinInterval ?? 5,
+        tmdbApiKey: llmSettings?.tmdbApiKey ? '••••••••' : '',
+        syncInterval: llmSettings?.syncInterval ?? 5,
         radarrUrl: arrSettings?.radarrUrl ?? '',
         radarrApiKey: arrSettings?.radarrApiKey ? '••••••••' : '',
         radarrQualityProfileId: arrSettings?.radarrQualityProfileId ?? 1,
@@ -82,6 +86,8 @@ export function registerSettingsRoutes(
         llmApiKey,
         llmModel,
         recapMinInterval,
+        tmdbApiKey,
+        syncInterval,
         radarrUrl,
         radarrApiKey,
         radarrQualityProfileId,
@@ -121,7 +127,7 @@ export function registerSettingsRoutes(
       }
 
       // 2. Partial update for LLM configurations
-      if (userRepo && (llmProvider !== undefined || llmBaseUrl !== undefined || llmApiKey !== undefined || llmModel !== undefined || recapMinInterval !== undefined)) {
+      if (userRepo && (llmProvider !== undefined || llmBaseUrl !== undefined || llmApiKey !== undefined || llmModel !== undefined || recapMinInterval !== undefined || tmdbApiKey !== undefined || syncInterval !== undefined)) {
         const existing = await userRepo.getLlmSettings(userId)
         const finalProvider = llmProvider !== undefined ? llmProvider : (existing?.llmProvider ?? 'gemini')
         const finalBaseUrl = llmBaseUrl !== undefined ? llmBaseUrl : (existing?.llmBaseUrl ?? null)
@@ -137,6 +143,10 @@ export function registerSettingsRoutes(
           llmApiKey: finalApiKey || null,
           llmModel: finalModel || null,
           recapMinInterval: finalInterval || 5,
+          tmdbApiKey: tmdbApiKey !== undefined
+            ? (tmdbApiKey === '••••••••' ? (existing?.tmdbApiKey ?? null) : tmdbApiKey || null)
+            : (existing?.tmdbApiKey ?? null),
+          syncInterval: syncInterval !== undefined ? Number(syncInterval) : (existing?.syncInterval ?? 5),
         })
       }
 
