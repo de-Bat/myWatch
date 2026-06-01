@@ -48,9 +48,10 @@ function HomePageInner() {
   const [statusFilter, setStatusFilter] = useState<WatchStatus | 'all'>('all')
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
   const [sortIndex, setSortIndex] = useState(0)
-  const [sortOpen, setSortOpen] = useState(false)
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const [sortOpen, setSortOpen] = useState(true)
   const [genreFilter, setGenreFilter] = useState<Set<string>>(new Set())
-  const [genreOpen, setGenreOpen] = useState(false)
+  const [genreOpen, setGenreOpen] = useState(true)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [panel, setPanel] = useState<{ tmdbId: number; mediaType: MediaType } | null>(null)
   const [isMobile, setIsMobile] = useState(false)
@@ -268,7 +269,7 @@ function HomePageInner() {
     return true
   })
 
-  const sorted = [...filtered].sort((a, b) => {
+  const sortedRaw = [...filtered].sort((a, b) => {
     if (sortValue === 'rating') return (b.rating ?? 0) - (a.rating ?? 0)
     if (sortValue === 'title') return a.tmdbId - b.tmdbId
     if (sortValue === 'type') {
@@ -279,6 +280,7 @@ function HomePageInner() {
     }
     return b.updatedAt.localeCompare(a.updatedAt)
   })
+  const sorted = sortDir === 'asc' ? [...sortedRaw].reverse() : sortedRaw
 
   // Genre filter applied after sort (requires media cache lookup — done via a separate memo)
   // We filter by genre using the genreFilter state; the actual cache lookup happens in each card.
@@ -912,7 +914,8 @@ function HomePageInner() {
                 })}
               </div>
 
-              {/* Desktop: Sort dropdown */}
+              {/* Desktop: Sort dropdown + direction */}
+              <div className="flex items-center gap-1">
               <div ref={sortRef} className="relative">
                 <button
                   onClick={() => setSortOpen((v) => !v)}
@@ -961,6 +964,38 @@ function HomePageInner() {
                     ))}
                   </div>
                 )}
+              </div>
+              {/* Sort direction toggle */}
+              <button
+                onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')}
+                title={sortDir === 'desc' ? 'Descending — click for Ascending' : 'Ascending — click for Descending'}
+                className="flex items-center justify-center border cursor-pointer transition-all duration-100"
+                style={{
+                  width: '2rem',
+                  height: '2rem',
+                  borderRadius: 'var(--rsm)',
+                  background: sortDir === 'asc' ? 'var(--accent-bg)' : 'var(--surface)',
+                  borderColor: sortDir === 'asc' ? 'var(--accent)' : 'var(--border)',
+                  color: sortDir === 'asc' ? 'var(--accent2)' : 'var(--muted)',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => { if (sortDir !== 'asc') { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.borderColor = 'var(--border)' } }}
+                onMouseLeave={(e) => { if (sortDir !== 'asc') { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--border)' } }}
+              >
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '0.86rem', height: '0.86rem' }}>
+                  {sortDir === 'desc' ? (
+                    <>
+                      <line x1="8" y1="3" x2="8" y2="13" />
+                      <polyline points="5 10 8 13 11 10" />
+                    </>
+                  ) : (
+                    <>
+                      <line x1="8" y1="13" x2="8" y2="3" />
+                      <polyline points="5 6 8 3 11 6" />
+                    </>
+                  )}
+                </svg>
+              </button>
               </div>
             </>
           )}

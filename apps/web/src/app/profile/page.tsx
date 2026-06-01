@@ -80,6 +80,7 @@ const CARD_META_LABELS: Record<keyof CardMetaSettings, string> = {
   showRuntime: 'Runtime',
   showProviders: 'Streaming Providers',
   showOverview: 'Plot Overview',
+  showProgressBars: 'Progress Bars',
 }
 
 const FONT_OPTIONS: Array<{ value: FontFamily; label: string }> = [

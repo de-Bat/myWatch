@@ -8,6 +8,7 @@ export interface CardMetaSettings {
   showRuntime: boolean
   showProviders: boolean
   showOverview: boolean
+  showProgressBars: boolean
 }
 
 export type FontFamily = 'system' | 'serif' | 'mono'
@@ -62,6 +63,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     showRuntime: false,
     showProviders: false,
     showOverview: false,
+    showProgressBars: true,
   },
   jellyfinUrl: '',
   jellyfinApiKey: '',
