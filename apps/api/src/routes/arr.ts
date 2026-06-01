@@ -60,4 +60,38 @@ export function registerArrRoutes(
       }
     },
   )
+
+  // POST /api/arr/test — Secure proxy for connection testing
+  app.post<{ Body: { type: 'radarr' | 'sonarr'; url: string; apiKey: string } }>(
+    '/api/arr/test',
+    {
+      preHandler: [authenticate],
+      schema: {
+        body: {
+          type: 'object',
+          required: ['type', 'url', 'apiKey'],
+          properties: {
+            type: { type: 'string', enum: ['radarr', 'sonarr'] },
+            url: { type: 'string' },
+            apiKey: { type: 'string' },
+          },
+        },
+      },
+    },
+    async (req, reply) => {
+      const { type, url, apiKey } = req.body
+      const userId = req.user.sub
+
+      try {
+        const result = await arrService.testConnection(userId, type, url, apiKey)
+        if (!result.success) {
+          return reply.status(400).send({ error: result.message })
+        }
+        return reply.send({ success: true })
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        return reply.status(500).send({ error: msg })
+      }
+    },
+  )
 }

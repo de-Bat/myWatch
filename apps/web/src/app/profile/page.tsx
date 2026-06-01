@@ -137,6 +137,14 @@ export default function SettingsPage() {
   const [sonarrQualityProfileIdInput, setSonarrQualityProfileIdInput] = useState(1)
   const [sonarrRootFolderPathInput, setSonarrRootFolderPathInput] = useState('')
 
+  const [radarrTesting, setRadarrTesting] = useState(false)
+  const [radarrTestResult, setRadarrTestResult] = useState<'ok' | 'error' | null>(null)
+  const [radarrTestError, setRadarrTestError] = useState<string | null>(null)
+
+  const [sonarrTesting, setSonarrTesting] = useState(false)
+  const [sonarrTestResult, setSonarrTestResult] = useState<'ok' | 'error' | null>(null)
+  const [sonarrTestError, setSonarrTestError] = useState<string | null>(null)
+
   // ── PWA debug state ──────────────────────────────────────────────────────────
   const [pwaLogs, setPwaLogs] = useState<{ text: string; kind: 'ok' | 'warn' | 'info' }[]>([])
 
@@ -513,6 +521,76 @@ export default function SettingsPage() {
       }
     } catch (err) {
       toast('Network error saving Arr settings to server', 'error')
+    }
+  }
+
+  async function testRadarr() {
+    const url = radarrUrlInput.trim()
+    const apiKey = radarrApiKeyInput.trim()
+    if (!url || !apiKey) return
+
+    setRadarrTesting(true)
+    setRadarrTestResult(null)
+    setRadarrTestError(null)
+
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+      const res = await fetch(`${apiBase}/api/arr/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.apiToken}`,
+        },
+        body: JSON.stringify({ type: 'radarr', url, apiKey }),
+      })
+
+      if (res.ok) {
+        setRadarrTestResult('ok')
+      } else {
+        const data = await res.json()
+        setRadarrTestResult('error')
+        setRadarrTestError(data.error ?? 'Connection failed')
+      }
+    } catch (err) {
+      setRadarrTestResult('error')
+      setRadarrTestError(err instanceof Error ? err.message : 'Network error')
+    } finally {
+      setRadarrTesting(false)
+    }
+  }
+
+  async function testSonarr() {
+    const url = sonarrUrlInput.trim()
+    const apiKey = sonarrApiKeyInput.trim()
+    if (!url || !apiKey) return
+
+    setSonarrTesting(true)
+    setSonarrTestResult(null)
+    setSonarrTestError(null)
+
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+      const res = await fetch(`${apiBase}/api/arr/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.apiToken}`,
+        },
+        body: JSON.stringify({ type: 'sonarr', url, apiKey }),
+      })
+
+      if (res.ok) {
+        setSonarrTestResult('ok')
+      } else {
+        const data = await res.json()
+        setSonarrTestResult('error')
+        setSonarrTestError(data.error ?? 'Connection failed')
+      }
+    } catch (err) {
+      setSonarrTestResult('error')
+      setSonarrTestError(err instanceof Error ? err.message : 'Network error')
+    } finally {
+      setSonarrTesting(false)
     }
   }
 
@@ -1115,7 +1193,22 @@ export default function SettingsPage() {
             <div className="space-y-3">
               <div style={{ borderBottom: '1px solid var(--border2)' }} className="pb-1.5 flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>Radarr (Movies)</span>
+                <button
+                  type="button"
+                  onClick={testRadarr}
+                  disabled={radarrTesting || !radarrUrlInput || !radarrApiKeyInput}
+                  className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold cursor-pointer border-none disabled:opacity-50 transition-all duration-100 flex items-center gap-1"
+                  style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+                >
+                  {radarrTesting ? 'Testing…' : 'Test Connection'}
+                </button>
               </div>
+              {radarrTestResult === 'ok' && (
+                <p className="text-[11px]" style={{ color: 'var(--green)' }}>✓ Connected to Radarr successfully</p>
+              )}
+              {radarrTestResult === 'error' && (
+                <p className="text-[11px]" style={{ color: 'var(--red)', lineHeight: 1.4 }}>Connection failed: {radarrTestError}</p>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Radarr Server URL</span>
@@ -1168,7 +1261,22 @@ export default function SettingsPage() {
             <div className="space-y-3 pt-3" style={{ borderTop: '1px solid var(--border2)' }}>
               <div style={{ borderBottom: '1px solid var(--border2)' }} className="pb-1.5 flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>Sonarr (TV Shows)</span>
+                <button
+                  type="button"
+                  onClick={testSonarr}
+                  disabled={sonarrTesting || !sonarrUrlInput || !sonarrApiKeyInput}
+                  className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold cursor-pointer border-none disabled:opacity-50 transition-all duration-100 flex items-center gap-1"
+                  style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+                >
+                  {sonarrTesting ? 'Testing…' : 'Test Connection'}
+                </button>
               </div>
+              {sonarrTestResult === 'ok' && (
+                <p className="text-[11px]" style={{ color: 'var(--green)' }}>✓ Connected to Sonarr successfully</p>
+              )}
+              {sonarrTestResult === 'error' && (
+                <p className="text-[11px]" style={{ color: 'var(--red)', lineHeight: 1.4 }}>Connection failed: {sonarrTestError}</p>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] font-medium" style={{ color: 'var(--fg2)' }}>Sonarr Server URL</span>

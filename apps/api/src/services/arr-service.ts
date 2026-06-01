@@ -297,8 +297,41 @@ export function createArrService(userRepo: UserRepo) {
     }
   }
 
+  async function testConnection(
+    userId: string,
+    type: 'radarr' | 'sonarr',
+    url: string,
+    apiKey: string,
+  ): Promise<{ success: boolean; message?: string }> {
+    let finalKey = apiKey
+    if (apiKey === '••••••••') {
+      const arrSettings = await userRepo.getArrSettings(userId)
+      const savedKey = type === 'radarr' ? arrSettings?.radarrApiKey : arrSettings?.sonarrApiKey
+      if (!savedKey) {
+        return { success: false, message: 'No saved API key found to test.' }
+      }
+      finalKey = savedKey
+    }
+
+    const cleanUrl = url.replace(/\/$/, '')
+    try {
+      const testUrl = `${cleanUrl}/api/v3/system/status?apikey=${finalKey}`
+      const res = await fetch(testUrl)
+      if (res.ok) {
+        return { success: true }
+      } else {
+        const text = await res.text()
+        return { success: false, message: `Status ${res.status}: ${text}` }
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      return { success: false, message: msg }
+    }
+  }
+
   return {
     getMediaStatus,
     requestDownload,
+    testConnection,
   }
 }
