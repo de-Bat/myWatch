@@ -169,21 +169,21 @@ export function createArrService(userRepo: UserRepo) {
     tmdbId: number,
     mediaType: 'movie' | 'tv',
   ): Promise<{ success: boolean; message?: string }> {
-    const settings = await userRepo.getArrSettings(userId)
-    if (!settings) {
-      throw new Error('Radarr/Sonarr credentials are not configured on the server.')
-    }
-
-    const meta = await getTmdbMeta(tmdbId, mediaType)
-    if (!meta) {
-      throw new Error('Failed to load media details from TMDB.')
-    }
-
     try {
+      const settings = await userRepo.getArrSettings(userId)
+      if (!settings) {
+        return { success: false, message: 'Radarr/Sonarr credentials are not configured on the server.' }
+      }
+
+      const meta = await getTmdbMeta(tmdbId, mediaType)
+      if (!meta) {
+        return { success: false, message: 'Failed to load media details from TMDB.' }
+      }
+
       if (mediaType === 'movie') {
         const { radarrUrl, radarrApiKey, radarrQualityProfileId = 1, radarrRootFolderPath } = settings
         if (!radarrUrl || !radarrApiKey || !radarrRootFolderPath) {
-          throw new Error('Radarr URL, API key, and root folder path must be configured.')
+          return { success: false, message: 'Radarr URL, API key, and root folder path must be configured in Settings.' }
         }
 
         const cleanUrl = radarrUrl.replace(/\/$/, '')
@@ -208,27 +208,42 @@ export function createArrService(userRepo: UserRepo) {
           }
         }
 
+        // Fetch quality profiles to get language profile if needed
+        let languageProfileId = 1
+        try {
+          const lpRes = await fetch(`${cleanUrl}/api/v3/languageprofile?apikey=${radarrApiKey}`)
+          if (lpRes.ok) {
+            const profiles = (await lpRes.json()) as any[]
+            if (profiles.length > 0) languageProfileId = profiles[0].id
+          }
+        } catch { /* ignore, languageProfileId defaults to 1 */ }
+
         // Add new movie
+        const addPayload = {
+          title: meta.title,
+          qualityProfileId: radarrQualityProfileId,
+          languageProfileId,
+          titleSlug: `${meta.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${tmdbId}`,
+          images: meta.posterPath ? [{ coverType: 'poster', url: meta.posterPath, remoteUrl: meta.posterPath }] : [],
+          tmdbId: tmdbId,
+          year: meta.year,
+          rootFolderPath: radarrRootFolderPath,
+          monitored: true,
+          addOptions: {
+            searchForMovie: true,
+          },
+        }
+        console.log('[arr-service] Adding movie to Radarr:', JSON.stringify(addPayload))
         const addMovieRes = await fetch(`${cleanUrl}/api/v3/movie?apikey=${radarrApiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: meta.title,
-            qualityProfileId: radarrQualityProfileId,
-            titleSlug: meta.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-            images: meta.posterPath ? [{ coverType: 'poster', url: meta.posterPath }] : [],
-            tmdbId: tmdbId,
-            year: meta.year,
-            rootFolderPath: radarrRootFolderPath,
-            monitored: true,
-            addOptions: {
-              searchForMovie: true,
-            },
-          }),
+          body: JSON.stringify(addPayload),
         })
 
         if (!addMovieRes.ok) {
-          throw new Error(`Radarr returned status ${addMovieRes.status}: ${await addMovieRes.text()}`)
+          const errText = await addMovieRes.text()
+          console.error(`[arr-service] Radarr POST /movie failed (${addMovieRes.status}):`, errText)
+          return { success: false, message: `Radarr error (${addMovieRes.status}): ${errText}` }
         }
 
         return { success: true, message: 'Successfully requested movie download on Radarr.' }
@@ -236,12 +251,12 @@ export function createArrService(userRepo: UserRepo) {
         // TV Show
         const { sonarrUrl, sonarrApiKey, sonarrQualityProfileId = 1, sonarrRootFolderPath } = settings
         if (!sonarrUrl || !sonarrApiKey || !sonarrRootFolderPath) {
-          throw new Error('Sonarr URL, API key, and root folder path must be configured.')
+          return { success: false, message: 'Sonarr URL, API key, and root folder path must be configured in Settings.' }
         }
 
         const tvdbId = await getTvdbId(tmdbId)
         if (!tvdbId) {
-          throw new Error('Sonarr requires a TVDB ID, but TMDB could not resolve one for this show.')
+          return { success: false, message: 'Sonarr requires a TVDB ID, but TMDB could not resolve one for this show.' }
         }
 
         const cleanUrl = sonarrUrl.replace(/\/$/, '')
@@ -265,27 +280,44 @@ export function createArrService(userRepo: UserRepo) {
           }
         }
 
+        // Fetch language profile for Sonarr
+        let languageProfileId = 1
+        try {
+          const lpRes = await fetch(`${cleanUrl}/api/v3/languageprofile?apikey=${sonarrApiKey}`)
+          if (lpRes.ok) {
+            const profiles = (await lpRes.json()) as any[]
+            if (profiles.length > 0) languageProfileId = profiles[0].id
+          }
+        } catch { /* ignore */ }
+
         // Add new series
+        const addPayload = {
+          title: meta.title,
+          qualityProfileId: sonarrQualityProfileId,
+          languageProfileId,
+          titleSlug: `${meta.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${tvdbId}`,
+          images: meta.posterPath ? [{ coverType: 'poster', url: meta.posterPath, remoteUrl: meta.posterPath }] : [],
+          tvdbId: tvdbId,
+          year: meta.year,
+          rootFolderPath: sonarrRootFolderPath,
+          monitored: true,
+          seasons: [],
+          addOptions: {
+            searchForMissingEpisodes: true,
+            monitor: 'all',
+          },
+        }
+        console.log('[arr-service] Adding series to Sonarr:', JSON.stringify(addPayload))
         const addSeriesRes = await fetch(`${cleanUrl}/api/v3/series?apikey=${sonarrApiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: meta.title,
-            qualityProfileId: sonarrQualityProfileId,
-            titleSlug: meta.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-            images: meta.posterPath ? [{ coverType: 'poster', url: meta.posterPath }] : [],
-            tvdbId: tvdbId,
-            year: meta.year,
-            rootFolderPath: sonarrRootFolderPath,
-            monitored: true,
-            addOptions: {
-              searchForMissingEpisodes: true,
-            },
-          }),
+          body: JSON.stringify(addPayload),
         })
 
         if (!addSeriesRes.ok) {
-          throw new Error(`Sonarr returned status ${addSeriesRes.status}: ${await addSeriesRes.text()}`)
+          const errText = await addSeriesRes.text()
+          console.error(`[arr-service] Sonarr POST /series failed (${addSeriesRes.status}):`, errText)
+          return { success: false, message: `Sonarr error (${addSeriesRes.status}): ${errText}` }
         }
 
         return { success: true, message: 'Successfully requested series download on Sonarr.' }

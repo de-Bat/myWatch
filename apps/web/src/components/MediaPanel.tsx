@@ -71,6 +71,8 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
   } | null>(null)
   const [arrLoading, setArrLoading] = useState(false)
   const [requestingDownload, setRequestingDownload] = useState(false)
+  const [requestError, setRequestError] = useState<string | null>(null)
+  const [requestSuccess, setRequestSuccess] = useState<string | null>(null)
 
   useEffect(() => {
     if (!session?.apiToken) return
@@ -97,6 +99,8 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
   async function handleRequestDownload() {
     if (!session?.apiToken) return
     setRequestingDownload(true)
+    setRequestError(null)
+    setRequestSuccess(null)
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
       const res = await fetch(`${apiBase}/api/user/arr/request`, {
@@ -109,6 +113,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
       })
       const data = await res.json()
       if (res.ok && data.success) {
+        setRequestSuccess(data.message || 'Download request sent!')
         // Optimistically set to monitored/downloading
         setArrStatus(prev => ({
           monitored: true,
@@ -125,9 +130,17 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
           const freshData = await statusRes.json()
           setArrStatus(freshData)
         }
+        // Auto-clear success after 5s
+        setTimeout(() => setRequestSuccess(null), 5000)
+      } else {
+        const errMsg = data.message || data.error || `Request failed (${res.status})`
+        setRequestError(errMsg)
+        console.error('[MediaPanel] Download request failed:', errMsg)
       }
     } catch (err) {
-      console.error(err)
+      const msg = err instanceof Error ? err.message : String(err)
+      setRequestError(msg)
+      console.error('[MediaPanel] Download request error:', err)
     } finally {
       setRequestingDownload(false)
     }
@@ -623,6 +636,22 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                           </>
                         )}
                       </button>
+                      {requestError && (
+                        <div
+                          className="rounded-[6px] px-3 py-2 text-[10px] font-medium leading-snug"
+                          style={{ background: 'rgba(239,68,68,.12)', color: '#f87171', border: '1px solid rgba(239,68,68,.25)' }}
+                        >
+                          ⚠ {requestError}
+                        </div>
+                      )}
+                      {requestSuccess && (
+                        <div
+                          className="rounded-[6px] px-3 py-2 text-[10px] font-medium leading-snug"
+                          style={{ background: 'rgba(34,197,94,.12)', color: '#4ade80', border: '1px solid rgba(34,197,94,.25)' }}
+                        >
+                          ✓ {requestSuccess}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -630,6 +659,27 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                 <div className="text-[11px] text-center" style={{ color: 'var(--muted2)' }}>
                   Loading download status…
                 </div>
+              )}
+              {/* Error / success shown outside of status block too (e.g. after re-request on monitored) */}
+              {arrStatus && (requestError || requestSuccess) && arrStatus.monitored && (
+                <>
+                  {requestError && (
+                    <div
+                      className="rounded-[6px] px-3 py-2 text-[10px] font-medium leading-snug"
+                      style={{ background: 'rgba(239,68,68,.12)', color: '#f87171', border: '1px solid rgba(239,68,68,.25)' }}
+                    >
+                      ⚠ {requestError}
+                    </div>
+                  )}
+                  {requestSuccess && (
+                    <div
+                      className="rounded-[6px] px-3 py-2 text-[10px] font-medium leading-snug"
+                      style={{ background: 'rgba(34,197,94,.12)', color: '#4ade80', border: '1px solid rgba(34,197,94,.25)' }}
+                    >
+                      ✓ {requestSuccess}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

@@ -51,12 +51,13 @@ export function registerArrRoutes(
       try {
         const result = await arrService.requestDownload(userId, tmdbId, mediaType)
         if (!result.success) {
-          return reply.status(400).send({ error: result.message })
+          return reply.status(400).send({ error: result.message, message: result.message })
         }
         return reply.send(result)
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        return reply.status(500).send({ error: msg })
+        console.error('[arr-route] Unexpected error in /request:', err)
+        return reply.status(500).send({ error: msg, message: msg })
       }
     },
   )
