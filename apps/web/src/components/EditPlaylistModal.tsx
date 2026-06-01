@@ -12,7 +12,7 @@ interface Props {
 
 const WATCH_STATUSES: { value: WatchStatus; label: string }[] = [
   { value: 'planned', label: 'Planned' },
-  { value: 'in_progress', label: 'In Progress' },
+  { value: 'in_progress', label: 'Watching' },
   { value: 'watched', label: 'Watched' },
   { value: 'quit', label: 'Quit' },
 ]

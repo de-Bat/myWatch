@@ -2,7 +2,7 @@ import type { WatchStatus } from '@mywatch/core'
 
 const labels: Record<WatchStatus, string> = {
   planned: 'Planned',
-  in_progress: 'In Progress',
+  in_progress: 'Watching',
   watched: 'Watched',
   quit: 'Quit',
 }

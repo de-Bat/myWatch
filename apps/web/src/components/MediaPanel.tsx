@@ -19,7 +19,7 @@ const TMDB_LOGO = 'https://image.tmdb.org/t/p/w45'
 const STATUSES: WatchStatus[] = ['planned', 'in_progress', 'watched', 'quit']
 const STATUS_LABELS: Record<WatchStatus, string> = {
   planned: 'Planned',
-  in_progress: 'In Progress',
+  in_progress: 'Watching',
   watched: 'Watched',
   quit: 'Quit',
 }

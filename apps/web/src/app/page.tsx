@@ -24,7 +24,7 @@ const STATUS_TABS: Array<WatchStatus | 'all'> = ['all', 'planned', 'in_progress'
 const STATUS_LABELS: Record<WatchStatus | 'all', string> = {
   all: 'All',
   planned: 'Planned',
-  in_progress: 'In Progress',
+  in_progress: 'Watching',
   watched: 'Watched',
   quit: 'Quit',
 }
