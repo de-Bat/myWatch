@@ -1,6 +1,6 @@
 'use client'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import type { Playlist, PlaylistItem, SmartRules, WatchlistItem, MediaCache } from '@mywatch/core'
 import { db } from '@/lib/db'
@@ -47,16 +47,20 @@ export async function seedDefaultPlaylists() {
 }
 
 export function usePlaylists() {
-  return useLiveQuery(
-    async () => {
-      const ps = await db.playlists.filter((p) => p.deletedAt === null).toArray()
-      if (ps.length === 0) {
+  useEffect(() => {
+    async function checkAndSeed() {
+      const count = await db.playlists.filter((p) => p.deletedAt === null).count()
+      if (count === 0) {
         await seedDefaultPlaylists()
-        const seeded = await db.playlists.filter((p) => p.deletedAt === null).toArray()
-        return seeded.sort((a, b) => a.sortOrder - b.sortOrder)
       }
-      return ps.sort((a, b) => a.sortOrder - b.sortOrder)
-    },
+    }
+    checkAndSeed().catch((err) => console.error('Failed to seed default lists', err))
+  }, [])
+
+  return useLiveQuery(
+    () => db.playlists.filter((p) => p.deletedAt === null).toArray().then((ps) =>
+      ps.sort((a, b) => a.sortOrder - b.sortOrder)
+    ),
     [],
   )
 }
