@@ -16,6 +16,13 @@ export type FontFamily = 'system' | 'serif' | 'mono'
 export type FontSize = 'sm' | 'md' | 'lg' | 'xl'
 export type GridColumns = 2 | 3 | 4 | 5 | 'auto'
 
+export const BADGE_ICON_SIZES: Record<FontSize, { container: number, icon: number }> = {
+  sm: { container: 16, icon: 10 },
+  md: { container: 20, icon: 12 },
+  lg: { container: 24, icon: 14 },
+  xl: { container: 28, icon: 16 },
+}
+
 export interface AppSettings {
   theme: 'dark' | 'light'
   tmdbApiKey: string
@@ -28,6 +35,7 @@ export interface AppSettings {
   language: string
   font: FontFamily
   fontSize: FontSize
+  badgeIconSize: FontSize
   syncInterval: number // minutes; 0 = disabled
   gridColumns: GridColumns
   cardMeta: CardMetaSettings
@@ -56,6 +64,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   language: 'en-US',
   font: 'system',
   fontSize: 'md',
+  badgeIconSize: 'md',
   syncInterval: 5,
   gridColumns: 'auto',
   cardMeta: {

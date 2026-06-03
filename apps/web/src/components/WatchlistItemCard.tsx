@@ -7,7 +7,7 @@ import { StatusBadge } from './StatusBadge'
 import { ArrStatusBadge } from './ArrStatusBadge'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { usePlaylists, useAddToPlaylist, MAIN_LIST_UUID } from '@/hooks/usePlaylists'
-import { useSettings } from '@/hooks/useSettings'
+import { useSettings, BADGE_ICON_SIZES } from '@/hooks/useSettings'
 import { getTvProgress } from '@/lib/progress'
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w92'
@@ -65,11 +65,12 @@ export function WatchlistItemCard({
 }) {
   const { data: session } = useSession()
   const { settings } = useSettings()
+  const cardMeta = settings.cardMeta
+  const size = BADGE_ICON_SIZES[settings.badgeIconSize] ?? BADGE_ICON_SIZES.md
   const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey, settings.language)
   const router = useRouter()
   const playlists = usePlaylists()
   const addToPlaylist = useAddToPlaylist()
-  const { cardMeta } = settings
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -176,19 +177,28 @@ export function WatchlistItemCard({
         {/* Row 1: [Movie/TV] Title */}
         <div className="flex items-center gap-[6px] min-w-0">
           <span
-            className="flex-shrink-0 text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+            className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px] flex items-center justify-center"
             style={
-              item.mediaType === 'movie'
-                ? { background: 'rgba(251,146,60,.13)', color: 'var(--orange)' }
-                : { background: 'rgba(168,85,247,.13)', color: 'var(--purple)' }
+              cardMeta.showBadgesAsIcons
+                ? {
+                    background: item.mediaType === 'movie' ? 'rgba(251,146,60,.13)' : 'rgba(168,85,247,.13)',
+                    color: item.mediaType === 'movie' ? 'var(--orange)' : 'var(--purple)',
+                    width: size.container,
+                    height: size.container,
+                    padding: 0
+                  }
+                : {
+                    background: item.mediaType === 'movie' ? 'rgba(251,146,60,.13)' : 'rgba(168,85,247,.13)',
+                    color: item.mediaType === 'movie' ? 'var(--orange)' : 'var(--purple)'
+                  }
             }
             title={item.mediaType === 'movie' ? 'Movie' : 'TV'}
           >
             {cardMeta.showBadgesAsIcons ? (
               item.mediaType === 'movie' ? (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                <svg style={{ width: size.icon, height: size.icon, display: 'block' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
               ) : (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+                <svg style={{ width: size.icon, height: size.icon, display: 'block' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
               )
             ) : (
               item.mediaType === 'movie' ? 'Movie' : 'TV'
@@ -212,12 +222,16 @@ export function WatchlistItemCard({
           )}
           {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (
             <span
-              className="text-[var(--text-10)] font-bold px-[6px] py-[2px] rounded-[4px]"
-              style={{ background: 'rgba(168,85,247,.15)', color: 'var(--purple)' }}
+              className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px] flex items-center justify-center"
+              style={
+                cardMeta.showBadgesAsIcons
+                  ? { background: 'rgba(168,85,247,.15)', color: 'var(--purple)', width: size.container, height: size.container, padding: 0 }
+                  : { background: 'rgba(168,85,247,.15)', color: 'var(--purple)' }
+              }
               title="Jellyfin"
             >
               {cardMeta.showBadgesAsIcons ? (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                <svg style={{ width: size.icon, height: size.icon, display: 'block' }} viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 .002C8.826.002-1.398 18.537.16 21.666c1.56 3.129 22.14 3.094 23.682 0C25.384 18.573 15.177 0 12 0zm7.76 18.949c-1.008 2.028-14.493 2.05-15.514 0C3.224 16.9 9.92 4.755 12.003 4.755c2.081 0 8.77 12.166 7.759 14.196zM12 9.198c-1.054 0-4.446 6.15-3.93 7.189.518 1.04 7.348 1.027 7.86 0 .511-1.027-2.874-7.19-3.93-7.19z"/></svg>
               ) : (
                 'Jellyfin'
               )}

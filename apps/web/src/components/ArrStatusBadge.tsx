@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useSettings, BADGE_ICON_SIZES } from '@/hooks/useSettings'
 
 export function ArrStatusBadge({
   tmdbId,
@@ -12,6 +13,8 @@ export function ArrStatusBadge({
   asIcon?: boolean
 }) {
   const { data: session } = useSession()
+  const { settings } = useSettings()
+  const size = BADGE_ICON_SIZES[settings.badgeIconSize] ?? BADGE_ICON_SIZES.md
   const [arrStatus, setArrStatus] = useState<{
     monitored: boolean
     hasFile: boolean
@@ -73,9 +76,9 @@ export function ArrStatusBadge({
           <span
             className="flex items-center justify-center rounded-[3px]"
             title="Available"
-            style={{ background: 'rgba(34,197,94,.15)', color: 'var(--green)', width: 20, height: 20 }}
+            style={{ background: 'rgba(34,197,94,.15)', color: 'var(--green)', width: size.container, height: size.container }}
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg style={{ width: size.icon, height: size.icon, display: 'block' }} viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="2 6 5 9 10 3" />
             </svg>
           </span>
@@ -96,9 +99,9 @@ export function ArrStatusBadge({
           <span
             className="flex items-center justify-center rounded-[3px]"
             title={arrStatus.downloadPercent != null ? `Downloading ${arrStatus.downloadPercent}%` : 'Downloading'}
-            style={{ background: 'rgba(168,85,247,.15)', color: 'var(--purple)', width: 20, height: 20 }}
+            style={{ background: 'rgba(168,85,247,.15)', color: 'var(--purple)', width: size.container, height: size.container }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping flex-shrink-0" />
+            <span className="rounded-full bg-purple-400 animate-ping flex-shrink-0" style={{ width: Math.max(6, size.icon - 6), height: Math.max(6, size.icon - 6) }} />
           </span>
         ) : (
           <span
@@ -118,18 +121,18 @@ export function ArrStatusBadge({
           className="font-bold rounded-[3px] border-none cursor-pointer transition-all duration-100 flex items-center justify-center gap-1 disabled:opacity-50"
           style={
             asIcon
-              ? { background: 'var(--accent)', color: '#fff', width: 20, height: 20, padding: 0 }
+              ? { background: 'var(--accent)', color: '#fff', width: size.container, height: size.container, padding: 0 }
               : { background: 'var(--accent)', color: '#fff', fontSize: 'var(--text-10)', padding: '2px 8px' }
           }
           onMouseEnter={(e) => { if (!requestingDownload) e.currentTarget.style.opacity = '0.85' }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
         >
           {requestingDownload ? (
-            <svg className="animate-spin" width={asIcon ? 12 : 9} height={asIcon ? 12 : 9} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <svg className="animate-spin" style={asIcon ? { width: size.icon, height: size.icon, display: 'block' } : { width: 9, height: 9 }} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M7 1.5A5.5 5.5 0 0 1 12.5 7" />
             </svg>
           ) : (
-            <svg width={asIcon ? 12 : 9} height={asIcon ? 12 : 9} viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg style={asIcon ? { width: size.icon, height: size.icon, display: 'block' } : { width: 9, height: 9 }} viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 1v7M3 5l3 3 3-3M1 10h10" />
             </svg>
           )}
@@ -144,7 +147,7 @@ export function ArrStatusBadge({
             style={{
               background: requestMsg.type === 'ok' ? 'rgba(34,197,94,.12)' : 'rgba(239,68,68,.12)',
               color: requestMsg.type === 'ok' ? '#4ade80' : '#f87171',
-              width: 20, height: 20
+              width: size.container, height: size.container
             }}
           >
             {requestMsg.type === 'ok' ? '✓' : '⚠'}

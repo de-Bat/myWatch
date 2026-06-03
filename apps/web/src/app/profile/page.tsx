@@ -1287,6 +1287,30 @@ export default function SettingsPage() {
                   })}
                 </div>
               </Row>
+              <Row label="Badge Icon Size">
+                <div
+                  className="flex"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
+                >
+                  {FONT_SIZE_OPTIONS.map((f) => {
+                    const active = settings.badgeIconSize === f.value
+                    return (
+                      <button
+                        key={f.value}
+                        onClick={() => update({ badgeIconSize: f.value })}
+                        className="px-3 py-[4px] text-[var(--text-12)] rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                        style={{
+                          background: active ? 'var(--surface2)' : 'transparent',
+                          color: active ? 'var(--fg)' : 'var(--muted)',
+                          fontWeight: active ? 600 : 500,
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </Row>
             </Section>
 
             {/* Card Display */}
