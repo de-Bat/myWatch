@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useSync } from '@/hooks/useSync'
-import { useSettings } from '@/hooks/useSettings'
+import { useSettings, CARD_META_LABELS } from '@/hooks/useSettings'
 import { useToast } from '@/components/Toast'
 import type { CardMetaSettings, FontFamily, FontSize } from '@/hooks/useSettings'
 import { db } from '@/lib/db'
@@ -72,18 +72,6 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       />
     </button>
   )
-}
-
-const CARD_META_LABELS: Record<keyof CardMetaSettings, string> = {
-  showGenres: 'Genres',
-  showTmdbRating: 'TMDB Rating',
-  showRuntime: 'Runtime',
-  showProviders: 'Streaming Providers',
-  showOverview: 'Plot Overview',
-  showProgress: 'Progress Bars',
-  showAvailability: 'Availability',
-  showPlatform: 'Platform',
-  showBadgesAsIcons: 'Badges as Icons',
 }
 
 const FONT_OPTIONS: Array<{ value: FontFamily; label: string }> = [

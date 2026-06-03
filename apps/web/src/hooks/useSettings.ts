@@ -14,6 +14,18 @@ export interface CardMetaSettings {
   showBadgesAsIcons: boolean
 }
 
+export const CARD_META_LABELS: Record<keyof CardMetaSettings, string> = {
+  showGenres: 'Genres',
+  showTmdbRating: 'TMDB Rating',
+  showRuntime: 'Runtime',
+  showProviders: 'Streaming Providers',
+  showOverview: 'Plot Overview',
+  showProgress: 'Progress Bars',
+  showAvailability: 'Availability',
+  showPlatform: 'Platform',
+  showBadgesAsIcons: 'Badges As Icons',
+}
+
 export type FontFamily = 'system' | 'serif' | 'mono'
 export type FontSize = 'sm' | 'md' | 'lg' | 'xl'
 export type GridColumns = 2 | 3 | 4 | 5 | 'auto'
