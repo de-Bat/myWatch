@@ -110,6 +110,24 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
               {item.mediaType === 'movie' ? 'Movie' : 'TV'}
             </span>
 
+            {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (
+              <span
+                className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+                style={{ background: 'rgba(168,85,247,.85)', color: '#fff' }}
+              >
+                Jellyfin
+              </span>
+            )}
+
+            {item.mediaType === 'movie' && jellyfinProgress?.jellyfinStatus === 'watching' && jellyfinProgress.moviePercent != null && (
+              <span
+                className="text-[var(--text-9)] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
+                style={{ background: 'rgba(251,191,36,0.2)', color: 'var(--amber)' }}
+              >
+                {jellyfinProgress.moviePercent}%
+              </span>
+            )}
+
             {item.mediaType === 'tv' && (() => {
               // Prefer Jellyfin progress, fallback to manual item progress
               if (jellyfinProgress && (jellyfinProgress.season != null || jellyfinProgress.watchedEpisodes != null)) {

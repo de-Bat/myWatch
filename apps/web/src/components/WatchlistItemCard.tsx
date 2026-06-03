@@ -247,7 +247,25 @@ export function WatchlistItemCard({
           className="flex items-center gap-[5px] flex-wrap leading-none"
           style={{ color: 'var(--muted2)', fontSize: 'var(--text-11h)' }}
         >
-          <StatusBadge status={item.status} />
+          {!(jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned') && (
+            <StatusBadge status={item.status} />
+          )}
+          {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (
+            <span
+              className="text-[var(--text-10)] font-bold px-[6px] py-[2px] rounded-[4px]"
+              style={{ background: 'rgba(168,85,247,.15)', color: 'var(--purple)' }}
+            >
+              Jellyfin
+            </span>
+          )}
+          {item.mediaType === 'movie' && jellyfinProgress?.jellyfinStatus === 'watching' && jellyfinProgress.moviePercent != null && (
+            <span
+              className="text-[var(--text-10h)] font-bold rounded-full px-[7px] py-[1.5px] border tabular-nums"
+              style={{ color: 'var(--amber)', background: 'rgba(251,191,36,0.1)', borderColor: 'rgba(251,191,36,0.2)' }}
+            >
+              {jellyfinProgress.moviePercent}%
+            </span>
+          )}
           {item.mediaType === 'tv' && (() => {
             if (jellyfinProgress && (jellyfinProgress.season != null || jellyfinProgress.watchedEpisodes != null)) {
               const tvProg = getTvProgress(jellyfinProgress, meta)
