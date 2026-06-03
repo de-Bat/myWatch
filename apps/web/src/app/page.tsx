@@ -351,18 +351,11 @@ function HomePageInner() {
       >
         <div className="flex items-center gap-[10px] min-w-0">
           {!isMobile && (
-            <span
-              className="text-[var(--text-13)] font-bold whitespace-nowrap"
-              style={{
-                color: 'var(--accent2)',
-                background: 'var(--accent-bg)',
-                borderRadius: 'var(--rxs)',
-                padding: '3px 8px',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              myWatch
-            </span>
+            <img 
+              src="/logo.png" 
+              alt="myWatch" 
+              style={{ height: '28px', objectFit: 'contain', borderRadius: 'var(--rxs)' }} 
+            />
           )}
           {/* Lists Dropdown */}
           <div ref={listDropdownRef} className="relative z-40">

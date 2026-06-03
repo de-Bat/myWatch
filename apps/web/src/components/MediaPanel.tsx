@@ -11,6 +11,7 @@ import { ProgressTracker } from './ProgressTracker'
 import { getTvProgress } from '@/lib/progress'
 import { db } from '@/lib/db'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { StatusPicker } from './StatusPicker'
 
 const TMDB_BACKDROP = 'https://image.tmdb.org/t/p/w780'
 const TMDB_POSTER = 'https://image.tmdb.org/t/p/w342'
@@ -74,6 +75,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
   const [requestingDownload, setRequestingDownload] = useState(false)
   const [requestError, setRequestError] = useState<string | null>(null)
   const [requestSuccess, setRequestSuccess] = useState<string | null>(null)
+  const [statusPickerOpen, setStatusPickerOpen] = useState(false)
 
   useEffect(() => {
     if (!session?.apiToken) return
@@ -263,6 +265,15 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
 
   return (
     <>
+      {statusPickerOpen && (
+        <StatusPicker 
+          onSelect={(status) => {
+            handleStatusChange(status)
+            setStatusPickerOpen(false)
+          }} 
+          onCancel={() => setStatusPickerOpen(false)} 
+        />
+      )}
       {/* Backdrop */}
       <div
         onClick={handleClose}
@@ -425,28 +436,24 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
           {/* Status */}
           <div className="flex flex-col gap-[8px]">
             <SectionLabel>Status</SectionLabel>
-            <div className="flex flex-wrap gap-[5px]">
-              {STATUSES.map((s) => {
-                const active = existingItem?.status === s
-                return (
-                  <button
-                    key={s}
-                    onClick={() => handleStatusChange(s)}
-                    className="px-[12px] py-[6px] rounded-[6px] text-[var(--text-12)] font-medium transition-all duration-100 cursor-pointer border-none"
-                    style={{
-                      background: active ? 'var(--accent)' : 'var(--surface)',
-                      color: active ? '#fff' : 'var(--muted)',
-                      border: `1px solid ${active ? 'transparent' : 'var(--border2)'}`,
-                    }}
-                    onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = 'var(--fg2)'; e.currentTarget.style.borderColor = 'var(--border)' } }}
-                    onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--border2)' } }}
-                  >
-                    {STATUS_LABELS[s]}
-                  </button>
-                )
-              })}
-            </div>
-            {existingItem && <div className="mt-[2px]"><StatusBadge status={existingItem.status} /></div>}
+            {existingItem ? (
+              <div 
+                className="mt-[2px] cursor-pointer inline-block w-fit"
+                onClick={() => setStatusPickerOpen(true)}
+              >
+                <StatusBadge status={existingItem.status} />
+              </div>
+            ) : (
+              <button
+                onClick={() => setStatusPickerOpen(true)}
+                className="w-fit px-[12px] py-[6px] rounded-[6px] text-[var(--text-12)] font-medium transition-all duration-100 cursor-pointer border-none"
+                style={{ background: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--border2)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--fg)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--border2)' }}
+              >
+                + Add to List
+              </button>
+            )}
           </div>
 
           {/* Jellyfin progress */}
