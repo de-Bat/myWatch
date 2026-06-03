@@ -5,6 +5,7 @@ import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { useSettings } from '@/hooks/useSettings'
 import { getTvProgress } from '@/lib/progress'
 import { StatusBadge } from './StatusBadge'
+import { ArrStatusBadge } from './ArrStatusBadge'
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w342'
 const PROVIDER_IMG = 'https://image.tmdb.org/t/p/w45'
@@ -116,22 +117,36 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
               <StatusBadge status={item.status} />
             )}
             <span
-              className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+              className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px] flex items-center justify-center"
               style={
                 item.mediaType === 'movie'
                   ? { background: 'rgba(251,146,60,.85)', color: '#fff' }
                   : { background: 'rgba(168,85,247,.85)', color: '#fff' }
               }
+              title={item.mediaType === 'movie' ? 'Movie' : 'TV'}
             >
-              {item.mediaType === 'movie' ? 'Movie' : 'TV'}
+              {cardMeta.showBadgesAsIcons ? (
+                item.mediaType === 'movie' ? (
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                ) : (
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+                )
+              ) : (
+                item.mediaType === 'movie' ? 'Movie' : 'TV'
+              )}
             </span>
 
             {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (
               <span
-                className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
+                className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px] flex items-center justify-center"
                 style={{ background: 'rgba(168,85,247,.85)', color: '#fff' }}
+                title="Jellyfin"
               >
-                Jellyfin
+                {cardMeta.showBadgesAsIcons ? (
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                ) : (
+                  'Jellyfin'
+                )}
               </span>
             )}
 
@@ -197,6 +212,8 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
               </span>
             )}
           </div>
+
+          <ArrStatusBadge tmdbId={item.tmdbId} mediaType={item.mediaType} asIcon={cardMeta.showBadgesAsIcons} />
 
           {/* Overview */}
           {cardMeta.showOverview && meta?.overview && (

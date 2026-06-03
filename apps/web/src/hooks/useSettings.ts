@@ -9,6 +9,7 @@ export interface CardMetaSettings {
   showProviders: boolean
   showOverview: boolean
   showProgressBars: boolean
+  showBadgesAsIcons: boolean
 }
 
 export type FontFamily = 'system' | 'serif' | 'mono'
@@ -64,6 +65,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     showProviders: false,
     showOverview: false,
     showProgressBars: true,
+    showBadgesAsIcons: false,
   },
   jellyfinUrl: '',
   jellyfinApiKey: '',

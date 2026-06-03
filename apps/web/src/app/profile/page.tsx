@@ -81,6 +81,7 @@ const CARD_META_LABELS: Record<keyof CardMetaSettings, string> = {
   showProviders: 'Streaming Providers',
   showOverview: 'Plot Overview',
   showProgressBars: 'Progress Bars',
+  showBadgesAsIcons: 'Badges as Icons',
 }
 
 const FONT_OPTIONS: Array<{ value: FontFamily; label: string }> = [
