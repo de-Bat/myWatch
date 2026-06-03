@@ -510,13 +510,12 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
 
             return (
               <div className="flex flex-col gap-[8px]">
-                <SectionLabel>On Jellyfin</SectionLabel>
                 <div className="flex items-center gap-[8px] flex-wrap">
                   <span
-                    className="text-[var(--text-9h)] font-extrabold tracking-[0.04em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
-                    style={{ background: watched ? 'rgba(134,239,172,.15)' : 'rgba(251,191,36,.15)', color: watched ? 'var(--green)' : 'var(--amber)' }}
+                    className="text-[var(--text-10)] font-bold px-[6px] py-[2px] rounded-[4px]"
+                    style={{ background: 'rgba(168,85,247,.15)', color: 'var(--purple)' }}
                   >
-                    {watched ? 'Watched' : 'Watching'}
+                    Jellyfin
                   </span>
                   {!watched && isMovie && (
                     <span style={{ fontSize: 'var(--text-12)', color: 'var(--fg2)' }}>
