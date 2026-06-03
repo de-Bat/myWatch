@@ -45,7 +45,7 @@ export function CardMenu({ item, globalSettings }: { item: WatchlistItem; global
   const flags = Object.keys(CARD_META_LABELS)
 
   return (
-    <div className="absolute top-[6px] right-[6px] z-50">
+    <div className="absolute bottom-[6px] right-[6px] z-50">
       <button
         onClick={(e) => {
           e.stopPropagation()
@@ -65,7 +65,7 @@ export function CardMenu({ item, globalSettings }: { item: WatchlistItem; global
       {open && (
         <div
           ref={menuRef}
-          className="absolute right-0 top-[28px] rounded-[8px] py-1 min-w-[160px]"
+          className="absolute right-0 bottom-[28px] rounded-[8px] py-1 min-w-[160px]"
           style={{
             background: 'var(--surface)',
             border: '1px solid var(--border)',
@@ -102,7 +102,7 @@ export function CardMenu({ item, globalSettings }: { item: WatchlistItem; global
                 <span>◀</span> Back
               </button>
               <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
-              <div className="max-h-[250px] overflow-y-auto">
+              <div className="flex flex-col">
                 {flags.map((key) => {
                   const isActive = overrides[key] ?? globalSettings[key] ?? false
                   return (

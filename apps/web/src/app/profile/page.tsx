@@ -1301,6 +1301,18 @@ export default function SettingsPage() {
                   })}
                 </div>
               </Row>
+              <Row label="Hide Watched in General Views">
+                <Toggle
+                  on={settings.hideWatched}
+                  onToggle={() => update({ hideWatched: !settings.hideWatched })}
+                />
+              </Row>
+              <Row label="Always Show Progress Bars">
+                <Toggle
+                  on={settings.alwaysShowProgressBars}
+                  onToggle={() => update({ alwaysShowProgressBars: !settings.alwaysShowProgressBars })}
+                />
+              </Row>
             </Section>
 
             {/* Card Display */}

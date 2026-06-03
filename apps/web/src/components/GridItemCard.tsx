@@ -108,7 +108,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
         )}
 
         {/* Bottom overlay */}
-        <div className="absolute bottom-0 left-0 right-0 px-[8px] pb-[7px] flex flex-col gap-[4px]">
+        <div className="absolute bottom-0 left-0 right-0 px-[8px] pr-[34px] pb-[7px] flex flex-col gap-[4px]">
           <div
             className="text-[var(--text-13)] font-semibold leading-[1.2] truncate"
             style={{ color: '#fff', letterSpacing: '-0.01em' }}
@@ -278,11 +278,11 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
         </div>
 
         {/* Jellyfin progress bar */}
-        {cardMeta.showProgress && jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (() => {
-          const watched = jellyfinProgress.jellyfinStatus === 'watched'
+        {cardMeta.showProgress && (settings.alwaysShowProgressBars || (jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned')) && (() => {
+          const watched = (jellyfinProgress?.jellyfinStatus === 'watched') || item.status === 'watched'
           const track = <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: 'rgba(0,0,0,.35)' }} />
-          if (jellyfinProgress.mediaType === 'movie') {
-            const pct = watched ? 100 : (jellyfinProgress.moviePercent ?? 0)
+          if (item.mediaType === 'movie') {
+            const pct = watched ? 100 : (jellyfinProgress?.moviePercent ?? 0)
             return (
               <>
                 {track}
@@ -293,7 +293,8 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
           if (watched) {
             return <>{track}<div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: 'rgba(134,239,172,.9)' }} /></>
           }
-          const tvProg = getTvProgress(jellyfinProgress, meta)
+          const mockProg = { jellyfinStatus: 'watching', mediaType: 'tv', season: null, episode: null, watchedEpisodes: 0, totalEpisodes: 0, completedTicks: null, totalTicks: null, episodePercent: null, hasEpisodeBar: false } as any
+          const tvProg = getTvProgress(jellyfinProgress ?? mockProg, meta)
           const completedPct = tvProg.completedPct
           const episodePct = tvProg.episodePercent
           const hasEpisodeBar = tvProg.hasEpisodeBar

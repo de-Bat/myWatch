@@ -65,6 +65,7 @@ export interface AppSettings {
   sonarrApiKey: string
   sonarrQualityProfileId: number
   sonarrRootFolderPath: string
+  alwaysShowProgressBars: boolean
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -115,6 +116,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   sonarrApiKey: '',
   sonarrQualityProfileId: 1,
   sonarrRootFolderPath: '',
+  alwaysShowProgressBars: false,
 }
 
 const FONT_SIZES: Record<FontSize, string> = {

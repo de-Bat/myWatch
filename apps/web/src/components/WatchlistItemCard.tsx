@@ -94,10 +94,11 @@ export function WatchlistItemCard({
 
   // Progress bar rendering (respects showProgress setting)
   const showBars = cardMeta.showProgress !== false
-  const progressBars = showBars && jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' ? (() => {
-    const watched = jellyfinProgress.jellyfinStatus === 'watched'
-    if (jellyfinProgress.mediaType === 'movie') {
-      const pct = watched ? 100 : (jellyfinProgress.moviePercent ?? 0)
+  const forceBars = settings.alwaysShowProgressBars
+  const progressBars = showBars && (forceBars || (jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned')) ? (() => {
+    const watched = (jellyfinProgress?.jellyfinStatus === 'watched') || item.status === 'watched'
+    if (item.mediaType === 'movie') {
+      const pct = watched ? 100 : (jellyfinProgress?.moviePercent ?? 0)
       return (
         <ProgressBar
           pct={pct}
@@ -109,7 +110,8 @@ export function WatchlistItemCard({
     if (watched) {
       return <ProgressBar pct={100} color="rgba(134,239,172,.85)" tooltip="Watched" />
     }
-    const tvProg = getTvProgress(jellyfinProgress, meta)
+    const mockProg = { jellyfinStatus: 'watching', mediaType: 'tv', season: null, episode: null, watchedEpisodes: 0, totalEpisodes: 0, completedTicks: null, totalTicks: null, episodePercent: null, hasEpisodeBar: false } as any
+    const tvProg = getTvProgress(jellyfinProgress ?? mockProg, meta)
     const { completedPct, episodePercent, hasEpisodeBar } = tvProg
     const hasBoth = hasEpisodeBar && completedPct > 0
     return (

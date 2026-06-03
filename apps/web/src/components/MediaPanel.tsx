@@ -159,6 +159,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
   }
 
   const [isRevealed, setIsRevealed] = useState(false)
+  const [showWaitMsg, setShowWaitMsg] = useState(false)
   useEffect(() => {
     setIsRevealed(false)
   }, [tmdbId, mediaType])
@@ -763,24 +764,15 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
           {/* AI Progress Recap inline under progress tracking */}
           {canShowRecap && !watched && (
             <div className="mt-4 flex flex-col gap-2">
-              {!dbRecap && (
-                <div 
-                  className="rounded-[8px] p-3 text-center border animate-pulse flex items-center justify-center gap-2"
-                  style={{
-                    background: 'rgba(99, 102, 241, 0.03)',
-                    borderColor: 'rgba(99, 102, 241, 0.1)',
-                  }}
-                >
-                  <span 
-                    className="w-1.5 h-1.5 rounded-full inline-block animate-ping"
-                    style={{ background: 'var(--accent2)' }}
-                  ></span>
-                  <span className="text-[11px] font-bold" style={{ color: 'var(--accent2)' }}>
-                    AI is writing your spoiler-free recap in the background...
-                  </span>
-                </div>
-              )}
-              
+              <style>{`
+                @keyframes tg-spoiler {
+                  0% { background-position: 0 0, 3px 3px; }
+                  25% { background-position: 3px 0, 0 3px; }
+                  50% { background-position: 3px 3px, 0 0; }
+                  75% { background-position: 0 3px, 3px 0; }
+                  100% { background-position: 0 0, 3px 3px; }
+                }
+              `}</style>
               <div 
                 className="flex flex-col gap-2 relative overflow-hidden rounded-[8px] p-4 transition-all duration-300 mt-1"
                 style={{
@@ -802,33 +794,61 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
 
                 <div className="relative">
                   <div 
-                    className="text-[12px] leading-relaxed select-none transition-all duration-500 ease-in-out"
+                    className="text-[12px] leading-relaxed select-none transition-all duration-500 ease-in-out relative"
                     style={{
-                      filter: isRevealed ? 'none' : 'blur(10px)',
-                      opacity: isRevealed ? 1 : 0.25,
-                      transition: 'filter 0.4s ease, opacity 0.4s ease',
+                      opacity: isRevealed ? 1 : 0.6,
                     }}
                   >
-                    {dbRecap ? dbRecap.recapText : 'This is a placeholder for the recap that is currently being generated. Once the AI finishes writing the spoiler-free recap, it will appear here in full.'}
+                    {/* The text itself */}
+                    <div style={{ filter: isRevealed ? 'none' : 'blur(3px)', transition: 'filter 0.4s ease' }}>
+                      {dbRecap ? dbRecap.recapText : 'This is a placeholder for the recap that is currently being generated. Once the AI finishes writing the spoiler-free recap, it will appear here in full.'}
+                    </div>
+                    
+                    {/* Telegram-style spoiler overlay */}
+                    {!isRevealed && (
+                      <div 
+                        className="absolute inset-0 z-10 pointer-events-none rounded-[4px]"
+                        style={{
+                          background: 'radial-gradient(circle, rgba(168,85,247,0.3) 1px, transparent 1px), radial-gradient(circle, rgba(99,102,241,0.2) 1px, transparent 1px)',
+                          backgroundSize: '6px 6px',
+                          backgroundPosition: '0 0, 3px 3px',
+                          animation: 'tg-spoiler 0.25s steps(1) infinite',
+                          backdropFilter: 'blur(4px)',
+                        }}
+                      />
+                    )}
                   </div>
 
                   {!isRevealed && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-1">
-                      <div className="text-[11px] font-bold text-center" style={{ color: 'var(--fg2)' }}>
-                        ⚠️ Spoiler Alert {dbRecap ? `(up to ${dbRecap.mediaType === 'movie' ? `${dbRecap.progressPercent}%` : `S${dbRecap.progressSeason} E${dbRecap.progressEpisode}`})` : ''}
-                      </div>
-                      <button
-                        onClick={() => { if (dbRecap) setIsRevealed(true) }}
-                        disabled={!dbRecap}
-                        className="px-3 py-1 text-[10px] font-extrabold tracking-wider uppercase cursor-pointer rounded-[4px] border-none disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{
-                          background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%)',
-                          color: '#ffffff',
-                          boxShadow: '0 2px 8px rgba(99, 102, 241, 0.2)',
-                        }}
-                      >
-                        {dbRecap ? 'Reveal Recap' : 'Generating...'}
-                      </button>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-1 z-20" style={{ background: showWaitMsg ? 'rgba(0,0,0,0.6)' : 'transparent', backdropFilter: showWaitMsg ? 'blur(2px)' : 'none', transition: 'all 0.3s' }}>
+                      {showWaitMsg ? (
+                        <div className="flex flex-col items-center gap-2 animate-pulse bg-black/50 p-3 rounded-lg backdrop-blur-md">
+                          <span className="w-1.5 h-1.5 rounded-full inline-block animate-ping" style={{ background: 'var(--accent2)' }}></span>
+                          <span className="text-[11px] font-bold text-center" style={{ color: 'var(--accent2)' }}>
+                            AI is writing your spoiler-free recap in the background...
+                          </span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="text-[11px] font-bold text-center drop-shadow-md" style={{ color: 'var(--fg)' }}>
+                            ⚠️ Spoiler Alert {dbRecap ? `(up to ${dbRecap.mediaType === 'movie' ? `${dbRecap.progressPercent}%` : `S${dbRecap.progressSeason} E${dbRecap.progressEpisode}`})` : ''}
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (dbRecap) setIsRevealed(true)
+                              else setShowWaitMsg(true)
+                            }}
+                            className="px-3 py-1 text-[10px] font-extrabold tracking-wider uppercase cursor-pointer rounded-[4px] border-none"
+                            style={{
+                              background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%)',
+                              color: '#ffffff',
+                              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.4)',
+                            }}
+                          >
+                            Reveal Recap
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
