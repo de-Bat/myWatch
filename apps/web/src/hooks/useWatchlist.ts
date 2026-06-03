@@ -48,13 +48,13 @@ export type UpsertItemInput = Omit<WatchlistItem, 'updatedAt' | 'deviceId' | 'cu
 }
 
 export function useUpsertItem() {
-  return useCallback(async (item: UpsertItemInput) => {
+  return useCallback(async (item: UpsertItemInput & { updatedAt?: string }, skipUpdatedAt = false) => {
     const now = new Date().toISOString()
     const full: WatchlistItem = {
       customPlatforms: [],
       displayOverrides: {},
       ...item,
-      updatedAt: now,
+      updatedAt: skipUpdatedAt && item.updatedAt ? item.updatedAt : now,
       deviceId: getLocalDeviceId(),
     }
     await db.watchlistItems.put(full)

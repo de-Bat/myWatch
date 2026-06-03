@@ -35,13 +35,12 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
   return (
     <div
       onClick={() => onSelect ? onSelect() : router.push(`/media/${item.mediaType}/${item.tmdbId}`)}
-      className="cursor-pointer transition-all duration-[120ms] hover:-translate-y-[2px] hover:shadow-[0_4px_16px_rgba(0,0,0,.4)]"
-      style={{ borderRadius: 'var(--r)', overflow: 'hidden' }}
+      className="cursor-pointer flex flex-col gap-[8px] group"
     >
       {/* Poster */}
       <div
-        className="relative w-full"
-        style={{ aspectRatio: '2/3', background: 'var(--surface2)' }}
+        className="relative w-full overflow-hidden transition-all duration-[120ms] group-hover:-translate-y-[2px] group-hover:shadow-[0_4px_16px_rgba(0,0,0,.4)]"
+        style={{ aspectRatio: '2/3', background: 'var(--surface2)', borderRadius: 'var(--r)' }}
       >
         {meta?.posterPath ? (
           <img
@@ -51,14 +50,14 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
           />
         ) : (
           <div
-            className="w-full h-full flex items-end pb-3 px-2"
+            className="w-full h-full flex items-center justify-center p-4 text-center"
             style={{ background: `linear-gradient(135deg, var(--accent-bg), var(--bg))` }}
           >
             <span
-              className="text-[var(--text-11)] font-bold leading-[1.2]"
-              style={{ color: 'var(--fg2)', letterSpacing: '-0.01em' }}
+              className="text-[var(--text-11)] font-bold leading-[1.2] opacity-50"
+              style={{ color: 'var(--fg)', letterSpacing: '-0.01em' }}
             >
-              {meta?.title ?? `#${item.tmdbId}`}
+              No Poster
             </span>
           </div>
         )}
@@ -109,12 +108,6 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
 
         {/* Bottom overlay */}
         <div className="absolute bottom-0 left-0 right-0 px-[8px] pr-[34px] pb-[7px] flex flex-col gap-[4px]">
-          <div
-            className="text-[var(--text-13)] font-semibold leading-[1.2] truncate"
-            style={{ color: '#fff', letterSpacing: '-0.01em' }}
-          >
-            {meta?.title ?? `#${item.tmdbId}`}
-          </div>
 
           {/* TV/Movie badge row */}
           <div className="flex items-center gap-[4px] flex-wrap">
@@ -317,6 +310,15 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
             </>
           )
         })()}
+      </div>
+
+      {/* Title Below Card */}
+      <div
+        className="text-[var(--text-13)] font-semibold leading-[1.2] truncate px-[2px] transition-colors group-hover:text-[var(--accent)]"
+        style={{ color: 'var(--fg)', letterSpacing: '-0.01em' }}
+        title={meta?.title ?? `#${item.tmdbId}`}
+      >
+        {meta?.title ?? `#${item.tmdbId}`}
       </div>
     </div>
   )

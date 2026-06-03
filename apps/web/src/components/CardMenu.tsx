@@ -33,7 +33,7 @@ export function CardMenu({ item, globalSettings }: { item: WatchlistItem; global
     await upsertItem({
       ...item,
       displayOverrides: newOverrides,
-    })
+    }, true)
   }
 
   const handleRemove = async () => {
