@@ -65,6 +65,15 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
   const [customInput, setCustomInput] = useState('')
   const [showCustomInput, setShowCustomInput] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  const hasChanges = existingItem != null && (
+    rating !== existingItem.rating ||
+    notes !== (existingItem.notes ?? '') ||
+    season !== existingItem.progressSeason ||
+    episode !== existingItem.progressEpisode ||
+    JSON.stringify(customPlatforms) !== JSON.stringify(existingItem.customPlatforms ?? [])
+  )
+
   const [arrStatus, setArrStatus] = useState<{
     monitored: boolean
     hasFile: boolean
@@ -309,25 +318,66 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
           ) : (
             <div style={{ height: 52 }} />
           )}
-          {/* Close button always in top-right of this zone */}
-          <button
-            onClick={handleClose}
-            className="absolute right-[12px] flex items-center justify-center w-[30px] h-[30px] rounded-full transition-all duration-100"
-            style={{
-              top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-              background: meta?.backdropPath ? 'rgba(0,0,0,.45)' : 'var(--surface)',
-              border: `1px solid ${meta?.backdropPath ? 'rgba(255,255,255,.12)' : 'var(--border)'}`,
-              color: meta?.backdropPath ? '#fff' : 'var(--muted)',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8' }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <line x1="1" y1="1" x2="11" y2="11" />
-              <line x1="11" y1="1" x2="1" y2="11" />
-            </svg>
-          </button>
+          <div className="absolute right-[12px] flex items-center gap-[6px]" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}>
+            {existingItem && (
+              <>
+                <button
+                  onClick={handleRemove}
+                  title="Remove item"
+                  className="flex items-center justify-center w-[30px] h-[30px] rounded-full transition-all duration-100 border-none cursor-pointer"
+                  style={{
+                    background: meta?.backdropPath ? 'rgba(0,0,0,.45)' : 'var(--surface)',
+                    border: `1px solid ${meta?.backdropPath ? 'rgba(255,255,255,.12)' : 'var(--border)'}`,
+                    color: '#f87171',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,.15)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,.3)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = meta?.backdropPath ? 'rgba(0,0,0,.45)' : 'var(--surface)'; e.currentTarget.style.borderColor = meta?.backdropPath ? 'rgba(255,255,255,.12)' : 'var(--border)' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" />
+                  </svg>
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={!hasChanges}
+                  title="Save changes"
+                  className="flex items-center justify-center w-[30px] h-[30px] rounded-full transition-all duration-100 border-none"
+                  style={{
+                    background: hasChanges ? 'var(--accent)' : (meta?.backdropPath ? 'rgba(0,0,0,.45)' : 'var(--surface)'),
+                    border: hasChanges ? '1px solid var(--accent)' : `1px solid ${meta?.backdropPath ? 'rgba(255,255,255,.12)' : 'var(--border)'}`,
+                    color: hasChanges ? '#fff' : (meta?.backdropPath ? '#fff' : 'var(--muted)'),
+                    cursor: hasChanges ? 'pointer' : 'default',
+                    opacity: hasChanges ? 1 : 0.6
+                  }}
+                  onMouseEnter={(e) => { if (hasChanges) e.currentTarget.style.opacity = '0.8' }}
+                  onMouseLeave={(e) => { if (hasChanges) e.currentTarget.style.opacity = '1' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                    <polyline points="17 21 17 13 7 13 7 21" />
+                    <polyline points="7 3 7 8 15 8" />
+                  </svg>
+                </button>
+              </>
+            )}
+            <button
+              onClick={handleClose}
+              className="flex items-center justify-center w-[30px] h-[30px] rounded-full transition-all duration-100"
+              style={{
+                background: meta?.backdropPath ? 'rgba(0,0,0,.45)' : 'var(--surface)',
+                border: `1px solid ${meta?.backdropPath ? 'rgba(255,255,255,.12)' : 'var(--border)'}`,
+                color: meta?.backdropPath ? '#fff' : 'var(--muted)',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8' }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <line x1="1" y1="1" x2="11" y2="11" />
+                <line x1="11" y1="1" x2="1" y2="11" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Scrollable content */}
@@ -807,7 +857,6 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
 
           {/* Notes */}
           <div className="flex flex-col gap-[8px]">
-            <SectionLabel>Notes</SectionLabel>
             {noteEditing ? (
               <div className="flex flex-col gap-[6px]">
                 <textarea
@@ -944,32 +993,6 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
             </div>
           </div>
 
-          {/* Save / Remove */}
-          {existingItem && (
-            <>
-              <Divider />
-              <div className="flex gap-[8px]">
-                <button
-                  onClick={handleSave}
-                  className="flex-1 py-[9px] rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
-                  style={{ background: 'var(--accent)', color: '#fff' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.88' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
-                >
-                  {saved ? 'Saved ✓' : 'Save'}
-                </button>
-                <button
-                  onClick={handleRemove}
-                  className="py-[9px] px-[16px] rounded-[6px] text-[var(--text-13)] font-medium cursor-pointer border-none transition-all duration-100"
-                  style={{ background: 'rgba(248,113,113,.1)', color: 'var(--red)', border: '1px solid rgba(248,113,113,.2)' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(248,113,113,.18)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(248,113,113,.1)' }}
-                >
-                  Remove
-                </button>
-              </div>
-            </>
-          )}
         </div>
         </div>{/* end scrollable */}
 

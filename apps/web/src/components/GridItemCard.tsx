@@ -4,6 +4,7 @@ import type { WatchlistItem, JellyfinProgress } from '@mywatch/core'
 import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { useSettings } from '@/hooks/useSettings'
 import { getTvProgress } from '@/lib/progress'
+import { StatusBadge } from './StatusBadge'
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w342'
 const PROVIDER_IMG = 'https://image.tmdb.org/t/p/w45'
@@ -88,6 +89,18 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
           </div>
         )}
 
+        {/* User rating top-right (below TMDB rating) */}
+        {item.rating != null && (
+          <div className="absolute right-[6px]" style={{ top: (cardMeta.showTmdbRating && meta?.voteAverage != null && meta.voteAverage > 0) ? '32px' : '6px' }}>
+            <span
+              className="text-[var(--text-10)] font-bold px-[6px] py-[2px] rounded-[3px] flex items-center gap-[2px]"
+              style={{ background: 'rgba(0,0,0,.65)', color: 'var(--amber)' }}
+            >
+              ★ {item.rating}
+            </span>
+          </div>
+        )}
+
         {/* Bottom overlay */}
         <div className="absolute bottom-0 left-0 right-0 px-[8px] pb-[7px] flex flex-col gap-[4px]">
           <div
@@ -99,6 +112,9 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
 
           {/* TV/Movie badge row */}
           <div className="flex items-center gap-[4px] flex-wrap">
+            {!(jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned') && (
+              <StatusBadge status={item.status} />
+            )}
             <span
               className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
               style={
@@ -181,6 +197,16 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
               </span>
             )}
           </div>
+
+          {/* Overview */}
+          {cardMeta.showOverview && meta?.overview && (
+            <p
+              className="text-[8.5px] leading-[1.4]"
+              style={{ color: 'rgba(255,255,255,0.7)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+            >
+              {meta.overview}
+            </p>
+          )}
 
           {/* Genres */}
           {cardMeta.showGenres && genres.length > 0 && (
