@@ -8,7 +8,9 @@ export interface CardMetaSettings {
   showRuntime: boolean
   showProviders: boolean
   showOverview: boolean
-  showProgressBars: boolean
+  showProgress: boolean
+  showAvailability: boolean
+  showPlatform: boolean
   showBadgesAsIcons: boolean
 }
 
@@ -38,7 +40,8 @@ export interface AppSettings {
   badgeIconSize: FontSize
   syncInterval: number // minutes; 0 = disabled
   gridColumns: GridColumns
-  cardMeta: CardMetaSettings
+  listCardMeta: CardMetaSettings
+  gridCardMeta: CardMetaSettings
   jellyfinUrl: string
   jellyfinApiKey: string
   jellyfinUserId: string
@@ -67,13 +70,26 @@ export const DEFAULT_SETTINGS: AppSettings = {
   badgeIconSize: 'md',
   syncInterval: 5,
   gridColumns: 'auto',
-  cardMeta: {
+  listCardMeta: {
+    showGenres: true,
+    showTmdbRating: false,
+    showRuntime: false,
+    showProviders: false,
+    showOverview: true,
+    showProgress: true,
+    showAvailability: false,
+    showPlatform: false,
+    showBadgesAsIcons: false,
+  },
+  gridCardMeta: {
     showGenres: true,
     showTmdbRating: false,
     showRuntime: false,
     showProviders: false,
     showOverview: false,
-    showProgressBars: true,
+    showProgress: true,
+    showAvailability: false,
+    showPlatform: false,
     showBadgesAsIcons: false,
   },
   jellyfinUrl: '',
@@ -104,10 +120,24 @@ export function loadSettings(): AppSettings {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return DEFAULT_SETTINGS
     const parsed = JSON.parse(raw)
+    
+    // Migration from old `cardMeta`
+    let listMeta = parsed.listCardMeta || parsed.cardMeta || {}
+    let gridMeta = parsed.gridCardMeta || parsed.cardMeta || {}
+    
+    // Map `showProgressBars` to `showProgress` for backwards compatibility
+    if (listMeta.showProgressBars !== undefined && listMeta.showProgress === undefined) {
+      listMeta.showProgress = listMeta.showProgressBars
+    }
+    if (gridMeta.showProgressBars !== undefined && gridMeta.showProgress === undefined) {
+      gridMeta.showProgress = gridMeta.showProgressBars
+    }
+
     return {
       ...DEFAULT_SETTINGS,
       ...parsed,
-      cardMeta: { ...DEFAULT_SETTINGS.cardMeta, ...parsed.cardMeta },
+      listCardMeta: { ...DEFAULT_SETTINGS.listCardMeta, ...listMeta },
+      gridCardMeta: { ...DEFAULT_SETTINGS.gridCardMeta, ...gridMeta },
     }
   } catch {
     return DEFAULT_SETTINGS
@@ -146,13 +176,15 @@ function applyFont(font: FontFamily, fontSize: FontSize) {
 type SettingsCtx = {
   settings: AppSettings
   update: (patch: Partial<AppSettings>) => void
-  updateCardMeta: (patch: Partial<CardMetaSettings>) => void
+  updateListCardMeta: (patch: Partial<CardMetaSettings>) => void
+  updateGridCardMeta: (patch: Partial<CardMetaSettings>) => void
 }
 
 const Ctx = createContext<SettingsCtx>({
   settings: DEFAULT_SETTINGS,
   update: () => {},
-  updateCardMeta: () => {},
+  updateListCardMeta: () => {},
+  updateGridCardMeta: () => {},
 })
 
 export function useSettings(): SettingsCtx {
@@ -192,13 +224,21 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  function updateCardMeta(patch: Partial<CardMetaSettings>) {
+  function updateListCardMeta(patch: Partial<CardMetaSettings>) {
     setSettings((prev) => {
-      const next = { ...prev, cardMeta: { ...prev.cardMeta, ...patch } }
+      const next = { ...prev, listCardMeta: { ...prev.listCardMeta, ...patch } }
       persistSettings(next)
       return next
     })
   }
 
-  return createElement(Ctx.Provider, { value: { settings, update, updateCardMeta } }, children)
+  function updateGridCardMeta(patch: Partial<CardMetaSettings>) {
+    setSettings((prev) => {
+      const next = { ...prev, gridCardMeta: { ...prev.gridCardMeta, ...patch } }
+      persistSettings(next)
+      return next
+    })
+  }
+
+  return createElement(Ctx.Provider, { value: { settings, update, updateListCardMeta, updateGridCardMeta } }, children)
 }

@@ -21,6 +21,7 @@ export const watchlistItemSchema = z.object({
   updatedAt: z.string().datetime(),
   deviceId: z.string().min(1),
   deletedAt: z.string().datetime().nullable(),
+  displayOverrides: z.record(z.boolean()).optional(),
 })
 
 export const mediaCacheSchema = z.object({

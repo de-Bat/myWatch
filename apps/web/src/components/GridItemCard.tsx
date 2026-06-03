@@ -6,6 +6,7 @@ import { useSettings, BADGE_ICON_SIZES } from '@/hooks/useSettings'
 import { getTvProgress } from '@/lib/progress'
 import { StatusBadge } from './StatusBadge'
 import { ArrStatusBadge } from './ArrStatusBadge'
+import { CardMenu } from './CardMenu'
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w342'
 const PROVIDER_IMG = 'https://image.tmdb.org/t/p/w45'
@@ -25,7 +26,8 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
   const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey, settings.language)
   const size = BADGE_ICON_SIZES[settings.badgeIconSize] ?? BADGE_ICON_SIZES.md
   const router = useRouter()
-  const { cardMeta } = settings
+  const { gridCardMeta: baseCardMeta } = settings
+  const cardMeta = { ...baseCardMeta, ...(item.displayOverrides ?? {}) }
   const upcoming = isUpcoming(meta?.releaseDate ?? null)
   const genres = meta?.genres ?? []
   const providers = (meta?.watchProviders ?? []).slice(0, 3)
@@ -63,9 +65,11 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
 
         {/* Gradient overlay */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 pointer-events-none"
           style={{ background: 'linear-gradient(to top, rgba(0,0,0,.82) 0%, transparent 55%)' }}
         />
+        
+        <CardMenu item={item} globalSettings={baseCardMeta} />
 
         {/* Upcoming badge */}
         {upcoming && (
@@ -146,7 +150,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
               )}
             </span>
 
-            {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (
+            {cardMeta.showPlatform && jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (
               <span
                 className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px] flex items-center justify-center"
                 style={
@@ -164,7 +168,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
               </span>
             )}
 
-            {item.mediaType === 'movie' && jellyfinProgress?.jellyfinStatus === 'watching' && jellyfinProgress.moviePercent != null && (
+            {cardMeta.showProgress && item.mediaType === 'movie' && jellyfinProgress?.jellyfinStatus === 'watching' && jellyfinProgress.moviePercent != null && (
               <span
                 className="text-[var(--text-9)] font-bold rounded-[3px] px-[4px] py-[1px] tracking-[0.02em] tabular-nums"
                 style={{ background: 'rgba(251,191,36,0.2)', color: 'var(--amber)' }}
@@ -173,7 +177,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
               </span>
             )}
 
-            {item.mediaType === 'tv' && (() => {
+            {cardMeta.showProgress && item.mediaType === 'tv' && (() => {
               // Prefer Jellyfin progress, fallback to manual item progress
               if (jellyfinProgress && (jellyfinProgress.season != null || jellyfinProgress.watchedEpisodes != null)) {
                 const tvProg = getTvProgress(jellyfinProgress, meta)
@@ -227,7 +231,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
             )}
           </div>
 
-          <ArrStatusBadge tmdbId={item.tmdbId} mediaType={item.mediaType} asIcon={cardMeta.showBadgesAsIcons} />
+          {cardMeta.showAvailability && <ArrStatusBadge tmdbId={item.tmdbId} mediaType={item.mediaType} asIcon={cardMeta.showBadgesAsIcons} />}
 
           {/* Overview */}
           {cardMeta.showOverview && meta?.overview && (
@@ -274,7 +278,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
         </div>
 
         {/* Jellyfin progress bar */}
-        {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (() => {
+        {cardMeta.showProgress && jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (() => {
           const watched = jellyfinProgress.jellyfinStatus === 'watched'
           const track = <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: 'rgba(0,0,0,.35)' }} />
           if (jellyfinProgress.mediaType === 'movie') {

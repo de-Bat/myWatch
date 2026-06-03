@@ -42,8 +42,9 @@ export function useWatchlistItem(tmdbId: number, mediaType: MediaType) {
   )
 }
 
-export type UpsertItemInput = Omit<WatchlistItem, 'updatedAt' | 'deviceId' | 'customPlatforms'> & {
+export type UpsertItemInput = Omit<WatchlistItem, 'updatedAt' | 'deviceId' | 'customPlatforms' | 'displayOverrides'> & {
   customPlatforms?: string[]
+  displayOverrides?: Record<string, boolean>
 }
 
 export function useUpsertItem() {
@@ -51,6 +52,7 @@ export function useUpsertItem() {
     const now = new Date().toISOString()
     const full: WatchlistItem = {
       customPlatforms: [],
+      displayOverrides: {},
       ...item,
       updatedAt: now,
       deviceId: getLocalDeviceId(),

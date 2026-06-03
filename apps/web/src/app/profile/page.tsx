@@ -80,7 +80,9 @@ const CARD_META_LABELS: Record<keyof CardMetaSettings, string> = {
   showRuntime: 'Runtime',
   showProviders: 'Streaming Providers',
   showOverview: 'Plot Overview',
-  showProgressBars: 'Progress Bars',
+  showProgress: 'Progress Bars',
+  showAvailability: 'Availability',
+  showPlatform: 'Platform',
   showBadgesAsIcons: 'Badges as Icons',
 }
 
@@ -119,7 +121,7 @@ export default function SettingsPage() {
   const { data: session } = useSession()
   const router = useRouter()
   const { syncing, lastSyncedAt, error, sync } = useSync()
-  const { settings, update, updateCardMeta } = useSettings()
+  const { settings, update, updateListCardMeta, updateGridCardMeta } = useSettings()
   const { toast } = useToast()
   const [llmProvider, setLlmProvider] = useState<'gemini' | 'openai'>('gemini')
   const [llmBaseUrlInput, setLlmBaseUrlInput] = useState('')
@@ -1315,17 +1317,44 @@ export default function SettingsPage() {
 
             {/* Card Display */}
             <Section title="Card Display">
-              {(Object.keys(CARD_META_LABELS) as Array<keyof CardMetaSettings>).map((key) => (
-                <Row key={key} label={CARD_META_LABELS[key]}>
-                  <Toggle
-                    on={settings.cardMeta[key]}
-                    onToggle={() => {
-                      updateCardMeta({ [key]: !settings.cardMeta[key] })
-                      toast('Saved', 'success', 1500)
-                    }}
-                  />
-                </Row>
-              ))}
+              <div className="flex divide-x" style={{ borderColor: 'var(--border2)' }}>
+                <div className="flex-1">
+                  <div className="px-4 py-2 text-[var(--text-12)] font-bold tracking-wider uppercase" style={{ color: 'var(--muted)', background: 'var(--bg)' }}>
+                    List View
+                  </div>
+                  <div className="divide-y" style={{ borderColor: 'var(--border2)' }}>
+                    {(Object.keys(CARD_META_LABELS) as Array<keyof CardMetaSettings>).map((key) => (
+                      <Row key={key} label={CARD_META_LABELS[key]}>
+                        <Toggle
+                          on={settings.listCardMeta[key]}
+                          onToggle={() => {
+                            updateListCardMeta({ [key]: !settings.listCardMeta[key] })
+                            toast('Saved', 'success', 1500)
+                          }}
+                        />
+                      </Row>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="px-4 py-2 text-[var(--text-12)] font-bold tracking-wider uppercase" style={{ color: 'var(--muted)', background: 'var(--bg)' }}>
+                    Grid View
+                  </div>
+                  <div className="divide-y" style={{ borderColor: 'var(--border2)' }}>
+                    {(Object.keys(CARD_META_LABELS) as Array<keyof CardMetaSettings>).map((key) => (
+                      <Row key={key} label={CARD_META_LABELS[key]}>
+                        <Toggle
+                          on={settings.gridCardMeta[key]}
+                          onToggle={() => {
+                            updateGridCardMeta({ [key]: !settings.gridCardMeta[key] })
+                            toast('Saved', 'success', 1500)
+                          }}
+                        />
+                      </Row>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </Section>
 
             {/* Data */}

@@ -17,6 +17,7 @@ interface WatchlistRow {
   rating: number | null
   notes: string | null
   custom_platforms: string[]
+  display_overrides: Record<string, boolean>
   added_at: Date
   started_at: Date | null
   finished_at: Date | null
@@ -45,6 +46,7 @@ function mapRow(row: WatchlistRow): WatchlistItem {
     updatedAt: row.updated_at.toISOString(),
     deviceId: row.device_id,
     deletedAt: row.deleted_at?.toISOString() ?? null,
+    displayOverrides: row.display_overrides ?? {},
   }
 }
 
@@ -66,17 +68,18 @@ export function createWatchlistRepo(sql: Sql): WatchlistRepo {
         const quitAt          = item.quitAt           ?? null
         const deletedAt       = item.deletedAt        ?? null
         const deviceId        = item.deviceId         ?? ''
+        const displayOverrides = item.displayOverrides ?? {}
 
         await sql`
           INSERT INTO watchlist_items (
             id, user_id, tmdb_id, media_type, status,
-            progress_episode, progress_season, rating, notes, custom_platforms,
+            progress_episode, progress_season, rating, notes, custom_platforms, display_overrides,
             added_at, started_at, finished_at, quit_at,
             updated_at, device_id, deleted_at
           ) VALUES (
             ${item.id}, ${userId}, ${item.tmdbId}, ${item.mediaType}, ${item.status},
             ${progressEpisode}, ${progressSeason}, ${rating}, ${notes},
-            ${customPlatforms},
+            ${customPlatforms}, ${sql.json(displayOverrides)},
             ${item.addedAt}, ${startedAt}, ${finishedAt}, ${quitAt},
             ${item.updatedAt}, ${deviceId}, ${deletedAt}
           )
@@ -88,6 +91,7 @@ export function createWatchlistRepo(sql: Sql): WatchlistRepo {
             rating = EXCLUDED.rating,
             notes = EXCLUDED.notes,
             custom_platforms = EXCLUDED.custom_platforms,
+            display_overrides = EXCLUDED.display_overrides,
             started_at = EXCLUDED.started_at,
             finished_at = EXCLUDED.finished_at,
             quit_at = EXCLUDED.quit_at,
@@ -102,7 +106,7 @@ export function createWatchlistRepo(sql: Sql): WatchlistRepo {
     async findSince(userId, since) {
       const rows = await sql<WatchlistRow[]>`
         SELECT id, user_id, tmdb_id, media_type, status,
-               progress_episode, progress_season, rating, notes, custom_platforms,
+               progress_episode, progress_season, rating, notes, custom_platforms, display_overrides,
                added_at, started_at, finished_at, quit_at,
                updated_at, device_id, deleted_at
         FROM watchlist_items

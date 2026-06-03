@@ -182,7 +182,10 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
   const recapPercent = isMovieProgress ? (jellyfinProgress?.moviePercent ?? (existingItem?.status === 'watched' ? 100 : null)) : null
   const recapSeason = isTvProgress ? (jellyfinProgress?.season ?? season) : null
   const recapEpisode = isTvProgress ? (jellyfinProgress?.episode ?? episode) : null
-  const canShowRecap = isMovieProgress || isTvProgress
+  const hasEnoughProgress = isMovieProgress 
+    ? (recapPercent != null && recapPercent > 10) 
+    : (recapSeason != null && recapSeason > 1) || (recapEpisode != null && recapEpisode > 1)
+  const canShowRecap = (isMovieProgress || isTvProgress) && hasEnoughProgress
 
   // Animate in
   useEffect(() => {
@@ -416,6 +419,22 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                 {meta?.seasonsCount && <><span style={{ opacity: 0.4 }}>·</span><span>{meta.seasonsCount} seasons</span></>}
                 {meta?.voteAverage != null && meta.voteAverage > 0 && (
                   <><span style={{ opacity: 0.4 }}>·</span><span style={{ color: 'var(--amber)' }}>★ {meta.voteAverage.toFixed(1)}</span></>
+                )}
+                {arrStatus && (
+                  <span
+                    className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px] ml-1"
+                    style={
+                      arrStatus.hasFile
+                        ? { background: 'rgba(34,197,94,.15)', color: 'var(--green)' }
+                        : arrStatus.isDownloading
+                        ? { background: 'rgba(168,85,247,.15)', color: 'var(--purple)' }
+                        : arrStatus.monitored
+                        ? { background: 'rgba(59,130,246,.15)', color: 'var(--accent2)' }
+                        : { background: 'rgba(255,255,255,.08)', color: 'var(--muted)' }
+                    }
+                  >
+                    {arrStatus.hasFile ? '✓ Available' : arrStatus.isDownloading ? 'Downloading' : arrStatus.monitored ? 'Monitored' : 'Not Tracked'}
+                  </span>
                 )}
               </div>
               {upcoming && meta?.releaseDate && (
@@ -744,7 +763,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
           {/* AI Progress Recap inline under progress tracking */}
           {canShowRecap && !watched && (
             <div className="mt-4 flex flex-col gap-2">
-              {!dbRecap ? (
+              {!dbRecap && (
                 <div 
                   className="rounded-[8px] p-3 text-center border animate-pulse flex items-center justify-center gap-2"
                   style={{
@@ -760,73 +779,72 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                     AI is writing your spoiler-free recap in the background...
                   </span>
                 </div>
-              ) : (
-                <div 
-                  className="flex flex-col gap-2 relative overflow-hidden rounded-[8px] p-4 transition-all duration-300"
-                  style={{
-                    background: 'var(--surface)',
-                    border: '1px solid var(--border2)',
-                  }}
-                >
-                  <div className="flex justify-between items-center text-[10px] font-extrabold uppercase tracking-[0.08em]"
-                       style={{ color: 'var(--accent2)' }}>
-                    <span>✨ Progress Recap</span>
-                    <span style={{ color: 'var(--muted)' }}>
-                      {dbRecap.mediaType === 'movie' 
+              )}
+              
+              <div 
+                className="flex flex-col gap-2 relative overflow-hidden rounded-[8px] p-4 transition-all duration-300 mt-1"
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border2)',
+                }}
+              >
+                <div className="flex justify-between items-center text-[10px] font-extrabold uppercase tracking-[0.08em]"
+                     style={{ color: 'var(--accent2)' }}>
+                  <span>✨ Progress Recap</span>
+                  <span style={{ color: 'var(--muted)' }}>
+                    {dbRecap ? (
+                      dbRecap.mediaType === 'movie' 
                         ? `Up to ${dbRecap.progressPercent}%`
                         : `Up to S${dbRecap.progressSeason} E${dbRecap.progressEpisode}`
-                      }
-                    </span>
+                    ) : 'Pending...'}
+                  </span>
+                </div>
+
+                <div className="relative">
+                  <div 
+                    className="text-[12px] leading-relaxed select-none transition-all duration-500 ease-in-out"
+                    style={{
+                      filter: isRevealed ? 'none' : 'blur(10px)',
+                      opacity: isRevealed ? 1 : 0.25,
+                      transition: 'filter 0.4s ease, opacity 0.4s ease',
+                    }}
+                  >
+                    {dbRecap ? dbRecap.recapText : 'This is a placeholder for the recap that is currently being generated. Once the AI finishes writing the spoiler-free recap, it will appear here in full.'}
                   </div>
 
-                  <div className="relative">
-                    <div 
-                      className="text-[12px] leading-relaxed select-none transition-all duration-500 ease-in-out"
-                      style={{
-                        filter: isRevealed ? 'none' : 'blur(10px)',
-                        opacity: isRevealed ? 1 : 0.25,
-                        transition: 'filter 0.4s ease, opacity 0.4s ease',
-                      }}
-                    >
-                      {dbRecap.recapText}
-                    </div>
-
-                    {!isRevealed && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-1">
-                        <div className="text-[11px] font-bold text-center" style={{ color: 'var(--fg2)' }}>
-                          ⚠️ Spoiler Alert (up to {dbRecap.mediaType === 'movie' 
-                            ? `${dbRecap.progressPercent}%`
-                            : `S${dbRecap.progressSeason} E${dbRecap.progressEpisode}`
-                          })
-                        </div>
-                        <button
-                          onClick={() => setIsRevealed(true)}
-                          className="px-3 py-1 text-[10px] font-extrabold tracking-wider uppercase cursor-pointer rounded-[4px] border-none"
-                          style={{
-                            background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%)',
-                            color: '#ffffff',
-                            boxShadow: '0 2px 8px rgba(99, 102, 241, 0.2)',
-                          }}
-                        >
-                          Reveal Recap
-                        </button>
+                  {!isRevealed && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-1">
+                      <div className="text-[11px] font-bold text-center" style={{ color: 'var(--fg2)' }}>
+                        ⚠️ Spoiler Alert {dbRecap ? `(up to ${dbRecap.mediaType === 'movie' ? `${dbRecap.progressPercent}%` : `S${dbRecap.progressSeason} E${dbRecap.progressEpisode}`})` : ''}
                       </div>
-                    )}
-                  </div>
-
-                  {isRevealed && (
-                    <div className="flex justify-end mt-1">
                       <button
-                        onClick={() => setIsRevealed(false)}
-                        className="text-[9px] font-extrabold tracking-[0.05em] uppercase hover:underline border-none cursor-pointer bg-transparent"
-                        style={{ color: 'var(--muted)' }}
+                        onClick={() => { if (dbRecap) setIsRevealed(true) }}
+                        disabled={!dbRecap}
+                        className="px-3 py-1 text-[10px] font-extrabold tracking-wider uppercase cursor-pointer rounded-[4px] border-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%)',
+                          color: '#ffffff',
+                          boxShadow: '0 2px 8px rgba(99, 102, 241, 0.2)',
+                        }}
                       >
-                        Hide Recap
+                        {dbRecap ? 'Reveal Recap' : 'Generating...'}
                       </button>
                     </div>
                   )}
                 </div>
-              )}
+
+                {isRevealed && dbRecap && (
+                  <div className="flex justify-end mt-1">
+                    <button
+                      onClick={() => setIsRevealed(false)}
+                      className="text-[9px] font-extrabold tracking-[0.05em] uppercase hover:underline border-none cursor-pointer bg-transparent"
+                      style={{ color: 'var(--muted)' }}
+                    >
+                      Hide Recap
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

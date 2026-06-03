@@ -30,6 +30,7 @@ export interface WatchlistItem {
   deviceId: string
   deletedAt: string | null
   customPlatforms: string[]
+  displayOverrides?: Record<string, boolean>
 }
 
 export interface WatchProvider {

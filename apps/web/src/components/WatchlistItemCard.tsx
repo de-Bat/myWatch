@@ -9,6 +9,7 @@ import { useMediaMeta } from '@/hooks/useMediaMeta'
 import { usePlaylists, useAddToPlaylist, MAIN_LIST_UUID } from '@/hooks/usePlaylists'
 import { useSettings, BADGE_ICON_SIZES } from '@/hooks/useSettings'
 import { getTvProgress } from '@/lib/progress'
+import { CardMenu } from './CardMenu'
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w92'
 const PROVIDER_IMG = 'https://image.tmdb.org/t/p/w45'
@@ -65,7 +66,8 @@ export function WatchlistItemCard({
 }) {
   const { data: session } = useSession()
   const { settings } = useSettings()
-  const cardMeta = settings.cardMeta
+  const baseCardMeta = settings.listCardMeta
+  const cardMeta = { ...baseCardMeta, ...(item.displayOverrides ?? {}) }
   const size = BADGE_ICON_SIZES[settings.badgeIconSize] ?? BADGE_ICON_SIZES.md
   const meta = useMediaMeta(item.tmdbId, item.mediaType, settings.tmdbApiKey, settings.language)
   const router = useRouter()
@@ -90,8 +92,8 @@ export function WatchlistItemCard({
   const genres = meta?.genres ?? []
   const providers = (meta?.watchProviders ?? []).slice(0, 3)
 
-  // Progress bar rendering (respects showProgressBars setting)
-  const showBars = cardMeta.showProgressBars !== false
+  // Progress bar rendering (respects showProgress setting)
+  const showBars = cardMeta.showProgress !== false
   const progressBars = showBars && jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' ? (() => {
     const watched = jellyfinProgress.jellyfinStatus === 'watched'
     if (jellyfinProgress.mediaType === 'movie') {
@@ -170,6 +172,8 @@ export function WatchlistItemCard({
           />
         )}
       </div>
+      
+      <CardMenu item={item} globalSettings={baseCardMeta} />
 
       {/* Body */}
       <div className="flex-1 min-w-0 flex flex-col gap-[6px] pt-[1px] overflow-visible">
@@ -220,7 +224,7 @@ export function WatchlistItemCard({
           {!(jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned') && (
             <StatusBadge status={item.status} />
           )}
-          {jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (
+          {cardMeta.showPlatform && jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (
             <span
               className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px] flex items-center justify-center"
               style={
@@ -237,7 +241,7 @@ export function WatchlistItemCard({
               )}
             </span>
           )}
-          {item.mediaType === 'movie' && jellyfinProgress?.jellyfinStatus === 'watching' && jellyfinProgress.moviePercent != null && (
+          {cardMeta.showProgress && item.mediaType === 'movie' && jellyfinProgress?.jellyfinStatus === 'watching' && jellyfinProgress.moviePercent != null && (
             <span
               className="text-[var(--text-10h)] font-bold rounded-full px-[7px] py-[1.5px] border tabular-nums"
               style={{ color: 'var(--amber)', background: 'rgba(251,191,36,0.1)', borderColor: 'rgba(251,191,36,0.2)' }}
@@ -245,7 +249,7 @@ export function WatchlistItemCard({
               {jellyfinProgress.moviePercent}%
             </span>
           )}
-          {item.mediaType === 'tv' && (() => {
+          {cardMeta.showProgress && item.mediaType === 'tv' && (() => {
             if (jellyfinProgress && (jellyfinProgress.season != null || jellyfinProgress.watchedEpisodes != null)) {
               const tvProg = getTvProgress(jellyfinProgress, meta)
               return (
@@ -337,7 +341,7 @@ export function WatchlistItemCard({
         )}
 
         {/* Arr status row */}
-        <ArrStatusBadge tmdbId={item.tmdbId} mediaType={item.mediaType} asIcon={cardMeta.showBadgesAsIcons} />
+        {cardMeta.showAvailability && <ArrStatusBadge tmdbId={item.tmdbId} mediaType={item.mediaType} asIcon={cardMeta.showBadgesAsIcons} />}
       </div>
 
       {/* Rating column */}
