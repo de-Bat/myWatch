@@ -1315,44 +1315,40 @@ export default function SettingsPage() {
               </Row>
             </Section>
 
-            {/* Card Display */}
             <Section title="Card Display">
-              <div className="flex divide-x" style={{ borderColor: 'var(--border2)' }}>
-                <div className="flex-1">
-                  <div className="px-4 py-2 text-[var(--text-12)] font-bold tracking-wider uppercase" style={{ color: 'var(--muted)', background: 'var(--bg)' }}>
-                    List View
-                  </div>
-                  <div className="divide-y" style={{ borderColor: 'var(--border2)' }}>
-                    {(Object.keys(CARD_META_LABELS) as Array<keyof CardMetaSettings>).map((key) => (
-                      <Row key={key} label={CARD_META_LABELS[key]}>
-                        <Toggle
-                          on={settings.listCardMeta[key]}
-                          onToggle={() => {
-                            updateListCardMeta({ [key]: !settings.listCardMeta[key] })
-                            toast('Saved', 'success', 1500)
-                          }}
-                        />
-                      </Row>
-                    ))}
+              <div className="flex flex-col">
+                <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: 'var(--border2)' }}>
+                  <div className="text-[var(--text-11)] font-bold tracking-wider uppercase text-[var(--muted)]">Display Flag</div>
+                  <div className="flex items-center gap-8 text-[var(--text-11)] font-bold tracking-wider uppercase text-[var(--muted)]">
+                    <div className="w-[40px] text-center">List</div>
+                    <div className="w-[40px] text-center">Grid</div>
                   </div>
                 </div>
-                <div className="flex-1">
-                  <div className="px-4 py-2 text-[var(--text-12)] font-bold tracking-wider uppercase" style={{ color: 'var(--muted)', background: 'var(--bg)' }}>
-                    Grid View
-                  </div>
-                  <div className="divide-y" style={{ borderColor: 'var(--border2)' }}>
-                    {(Object.keys(CARD_META_LABELS) as Array<keyof CardMetaSettings>).map((key) => (
-                      <Row key={key} label={CARD_META_LABELS[key]}>
-                        <Toggle
-                          on={settings.gridCardMeta[key]}
-                          onToggle={() => {
-                            updateGridCardMeta({ [key]: !settings.gridCardMeta[key] })
-                            toast('Saved', 'success', 1500)
-                          }}
-                        />
-                      </Row>
-                    ))}
-                  </div>
+                <div className="divide-y" style={{ borderColor: 'var(--border2)' }}>
+                  {(Object.keys(CARD_META_LABELS) as Array<keyof CardMetaSettings>).map((key) => (
+                    <Row key={key} label={CARD_META_LABELS[key]}>
+                      <div className="flex items-center gap-8">
+                        <div className="w-[40px] flex justify-center">
+                          <Toggle
+                            on={settings.listCardMeta[key]}
+                            onToggle={() => {
+                              updateListCardMeta({ [key]: !settings.listCardMeta[key] })
+                              toast('Saved', 'success', 1500)
+                            }}
+                          />
+                        </div>
+                        <div className="w-[40px] flex justify-center">
+                          <Toggle
+                            on={settings.gridCardMeta[key]}
+                            onToggle={() => {
+                              updateGridCardMeta({ [key]: !settings.gridCardMeta[key] })
+                              toast('Saved', 'success', 1500)
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </Row>
+                  ))}
                 </div>
               </div>
             </Section>

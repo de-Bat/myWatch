@@ -93,7 +93,7 @@ export function WatchlistItemCard({
   const providers = (meta?.watchProviders ?? []).slice(0, 3)
 
   // Progress bar rendering (respects showProgress setting)
-  const showBars = cardMeta.showProgress !== false
+  const showBars = cardMeta.showProgress !== false || settings.alwaysShowProgressBars
   const forceBars = settings.alwaysShowProgressBars
   const progressBars = showBars && (forceBars || (jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned')) ? (() => {
     const watched = (jellyfinProgress?.jellyfinStatus === 'watched') || item.status === 'watched'

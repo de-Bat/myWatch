@@ -278,7 +278,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
         </div>
 
         {/* Jellyfin progress bar */}
-        {cardMeta.showProgress && (settings.alwaysShowProgressBars || (jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned')) && (() => {
+        {(cardMeta.showProgress || settings.alwaysShowProgressBars) && (settings.alwaysShowProgressBars || (jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned')) && (() => {
           const watched = (jellyfinProgress?.jellyfinStatus === 'watched') || item.status === 'watched'
           const track = <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: 'rgba(0,0,0,.35)' }} />
           if (item.mediaType === 'movie') {
