@@ -1,1 +1,6 @@
-[]
+[
+  {
+    "name": "mywatch-plugin-youtube",
+    "id": "youtube"
+  }
+]
