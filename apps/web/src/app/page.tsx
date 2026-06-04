@@ -105,6 +105,29 @@ function HomePageInner() {
   }, [])
 
   useEffect(() => {
+    const su = searchParams.get('shareUrl')
+    const spt = searchParams.get('pluginListType')
+    if (su && spt) {
+      setShareUrl(su)
+      setSharePluginType(spt)
+      // Clean URL
+      const url = new URL(window.location.href)
+      url.searchParams.delete('shareUrl')
+      url.searchParams.delete('pluginListType')
+      window.history.replaceState({}, '', url.toString())
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!sharePluginType || !playlists) return
+    const matchingList = playlists.find((p) => p.type === sharePluginType)
+    if (matchingList) {
+      setActiveListId(matchingList.id)
+      setShowPluginAddModal(true)
+    }
+  }, [sharePluginType, playlists]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     function close(e: MouseEvent) {
       if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false)
     }
@@ -182,6 +205,8 @@ function HomePageInner() {
   const pluginItems = rawPluginItems ?? []
   const upsertPluginItem = useUpsertPluginItem()
   const [showPluginAddModal, setShowPluginAddModal] = useState(false)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [sharePluginType, setSharePluginType] = useState<string | null>(null)
 
   const activeManualItems = useLiveQuery(async () => {
     if (!activeList || activeList.type !== 'manual') return null
@@ -1354,10 +1379,17 @@ function HomePageInner() {
         return (
           <AddModal
             playlistId={activeList.id}
-            onClose={() => setShowPluginAddModal(false)}
+            prefillUrl={shareUrl ?? undefined}
+            onClose={() => {
+              setShowPluginAddModal(false)
+              setShareUrl(null)
+              setSharePluginType(null)
+            }}
             onAdded={async (item) => {
               await upsertPluginItem(item)
               setShowPluginAddModal(false)
+              setShareUrl(null)
+              setSharePluginType(null)
             }}
           />
         )
