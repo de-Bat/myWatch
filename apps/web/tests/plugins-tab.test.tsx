@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { PluginsTab } from '../src/components/settings/PluginsTab'
 
@@ -84,7 +84,7 @@ describe('PluginsTab', () => {
     fireEvent.click(within(screen.getByRole('row', { name: /rss feeds/i })).getByRole('button', { name: /load rss feeds/i }))
 
     await waitFor(() => expect(mockFetch).toHaveBeenCalledWith(
-      'https://api.example.test/api/plugins/rss',
+      'https://api.example.test/api/user/plugins/rss',
       expect.objectContaining({ method: 'PATCH' }),
     ))
   })

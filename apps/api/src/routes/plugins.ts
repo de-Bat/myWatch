@@ -19,8 +19,8 @@ export const PLUGINS_DIR = path.join(DATA_DIR, 'plugins')
 const ID_RE = /^[a-z0-9-]+$/
 
 export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRepo) {
-  // GET /api/plugins
-  app.get('/api/plugins', { preHandler: [authenticate] }, async (_req, reply) => {
+  // GET /api/user/plugins
+  app.get('/api/user/plugins', { preHandler: [authenticate] }, async (_req, reply) => {
     const dbRows = await pluginRepo.list()
     const dbMap = new Map(dbRows.map((r) => [r.id, r]))
 
@@ -55,9 +55,9 @@ export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRep
     return reply.send({ plugins: [...builtins, ...customs, ...filesystems] })
   })
 
-  // PATCH /api/plugins/:id
+  // PATCH /api/user/plugins/:id
   app.patch<{ Params: { id: string }; Body: { enabled: unknown } }>(
-    '/api/plugins/:id',
+    '/api/user/plugins/:id',
     { preHandler: [authenticate] },
     async (req, reply) => {
       const { id } = req.params
@@ -77,9 +77,9 @@ export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRep
     },
   )
 
-  // DELETE /api/plugins/:id
+  // DELETE /api/user/plugins/:id
   app.delete<{ Params: { id: string } }>(
-    '/api/plugins/:id',
+    '/api/user/plugins/:id',
     { preHandler: [authenticate] },
     async (req, reply) => {
       const { id } = req.params
@@ -95,9 +95,9 @@ export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRep
     },
   )
 
-  // GET /api/plugins/:id/bundle.js — no auth, same-origin fetch via script tag
+  // GET /api/user/plugins/:id/bundle.js — no auth, same-origin fetch via script tag
   app.get<{ Params: { id: string } }>(
-    '/api/plugins/:id/bundle.js',
+    '/api/user/plugins/:id/bundle.js',
     async (req, reply) => {
       const { id } = req.params
       if (!ID_RE.test(id)) return reply.status(400).send({ error: 'Invalid plugin id' })
@@ -119,8 +119,8 @@ export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRep
     },
   )
 
-  // POST /api/plugins/upload
-  app.post('/api/plugins/upload', { preHandler: [authenticate] }, async (req, reply) => {
+  // POST /api/user/plugins/upload
+  app.post('/api/user/plugins/upload', { preHandler: [authenticate] }, async (req, reply) => {
     const data = await req.file()
     if (!data) return reply.status(400).send({ error: 'No file uploaded' })
 
@@ -182,9 +182,9 @@ export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRep
     return reply.status(201).send({ id, displayName: displayName.trim(), source: 'custom', enabled: true })
   })
 
-  // POST /api/plugins/local
+  // POST /api/user/plugins/local
   app.post<{ Body: { path: string } }>(
-    '/api/plugins/local',
+    '/api/user/plugins/local',
     { preHandler: [authenticate] },
     async (req, reply) => {
       const { path: localPath } = req.body

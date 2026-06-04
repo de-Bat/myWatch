@@ -38,11 +38,11 @@ vi.mock('../src/middleware/authenticate.js', () => ({
   }),
 }))
 
-describe('GET /api/plugins', () => {
+describe('GET /api/user/plugins', () => {
   it('returns built-in plugins with default enabled=false when no DB record', async () => {
     const pluginRepo = makeMockPluginRepo({ list: vi.fn().mockResolvedValue([]) })
     const app = await createApp({ pluginRepo })
-    const res = await app.inject({ method: 'GET', url: '/api/plugins', headers: AUTH_HEADER })
+    const res = await app.inject({ method: 'GET', url: '/api/user/plugins', headers: AUTH_HEADER })
     expect(res.statusCode).toBe(200)
     const body = res.json<{ plugins: InstalledPluginMeta[] }>()
     const youtube = body.plugins.find((p) => p.id === 'youtube')
@@ -58,18 +58,18 @@ describe('GET /api/plugins', () => {
       ]),
     })
     const app = await createApp({ pluginRepo })
-    const res = await app.inject({ method: 'GET', url: '/api/plugins', headers: AUTH_HEADER })
+    const res = await app.inject({ method: 'GET', url: '/api/user/plugins', headers: AUTH_HEADER })
     const body = res.json<{ plugins: InstalledPluginMeta[] }>()
     expect(body.plugins.find((p) => p.id === 'youtube')?.enabled).toBe(false)
   })
 })
 
-describe('PATCH /api/plugins/:id', () => {
+describe('PATCH /api/user/plugins/:id', () => {
   it('upserts builtin plugin record with new enabled value', async () => {
     const pluginRepo = makeMockPluginRepo({ getById: vi.fn().mockResolvedValue(null) })
     const app = await createApp({ pluginRepo })
     const res = await app.inject({
-      method: 'PATCH', url: '/api/plugins/youtube',
+      method: 'PATCH', url: '/api/user/plugins/youtube',
       headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
       payload: { enabled: false },
     })
@@ -83,7 +83,7 @@ describe('PATCH /api/plugins/:id', () => {
     const pluginRepo = makeMockPluginRepo({ getById: vi.fn().mockResolvedValue(null) })
     const app = await createApp({ pluginRepo })
     const res = await app.inject({
-      method: 'PATCH', url: '/api/plugins/nonexistent',
+      method: 'PATCH', url: '/api/user/plugins/nonexistent',
       headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
       payload: { enabled: false },
     })
@@ -93,7 +93,7 @@ describe('PATCH /api/plugins/:id', () => {
   it('returns 400 when enabled is not boolean', async () => {
     const app = await createApp({ pluginRepo: makeMockPluginRepo() })
     const res = await app.inject({
-      method: 'PATCH', url: '/api/plugins/youtube',
+      method: 'PATCH', url: '/api/user/plugins/youtube',
       headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
       payload: { enabled: 'yes' },
     })
@@ -108,7 +108,7 @@ describe('PATCH /api/plugins/:id', () => {
     })
     const app = await createApp({ pluginRepo })
     const res = await app.inject({
-      method: 'PATCH', url: '/api/plugins/youtube',
+      method: 'PATCH', url: '/api/user/plugins/youtube',
       headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
       payload: { enabled: false },
     })
@@ -118,11 +118,11 @@ describe('PATCH /api/plugins/:id', () => {
   })
 })
 
-describe('DELETE /api/plugins/:id', () => {
+describe('DELETE /api/user/plugins/:id', () => {
   it('returns 400 when trying to remove a built-in plugin', async () => {
     const app = await createApp({ pluginRepo: makeMockPluginRepo() })
     const res = await app.inject({
-      method: 'DELETE', url: '/api/plugins/youtube', headers: AUTH_HEADER,
+      method: 'DELETE', url: '/api/user/plugins/youtube', headers: AUTH_HEADER,
     })
     expect(res.statusCode).toBe(400)
   })
@@ -135,7 +135,7 @@ describe('DELETE /api/plugins/:id', () => {
     })
     const app = await createApp({ pluginRepo })
     const res = await app.inject({
-      method: 'DELETE', url: '/api/plugins/my-plugin', headers: AUTH_HEADER,
+      method: 'DELETE', url: '/api/user/plugins/my-plugin', headers: AUTH_HEADER,
     })
     expect(res.statusCode).toBe(200)
     expect(pluginRepo.remove).toHaveBeenCalledWith('my-plugin')
@@ -147,19 +147,19 @@ describe('DELETE /api/plugins/:id', () => {
     })
     const app = await createApp({ pluginRepo })
     const res = await app.inject({
-      method: 'DELETE', url: '/api/plugins/unknown-custom', headers: AUTH_HEADER,
+      method: 'DELETE', url: '/api/user/plugins/unknown-custom', headers: AUTH_HEADER,
     })
     expect(res.statusCode).toBe(404)
   })
 })
 
-describe('POST /api/plugins/upload', () => {
+describe('POST /api/user/plugins/upload', () => {
   it('returns 400 when no file uploaded', async () => {
     const app = await createApp({ pluginRepo: makeMockPluginRepo() })
     const boundary = 'boundary123'
     const res = await app.inject({
       method: 'POST',
-      url: '/api/plugins/upload',
+      url: '/api/user/plugins/upload',
       headers: {
         ...AUTH_HEADER,
         'content-type': `multipart/form-data; boundary=${boundary}`,
@@ -185,7 +185,7 @@ describe('POST /api/plugins/upload', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/plugins/upload',
+      url: '/api/user/plugins/upload',
       headers: {
         ...AUTH_HEADER,
         'content-type': `multipart/form-data; boundary=${boundary}`,
@@ -213,7 +213,7 @@ describe('POST /api/plugins/upload', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/plugins/upload',
+      url: '/api/user/plugins/upload',
       headers: {
         ...AUTH_HEADER,
         'content-type': `multipart/form-data; boundary=${boundary}`,
@@ -225,7 +225,7 @@ describe('POST /api/plugins/upload', () => {
   })
 })
 
-describe('POST /api/plugins/local', () => {
+describe('POST /api/user/plugins/local', () => {
   it('loads and registers a local plugin successfully', async () => {
     const pluginRepo = makeMockPluginRepo()
     const app = await createApp({ pluginRepo })
@@ -237,7 +237,7 @@ describe('POST /api/plugins/local', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/plugins/local',
+      url: '/api/user/plugins/local',
       headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
       payload: { path: '/path/to/my-plugin' },
     })
@@ -260,7 +260,7 @@ describe('POST /api/plugins/local', () => {
     const app = await createApp({ pluginRepo: makeMockPluginRepo() })
     const res = await app.inject({
       method: 'POST',
-      url: '/api/plugins/local',
+      url: '/api/user/plugins/local',
       headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
       payload: {},
     })
@@ -274,7 +274,7 @@ describe('POST /api/plugins/local', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/plugins/local',
+      url: '/api/user/plugins/local',
       headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
       payload: { path: '/invalid' },
     })
@@ -291,7 +291,7 @@ describe('POST /api/plugins/local', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/plugins/local',
+      url: '/api/user/plugins/local',
       headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
       payload: { path: '/invalid' },
     })

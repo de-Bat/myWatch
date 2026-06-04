@@ -34,7 +34,7 @@ export function PluginsTab() {
   const token = (session as unknown as { accessToken?: string })?.accessToken ?? ''
 
   async function togglePlugin(id: string, currentlyEnabled: boolean) {
-    await fetch(pluginApiUrl(`/api/plugins/${id}`), {
+    await fetch(pluginApiUrl(`/api/user/plugins/${id}`), {
       method: 'PATCH',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
       body: JSON.stringify({ enabled: !currentlyEnabled }),
@@ -44,7 +44,7 @@ export function PluginsTab() {
 
   async function removePlugin(id: string, displayName: string) {
     if (!confirm(`Remove plugin "${displayName}"? Playlists using it will stop working.`)) return
-    await fetch(pluginApiUrl(`/api/plugins/${id}`), {
+    await fetch(pluginApiUrl(`/api/user/plugins/${id}`), {
       method: 'DELETE',
       headers: { authorization: `Bearer ${token}` },
     })
@@ -59,7 +59,7 @@ export function PluginsTab() {
     try {
       const form = new FormData()
       form.append('file', file)
-      const res = await fetch(pluginApiUrl('/api/plugins/upload'), {
+      const res = await fetch(pluginApiUrl('/api/user/plugins/upload'), {
         method: 'POST',
         headers: { authorization: `Bearer ${token}` },
         body: form,
@@ -81,7 +81,7 @@ export function PluginsTab() {
     setLocalError(null)
     setInstallingLocal(true)
     try {
-      const res = await fetch(pluginApiUrl('/api/plugins/local'), {
+      const res = await fetch(pluginApiUrl('/api/user/plugins/local'), {
         method: 'POST',
         headers: {
           authorization: `Bearer ${token}`,
