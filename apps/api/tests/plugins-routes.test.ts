@@ -84,6 +84,23 @@ describe('PATCH /api/plugins/:id', () => {
     })
     expect(res.statusCode).toBe(400)
   })
+
+  it('calls setEnabled when builtin plugin already has DB record', async () => {
+    const pluginRepo = makeMockPluginRepo({
+      getById: vi.fn().mockResolvedValue({
+        id: 'youtube', displayName: 'YouTube Links', source: 'builtin', enabled: true,
+      }),
+    })
+    const app = await createApp({ pluginRepo })
+    const res = await app.inject({
+      method: 'PATCH', url: '/api/plugins/youtube',
+      headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
+      payload: { enabled: false },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(pluginRepo.setEnabled).toHaveBeenCalledWith('youtube', false)
+    expect(pluginRepo.upsert).not.toHaveBeenCalled()
+  })
 })
 
 describe('DELETE /api/plugins/:id', () => {
@@ -107,5 +124,16 @@ describe('DELETE /api/plugins/:id', () => {
     })
     expect(res.statusCode).toBe(200)
     expect(pluginRepo.remove).toHaveBeenCalledWith('my-plugin')
+  })
+
+  it('returns 404 when custom plugin not found', async () => {
+    const pluginRepo = makeMockPluginRepo({
+      getById: vi.fn().mockResolvedValue(null),
+    })
+    const app = await createApp({ pluginRepo })
+    const res = await app.inject({
+      method: 'DELETE', url: '/api/plugins/unknown-custom', headers: AUTH_HEADER,
+    })
+    expect(res.statusCode).toBe(404)
   })
 })
