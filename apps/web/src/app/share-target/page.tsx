@@ -1,5 +1,4 @@
 'use client'
-export const dynamic = 'force-static'
 import { Suspense, useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'

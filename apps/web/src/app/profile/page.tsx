@@ -1,5 +1,4 @@
 'use client'
-export const dynamic = 'force-static'
 import { useSession, signOut } from 'next-auth/react'
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'

@@ -1,5 +1,4 @@
 'use client'
-export const dynamic = 'force-static'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { v4 as uuidv4 } from 'uuid'

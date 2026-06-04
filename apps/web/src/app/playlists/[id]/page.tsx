@@ -1,5 +1,4 @@
 'use client'
-export const dynamic = 'force-static'
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { usePlaylist, usePlaylistItems, useSmartPlaylistItems, useDeletePlaylist, useAddToPlaylist, useRemoveFromPlaylist, useReorderPlaylistItem } from '@/hooks/usePlaylists'
