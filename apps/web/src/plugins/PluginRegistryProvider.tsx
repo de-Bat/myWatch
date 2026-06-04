@@ -11,6 +11,7 @@ import { useSession } from 'next-auth/react'
 import type { MyWatchPlugin } from '@mywatch/plugin-sdk'
 import type { InstalledPluginMeta } from '@mywatch/core'
 import { PLUGINS } from './registry'
+import { pluginApiUrl } from './plugin-api'
 
 interface RegistryState {
   plugins: MyWatchPlugin[]
@@ -40,7 +41,7 @@ function injectScript(id: string): Promise<void> {
   return new Promise((resolve, reject) => {
     if (loadedScripts.has(id)) { resolve(); return }
     const script = document.createElement('script')
-    script.src = `/api/plugins/${id}/bundle.js`
+    script.src = pluginApiUrl(`/api/plugins/${id}/bundle.js`)
     script.onload = () => { loadedScripts.add(id); resolve() }
     script.onerror = () => reject(new Error(`Failed to load plugin: ${id}`))
     document.head.appendChild(script)
@@ -67,7 +68,7 @@ export function PluginRegistryProvider({ children }: { children: ReactNode }) {
       setError(null)
       try {
         const token = (session as unknown as { accessToken?: string })?.accessToken ?? ''
-        const res = await fetch('/api/plugins', {
+        const res = await fetch(pluginApiUrl('/api/plugins'), {
           headers: { authorization: `Bearer ${token}` },
         })
         if (!res.ok) throw new Error('Failed to fetch plugins')

@@ -6,6 +6,7 @@ import type { InstalledPluginMeta } from '@mywatch/core'
 import { usePluginRegistryContext } from '@/plugins/PluginRegistryProvider'
 import { OFFICIAL_CATALOG } from '@/plugins/official-catalog'
 import { PLUGINS } from '@/plugins/registry'
+import { pluginApiUrl } from '@/plugins/plugin-api'
 
 type PluginInventoryRow = {
   id: string
@@ -33,7 +34,7 @@ export function PluginsTab() {
   const token = (session as unknown as { accessToken?: string })?.accessToken ?? ''
 
   async function togglePlugin(id: string, currentlyEnabled: boolean) {
-    await fetch(`/api/plugins/${id}`, {
+    await fetch(pluginApiUrl(`/api/plugins/${id}`), {
       method: 'PATCH',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
       body: JSON.stringify({ enabled: !currentlyEnabled }),
@@ -43,7 +44,7 @@ export function PluginsTab() {
 
   async function removePlugin(id: string, displayName: string) {
     if (!confirm(`Remove plugin "${displayName}"? Playlists using it will stop working.`)) return
-    await fetch(`/api/plugins/${id}`, {
+    await fetch(pluginApiUrl(`/api/plugins/${id}`), {
       method: 'DELETE',
       headers: { authorization: `Bearer ${token}` },
     })
@@ -58,7 +59,7 @@ export function PluginsTab() {
     try {
       const form = new FormData()
       form.append('file', file)
-      const res = await fetch('/api/plugins/upload', {
+      const res = await fetch(pluginApiUrl('/api/plugins/upload'), {
         method: 'POST',
         headers: { authorization: `Bearer ${token}` },
         body: form,
@@ -80,7 +81,7 @@ export function PluginsTab() {
     setLocalError(null)
     setInstallingLocal(true)
     try {
-      const res = await fetch('/api/plugins/local', {
+      const res = await fetch(pluginApiUrl('/api/plugins/local'), {
         method: 'POST',
         headers: {
           authorization: `Bearer ${token}`,
@@ -158,16 +159,24 @@ export function PluginsTab() {
             No plugins found.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse" style={{ minWidth: '900px' }}>
+          <div>
+            <table className="w-full table-fixed text-left border-collapse">
+              <colgroup>
+                <col style={{ width: '18%' }} />
+                <col style={{ width: '24%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '17%' }} />
+                <col style={{ width: '16%' }} />
+              </colgroup>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border2)', background: 'rgba(255,255,255,0.01)' }}>
-                  <th className="px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Name</th>
-                  <th className="px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Description</th>
-                  <th className="px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Status</th>
-                  <th className="px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Type</th>
-                  <th className="px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Source</th>
-                  <th className="px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase text-right" style={{ color: 'var(--muted2)', width: '170px' }}>Operation</th>
+                  <th className="px-2 sm:px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Name</th>
+                  <th className="px-2 sm:px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Description</th>
+                  <th className="px-2 sm:px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Status</th>
+                  <th className="px-2 sm:px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Type</th>
+                  <th className="px-2 sm:px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Source</th>
+                  <th className="px-2 sm:px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase text-right" style={{ color: 'var(--muted2)' }}>Operation</th>
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: 'var(--border2)' }}>
@@ -176,9 +185,9 @@ export function PluginsTab() {
                   const listTypeLabel = getPluginTypeLabel(runtimePlugin?.listTypes?.map((listType) => listType.label))
                   return (
                     <tr key={plugin.id} className="transition-colors duration-[100ms] hover:bg-[rgba(255,255,255,0.02)]">
-                      <td className="px-4 py-3.5">
+                      <td className="px-2 sm:px-4 py-3.5">
                         <div className="min-w-0">
-                          <p className="text-[var(--text-13h)] font-semibold" style={{ color: 'var(--fg)' }}>
+                          <p className="text-[var(--text-13h)] font-semibold break-words" style={{ color: 'var(--fg)' }}>
                             {plugin.displayName}
                           </p>
                           <p className="text-[var(--text-10)] text-xs font-mono" style={{ color: 'var(--muted2)', marginTop: '2px' }}>
@@ -186,30 +195,30 @@ export function PluginsTab() {
                           </p>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 align-middle">
-                        <p className="text-[var(--text-12)] max-w-[280px]" style={{ color: 'var(--fg2)', lineHeight: 1.4 }}>
+                      <td className="px-2 sm:px-4 py-3.5 align-middle">
+                        <p className="text-[var(--text-12)] break-words" style={{ color: 'var(--fg2)', lineHeight: 1.4 }}>
                           {plugin.description}
                         </p>
                       </td>
-                      <td className="px-4 py-3.5 align-middle">
+                      <td className="px-2 sm:px-4 py-3.5 align-middle">
                         <PluginStatusBadge enabled={plugin.enabled} installed={plugin.installed} hasFailed={plugin.hasFailed} />
                       </td>
-                      <td className="px-4 py-3.5 align-middle text-[var(--text-12)]" style={{ color: 'var(--fg2)' }}>
+                      <td className="px-2 sm:px-4 py-3.5 align-middle text-[var(--text-12)] break-words" style={{ color: 'var(--fg2)' }}>
                         {listTypeLabel}
                       </td>
-                      <td className="px-4 py-3.5 align-middle">
+                      <td className="px-2 sm:px-4 py-3.5 align-middle">
                         <div className="space-y-1">
                           <PluginSourceBadge source={plugin.source} />
                           <PluginLocation source={plugin.source} path={plugin.path} installed={plugin.installed} />
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 align-middle text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-2 sm:px-4 py-3.5 align-middle text-right">
+                        <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
                           {plugin.hasFailed ? (
                             <button
                               onClick={refresh}
                               aria-label={`Retry ${plugin.displayName}`}
-                              className="rounded-[6px] px-3 py-1.5 text-[var(--text-12)] font-semibold cursor-pointer border transition-colors hover:bg-[var(--surface2)]"
+                              className="rounded-[6px] px-2 sm:px-3 py-1.5 text-[var(--text-12)] font-semibold cursor-pointer border transition-colors hover:bg-[var(--surface2)]"
                               style={{ borderColor: 'var(--border)', background: 'transparent', color: 'var(--accent2)' }}
                             >
                               Retry
@@ -218,7 +227,7 @@ export function PluginsTab() {
                             <button
                               onClick={() => togglePlugin(plugin.id, plugin.enabled)}
                               aria-label={`${plugin.enabled ? 'Disable' : plugin.installed ? 'Start' : 'Load'} ${plugin.displayName}`}
-                              className="rounded-[6px] px-3 py-1.5 text-[var(--text-12)] font-semibold cursor-pointer border transition-colors hover:bg-[var(--surface2)]"
+                              className="rounded-[6px] px-2 sm:px-3 py-1.5 text-[var(--text-12)] font-semibold cursor-pointer border transition-colors hover:bg-[var(--surface2)]"
                               style={{
                                 borderColor: 'var(--border)',
                                 background: plugin.enabled ? 'transparent' : 'var(--accent)',

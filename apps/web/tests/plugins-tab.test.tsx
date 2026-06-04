@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { PluginsTab } from '../src/components/settings/PluginsTab'
 
 const refresh = vi.fn()
+const mockFetch = vi.fn()
+vi.stubGlobal('fetch', mockFetch)
 
 vi.mock('next-auth/react', () => ({
   useSession: () => ({ data: { accessToken: 'test-token', user: { id: '1' } } }),
@@ -36,6 +38,13 @@ vi.mock('@/plugins/registry', () => ({
 }))
 
 describe('PluginsTab', () => {
+  beforeEach(() => {
+    refresh.mockReset()
+    mockFetch.mockReset()
+    mockFetch.mockResolvedValue({ ok: true, json: async () => ({ ok: true }) })
+    process.env.NEXT_PUBLIC_API_URL = 'https://api.example.test'
+  })
+
   it('shows known plugins in one unified table with status, type, source, operation, and load action', () => {
     render(<PluginsTab />)
 
@@ -67,5 +76,24 @@ describe('PluginsTab', () => {
     const rssRow = screen.getByRole('row', { name: /rss feeds/i })
     expect(within(rssRow).getByText(/not loaded/i)).toBeTruthy()
     expect(within(rssRow).getByRole('button', { name: /load rss feeds/i })).toBeTruthy()
+  })
+
+  it('sends plugin operations to the configured API URL', async () => {
+    render(<PluginsTab />)
+
+    fireEvent.click(within(screen.getByRole('row', { name: /rss feeds/i })).getByRole('button', { name: /load rss feeds/i }))
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.example.test/api/plugins/rss',
+      expect.objectContaining({ method: 'PATCH' }),
+    ))
+  })
+
+  it('does not force the plugins table into a horizontal scrollbar', () => {
+    render(<PluginsTab />)
+
+    const table = screen.getByRole('table')
+    expect(table.parentElement?.className).not.toContain('overflow-x-auto')
+    expect(table.getAttribute('style') ?? '').not.toContain('min-width')
   })
 })
