@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { SessionProvider } from 'next-auth/react'
 import { SettingsProvider } from '@/hooks/useSettings'
 import { ToastProvider } from '@/components/Toast'
+import { PluginRegistryProvider } from '@/plugins/PluginRegistryProvider'
 import { AutoSync } from '@/components/AutoSync'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
 import { PwaUpdater } from '@/components/PwaUpdater'
@@ -37,14 +38,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark">
       <body className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--fg)' }}>
         <SessionProvider>
-          <SettingsProvider>
-            <ToastProvider>
-              <AutoSync />
-              <OfflineIndicator />
-              <PwaUpdater />
-              {children}
-            </ToastProvider>
-          </SettingsProvider>
+          <PluginRegistryProvider>
+            <SettingsProvider>
+              <ToastProvider>
+                <AutoSync />
+                <OfflineIndicator />
+                <PwaUpdater />
+                {children}
+              </ToastProvider>
+            </SettingsProvider>
+          </PluginRegistryProvider>
         </SessionProvider>
       </body>
     </html>
