@@ -135,7 +135,8 @@ export interface PluginItem {
 export interface InstalledPluginMeta {
   id: string
   displayName: string
-  source: 'builtin' | 'custom'
+  source: 'builtin' | 'custom' | 'filesystem'
   enabled: boolean
   installedAt?: string
+  path?: string
 }

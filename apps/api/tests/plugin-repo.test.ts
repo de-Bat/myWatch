@@ -27,6 +27,22 @@ describe('createPluginRepo', () => {
     })
   })
 
+  it('list returns mapped rows with path for filesystem source', async () => {
+    const sql = makeSql([
+      { id: 'my-local', display_name: 'My Local', source: 'filesystem', enabled: true, installed_at: null, path: '/local/path' },
+    ])
+    const repo = createPluginRepo(sql)
+    const result = await repo.list()
+    expect(result[0]).toEqual({
+      id: 'my-local',
+      displayName: 'My Local',
+      source: 'filesystem',
+      enabled: true,
+      installedAt: undefined,
+      path: '/local/path',
+    })
+  })
+
   it('getById returns null when no rows', async () => {
     const sql = makeSql([])
     const repo = createPluginRepo(sql)

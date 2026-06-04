@@ -41,7 +41,18 @@ export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRep
         installedAt: r.installedAt,
       }))
 
-    return reply.send({ plugins: [...builtins, ...customs] })
+    const filesystems = dbRows
+      .filter((r) => r.source === 'filesystem')
+      .map((r) => ({
+        id: r.id,
+        displayName: r.displayName,
+        source: 'filesystem' as const,
+        enabled: r.enabled,
+        installedAt: r.installedAt,
+        path: r.path,
+      }))
+
+    return reply.send({ plugins: [...builtins, ...customs, ...filesystems] })
   })
 
   // PATCH /api/plugins/:id
@@ -90,7 +101,15 @@ export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRep
     async (req, reply) => {
       const { id } = req.params
       if (!ID_RE.test(id)) return reply.status(400).send({ error: 'Invalid plugin id' })
-      const bundlePath = path.join(PLUGINS_DIR, id, 'bundle.js')
+      
+      const existing = await pluginRepo.getById(id)
+      let bundlePath: string
+      if (existing?.source === 'filesystem' && existing.path) {
+        bundlePath = path.join(existing.path, 'bundle.js')
+      } else {
+        bundlePath = path.join(PLUGINS_DIR, id, 'bundle.js')
+      }
+
       try {
         const content = await fs.readFile(bundlePath, 'utf-8')
         return reply.header('content-type', 'application/javascript; charset=utf-8').send(content)
@@ -162,4 +181,61 @@ export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRep
 
     return reply.status(201).send({ id, displayName: displayName.trim(), source: 'custom', enabled: true })
   })
+
+  // POST /api/plugins/local
+  app.post<{ Body: { path: string } }>(
+    '/api/plugins/local',
+    { preHandler: [authenticate] },
+    async (req, reply) => {
+      const { path: localPath } = req.body
+      if (typeof localPath !== 'string' || !localPath.trim()) {
+        return reply.status(400).send({ error: 'path is required' })
+      }
+
+      const resolvedPath = path.resolve(localPath.trim())
+
+      let manifestContent: string
+      try {
+        manifestContent = await fs.readFile(path.join(resolvedPath, 'manifest.json'), 'utf-8')
+      } catch {
+        return reply.status(400).send({ error: 'Could not read manifest.json from path' })
+      }
+
+      let manifest: { id?: unknown; displayName?: unknown }
+      try {
+        manifest = JSON.parse(manifestContent)
+      } catch {
+        return reply.status(400).send({ error: 'manifest.json is not valid JSON' })
+      }
+
+      const { id, displayName } = manifest
+      if (typeof id !== 'string' || !ID_RE.test(id) || id.length > 64) {
+        return reply.status(400).send({ error: 'manifest id must be lowercase alphanumeric/dash, max 64 chars' })
+      }
+      if (typeof displayName !== 'string' || !displayName.trim()) {
+        return reply.status(400).send({ error: 'manifest displayName is required' })
+      }
+      if (BUILTIN_IDS.has(id)) {
+        return reply.status(400).send({ error: `Plugin id "${id}" conflicts with a builtin plugin` })
+      }
+
+      // Check bundle.js exists
+      try {
+        await fs.access(path.join(resolvedPath, 'bundle.js'))
+      } catch {
+        return reply.status(400).send({ error: 'Missing bundle.js in folder' })
+      }
+
+      await pluginRepo.upsert({
+        id,
+        displayName: displayName.trim(),
+        source: 'filesystem',
+        enabled: true,
+        installedAt: new Date().toISOString(),
+        path: resolvedPath,
+      })
+
+      return reply.status(201).send({ id, displayName: displayName.trim(), source: 'filesystem', enabled: true, path: resolvedPath })
+    }
+  )
 }

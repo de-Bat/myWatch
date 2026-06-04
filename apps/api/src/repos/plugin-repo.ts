@@ -12,9 +12,10 @@ export interface PluginRepo {
 interface PluginRow {
   id: string
   display_name: string
-  source: 'builtin' | 'custom'
+  source: 'builtin' | 'custom' | 'filesystem'
   enabled: boolean
   installed_at: Date | null
+  path: string | null
 }
 
 function rowToMeta(row: PluginRow): InstalledPluginMeta {
@@ -24,6 +25,7 @@ function rowToMeta(row: PluginRow): InstalledPluginMeta {
     source: row.source,
     enabled: row.enabled,
     installedAt: row.installed_at?.toISOString(),
+    path: row.path ?? undefined,
   }
 }
 
@@ -31,7 +33,7 @@ export function createPluginRepo(sql: Sql): PluginRepo {
   return {
     async list() {
       const rows = await sql<PluginRow[]>`
-        SELECT id, display_name, source, enabled, installed_at
+        SELECT id, display_name, source, enabled, installed_at, path
         FROM installed_plugins
         ORDER BY source, id
       `
@@ -40,7 +42,7 @@ export function createPluginRepo(sql: Sql): PluginRepo {
 
     async getById(id) {
       const rows = await sql<PluginRow[]>`
-        SELECT id, display_name, source, enabled, installed_at
+        SELECT id, display_name, source, enabled, installed_at, path
         FROM installed_plugins WHERE id = ${id}
       `
       return rows[0] ? rowToMeta(rows[0]) : null
@@ -48,16 +50,17 @@ export function createPluginRepo(sql: Sql): PluginRepo {
 
     async upsert(meta) {
       await sql`
-        INSERT INTO installed_plugins (id, display_name, source, enabled, installed_at)
+        INSERT INTO installed_plugins (id, display_name, source, enabled, installed_at, path)
         VALUES (
           ${meta.id}, ${meta.displayName}, ${meta.source}, ${meta.enabled},
-          ${meta.installedAt ? new Date(meta.installedAt) : null}
+          ${meta.installedAt ? new Date(meta.installedAt) : null}, ${meta.path ?? null}
         )
         ON CONFLICT (id) DO UPDATE SET
           display_name  = EXCLUDED.display_name,
           source        = EXCLUDED.source,
           enabled       = EXCLUDED.enabled,
-          installed_at  = EXCLUDED.installed_at
+          installed_at  = EXCLUDED.installed_at,
+          path          = EXCLUDED.path
       `
     },
 

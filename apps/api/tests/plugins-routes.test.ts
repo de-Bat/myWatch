@@ -2,6 +2,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createApp } from '../src/app.js'
 import type { PluginRepo } from '../src/repos/plugin-repo.js'
 import type { InstalledPluginMeta } from '@mywatch/core'
+import fs from 'node:fs/promises'
+
+vi.mock('node:fs/promises', () => ({
+  default: {
+    readFile: vi.fn(),
+    access: vi.fn(),
+    rm: vi.fn(),
+    mkdir: vi.fn(),
+    writeFile: vi.fn(),
+  }
+}))
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
 
 function makeMockPluginRepo(overrides?: Partial<PluginRepo>): PluginRepo {
   return {
@@ -207,5 +222,80 @@ describe('POST /api/plugins/upload', () => {
     })
     expect(res.statusCode).toBe(400)
     expect(res.json<{ error: string }>().error).toMatch(/builtin/)
+  })
+})
+
+describe('POST /api/plugins/local', () => {
+  it('loads and registers a local plugin successfully', async () => {
+    const pluginRepo = makeMockPluginRepo()
+    const app = await createApp({ pluginRepo })
+    
+    vi.mocked(fs.readFile).mockResolvedValue(
+      JSON.stringify({ id: 'my-local-plugin', displayName: 'My Local' })
+    )
+    vi.mocked(fs.access).mockResolvedValue(undefined)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/plugins/local',
+      headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
+      payload: { path: '/path/to/my-plugin' },
+    })
+
+    expect(res.statusCode).toBe(201)
+    const body = res.json<{ id: string; displayName: string; source: string; path: string }>()
+    expect(body.id).toBe('my-local-plugin')
+    expect(body.source).toBe('filesystem')
+    expect(body.path).toContain('my-plugin')
+    expect(pluginRepo.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'my-local-plugin',
+        source: 'filesystem',
+        enabled: true,
+      })
+    )
+  })
+
+  it('returns 400 when path is missing', async () => {
+    const app = await createApp({ pluginRepo: makeMockPluginRepo() })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/plugins/local',
+      headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
+      payload: {},
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json<{ error: string }>().error).toMatch(/path/)
+  })
+
+  it('returns 400 when manifest.json does not exist or is invalid', async () => {
+    const app = await createApp({ pluginRepo: makeMockPluginRepo() })
+    vi.mocked(fs.readFile).mockRejectedValue(new Error('ENOENT'))
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/plugins/local',
+      headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
+      payload: { path: '/invalid' },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json<{ error: string }>().error).toMatch(/manifest\.json/)
+  })
+
+  it('returns 400 when bundle.js does not exist', async () => {
+    const app = await createApp({ pluginRepo: makeMockPluginRepo() })
+    vi.mocked(fs.readFile).mockResolvedValue(
+      JSON.stringify({ id: 'test', displayName: 'Test' })
+    )
+    vi.mocked(fs.access).mockRejectedValue(new Error('ENOENT'))
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/plugins/local',
+      headers: { ...AUTH_HEADER, 'content-type': 'application/json' },
+      payload: { path: '/invalid' },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json<{ error: string }>().error).toMatch(/bundle\.js/)
   })
 })
