@@ -22,7 +22,7 @@ export default function manifest(): MetadataRoute.Manifest & { share_target?: un
       },
     ],
     share_target: {
-      action: '/share-target',
+      action: '/share',
       method: 'GET',
       params: {
         title: 'title',
