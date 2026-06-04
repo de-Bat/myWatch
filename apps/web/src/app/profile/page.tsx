@@ -9,6 +9,7 @@ import { useToast } from '@/components/Toast'
 import type { CardMetaSettings, FontFamily, FontSize } from '@/hooks/useSettings'
 import { db } from '@/lib/db'
 import { apiClient } from '@/lib/api-client'
+import { PluginsTab } from '@/components/settings/PluginsTab'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -144,7 +145,7 @@ export default function SettingsPage() {
   const [sonarrTestError, setSonarrTestError] = useState<string | null>(null)
 
   // ── Tab + server settings dirty state ────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<'server' | 'client' | 'logs'>('server')
+  const [activeTab, setActiveTab] = useState<'server' | 'client' | 'logs' | 'plugins'>('server')
   const [serverSnapshot, setServerSnapshot] = useState<ServerFormSnapshot | null>(null)
   const [saving, setSaving] = useState(false)
   const [pendingSync, setPendingSync] = useState(false)
@@ -746,7 +747,7 @@ export default function SettingsPage() {
 
         {/* Tab bar */}
         <div className="flex" style={{ borderBottom: '1px solid var(--border2)', gap: 0 }}>
-          {(['server', 'client', 'logs'] as const).map(tab => (
+          {(['server', 'client', 'logs', 'plugins'] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className="px-4 py-2 text-[var(--text-13)] font-medium capitalize border-none cursor-pointer transition-colors duration-100"
               style={{
@@ -1523,6 +1524,8 @@ export default function SettingsPage() {
             </Section>
           </div>
         )}
+
+        {activeTab === 'plugins' && <PluginsTab />}
       </div>
     </div>
   )
