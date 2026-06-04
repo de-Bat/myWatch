@@ -131,3 +131,11 @@ export interface PluginItem {
   updatedAt: string
   deletedAt: string | null
 }
+
+export interface InstalledPluginMeta {
+  id: string
+  displayName: string
+  source: 'builtin' | 'custom'
+  enabled: boolean
+  installedAt?: string
+}
