@@ -112,7 +112,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
           {/* TV/Movie badge row */}
           <div className="flex items-center gap-[4px] flex-wrap">
             {!(jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned') && (
-              <StatusBadge status={item.status} />
+              <StatusBadge status={item.status} asIcon={cardMeta.showBadgesAsIcons} />
             )}
             <span
               className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px] flex items-center justify-center"

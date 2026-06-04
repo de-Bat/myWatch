@@ -1,7 +1,6 @@
 import type { WatchStatus } from '@mywatch/core'
 import { useSettings, BADGE_ICON_SIZES } from '@/hooks/useSettings'
 import type { ReactNode } from 'react'
-
 const labels: Record<WatchStatus, string> = {
   planned: 'Planned',
   in_progress: 'Watching',
@@ -23,9 +22,8 @@ const styles: Record<WatchStatus, { bg: string; color: string }> = {
   quit: { bg: 'rgba(248,113,113,.13)', color: 'var(--red)' },
 }
 
-export function StatusBadge({ status }: { status: WatchStatus }) {
+export function StatusBadge({ status, asIcon = false }: { status: WatchStatus; asIcon?: boolean }) {
   const { settings } = useSettings()
-  const asIcon = settings.cardMeta.showBadgesAsIcons
   const size = BADGE_ICON_SIZES[settings.badgeIconSize] ?? BADGE_ICON_SIZES.md
   const { bg, color } = styles[status]
 

@@ -230,7 +230,7 @@ export function WatchlistItemCard({
           style={{ color: 'var(--muted2)', fontSize: 'var(--text-11h)' }}
         >
           {!(jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned') && (
-            <StatusBadge status={item.status} />
+            <StatusBadge status={item.status} asIcon={cardMeta.showBadgesAsIcons} />
           )}
           {cardMeta.showPlatform && jellyfinProgress && jellyfinProgress.jellyfinStatus !== 'planned' && (
             <span
