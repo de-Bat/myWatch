@@ -31,7 +31,7 @@ export function PluginsTab() {
   const [showLoadTools, setShowLoadTools] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const token = (session as unknown as { accessToken?: string })?.accessToken ?? ''
+  const token = (session as unknown as { apiToken?: string })?.apiToken ?? ''
 
   async function togglePlugin(id: string, currentlyEnabled: boolean) {
     await fetch(pluginApiUrl(`/api/user/plugins/${id}`), {
