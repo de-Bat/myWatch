@@ -358,22 +358,15 @@ export function PluginsTab() {
 }
 
 function getPluginTypeLabel(listTypeLabels?: string[]) {
-  if (!listTypeLabels || listTypeLabels.length === 0) return 'List'
-  if (listTypeLabels.length === 1) return `List: ${listTypeLabels[0]}`
-  return `Lists: ${listTypeLabels.join(', ')}`
+  if (!listTypeLabels || listTypeLabels.length === 0) return '-'
+  return listTypeLabels.join(', ')
 }
 
-function PluginLocation({ source, path, installed }: { source: InstalledPluginMeta['source']; path?: string; installed: boolean }) {
-  if (!installed) {
-    return <p className="text-[var(--text-10)]" style={{ color: 'var(--muted2)' }}>Built-in package</p>
-  }
+function PluginLocation({ source, path }: { source: InstalledPluginMeta['source']; path?: string; installed: boolean }) {
   if (source === 'filesystem' && path) {
     return <p className="text-[var(--text-10)] font-mono break-all" title={path} style={{ color: 'var(--muted2)' }}>{path}</p>
   }
-  if (source === 'custom') {
-    return <p className="text-[var(--text-10)]" style={{ color: 'var(--muted2)' }}>Uploaded bundle</p>
-  }
-  return <p className="text-[var(--text-10)]" style={{ color: 'var(--muted2)' }}>Built-in package</p>
+  return null
 }
 
 function PluginStatusBadge({ enabled, installed, hasFailed }: { enabled: boolean; installed: boolean; hasFailed: boolean }) {
