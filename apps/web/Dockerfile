@@ -12,10 +12,12 @@ FROM base AS deps
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
-COPY packages/core/package.json   ./packages/core/
-COPY packages/sync/package.json   ./packages/sync/
-COPY packages/tmdb/package.json   ./packages/tmdb/
-COPY apps/web/package.json        ./apps/web/
+COPY packages/core/package.json         ./packages/core/
+COPY packages/sync/package.json         ./packages/sync/
+COPY packages/tmdb/package.json         ./packages/tmdb/
+COPY packages/plugin-sdk/package.json   ./packages/plugin-sdk/
+COPY plugins/mywatch-plugin-youtube/package.json ./plugins/mywatch-plugin-youtube/
+COPY apps/web/package.json              ./apps/web/
 
 RUN pnpm install --frozen-lockfile
 
@@ -23,11 +25,14 @@ RUN pnpm install --frozen-lockfile
 FROM deps AS builder
 WORKDIR /app
 
-COPY packages/core/src  ./packages/core/src
-COPY packages/sync/src  ./packages/sync/src
-COPY packages/tmdb/src  ./packages/tmdb/src
+COPY packages/core/src       ./packages/core/src
+COPY packages/sync/src       ./packages/sync/src
+COPY packages/tmdb/src       ./packages/tmdb/src
+COPY packages/plugin-sdk/src ./packages/plugin-sdk/src
+COPY plugins/mywatch-plugin-youtube/src ./plugins/mywatch-plugin-youtube/src
 
 COPY apps/web/src        ./apps/web/src
+COPY apps/web/scripts    ./apps/web/scripts
 COPY apps/web/public     ./apps/web/public
 COPY apps/web/tsconfig.json     ./apps/web/
 COPY apps/web/next.config.mjs   ./apps/web/
@@ -50,7 +55,7 @@ ENV NEXT_PUBLIC_TMDB_API_KEY=$NEXT_PUBLIC_TMDB_API_KEY
 # Ensure public dir exists (COPY in runner fails if source is absent)
 RUN mkdir -p apps/web/public
 
-RUN cd apps/web && pnpm exec next build
+RUN cd apps/web && node scripts/scan-plugins.mjs && pnpm exec next build
 
 # ---- runner ----
 FROM node:20-alpine AS runner
