@@ -1,0 +1,221 @@
+'use client'
+export const dynamic = 'force-static'
+import { Suspense, useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+import { v4 as uuidv4 } from 'uuid'
+import Link from 'next/link'
+import type { MediaType, WatchStatus } from '@mywatch/core'
+import type { TmdbSearchResult } from '@mywatch/tmdb'
+import { TmdbClient } from '@mywatch/tmdb'
+import { useWatchlistItem, useUpsertItem, getLocalDeviceId } from '@/hooks/useWatchlist'
+import { MediaCard } from '@/components/MediaCard'
+import { StatusPicker } from '@/components/StatusPicker'
+
+function extractQuery(title: string | null, text: string | null): string {
+  if (title?.trim()) return title.trim()
+  if (text?.trim()) {
+    // Netflix sometimes puts "Watch <Title> on Netflix" in text
+    const match = text.match(/^(?:Watch\s+)?(.+?)(?:\s+on\s+Netflix)?$/i)
+    return match ? match[1].trim() : text.trim()
+  }
+  return ''
+}
+
+function SearchResult({
+  result,
+  onAdd,
+}: {
+  result: TmdbSearchResult
+  onAdd: (r: TmdbSearchResult) => void
+}) {
+  const existing = useWatchlistItem(result.id, result.media_type)
+  return <MediaCard result={result} existingStatus={existing?.status} onAdd={onAdd} />
+}
+
+function ShareTargetContent() {
+  const params = useSearchParams()
+  const { data: session } = useSession()
+
+  const initialQuery = extractQuery(params.get('title'), params.get('text'))
+
+  const [query, setQuery] = useState(initialQuery)
+  const [mediaType, setMediaType] = useState<MediaType | 'all'>('all')
+  const [results, setResults] = useState<TmdbSearchResult[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState<TmdbSearchResult | null>(null)
+  const [added, setAdded] = useState(false)
+  const upsert = useUpsertItem()
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults([])
+      return
+    }
+    const timer = setTimeout(async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const client = new TmdbClient({ apiKey: process.env.NEXT_PUBLIC_TMDB_API_KEY ?? '' })
+        const res = await client.search(query, mediaType === 'all' ? undefined : mediaType)
+        setResults(res)
+      } catch (e) {
+        setResults([])
+        setError(e instanceof Error ? e.message : 'Search failed')
+      } finally {
+        setLoading(false)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [query, mediaType])
+
+  async function handleAdd(result: TmdbSearchResult, status: WatchStatus) {
+    const now = new Date().toISOString()
+    await upsert({
+      id: uuidv4(),
+      userId: session?.user?.id ?? getLocalDeviceId(),
+      tmdbId: result.id,
+      mediaType: result.media_type,
+      status,
+      progressEpisode: null,
+      progressSeason: null,
+      rating: null,
+      notes: null,
+      addedAt: now,
+      startedAt: status === 'in_progress' ? now : null,
+      finishedAt: status === 'watched' ? now : null,
+      quitAt: status === 'quit' ? now : null,
+      deletedAt: null,
+    })
+
+    if (session?.apiToken) {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+      fetch(`${apiBase}/api/user/arr/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.apiToken}`,
+        },
+        body: JSON.stringify({ tmdbId: result.id, mediaType: result.media_type }),
+      }).catch(err => console.error('Failed to trigger Arr request:', err))
+    }
+
+    setPending(null)
+    setAdded(true)
+  }
+
+  return (
+    <>
+      {added && (
+        <div
+          className="mb-4 px-4 py-3 rounded-[var(--rsm)]"
+          style={{ background: 'rgba(34,197,94,.12)', color: 'var(--green)', fontSize: 'var(--text-13)', fontWeight: 600 }}
+        >
+          Added to watchlist.{' '}
+          <Link href="/" style={{ color: 'var(--green)', textDecoration: 'underline' }}>
+            Go home
+          </Link>
+        </div>
+      )}
+
+      <div className="flex gap-2 mb-4">
+        <input
+          ref={inputRef}
+          type="search"
+          placeholder="Search movies and TV shows…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="flex-1 focus:outline-none"
+          style={{
+            padding: '9px 13px',
+            borderRadius: 'var(--rsm)',
+            border: '1px solid var(--border)',
+            background: 'var(--surface)',
+            color: 'var(--fg)',
+            fontSize: '1rem',
+          }}
+        />
+        <div
+          className="flex flex-shrink-0"
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--rsm)',
+            padding: 2,
+            gap: 1,
+          }}
+        >
+          {(['all', 'movie', 'tv'] as const).map((t) => {
+            const active = mediaType === t
+            const label = t === 'all' ? 'All' : t === 'movie' ? 'Movies' : 'TV'
+            return (
+              <button
+                key={t}
+                onClick={() => setMediaType(t)}
+                className="whitespace-nowrap border-none cursor-pointer transition-all duration-100"
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: 'var(--rxs)',
+                  fontSize: 'var(--text-12)',
+                  fontWeight: active ? 600 : 500,
+                  background: active ? 'var(--surface2)' : 'transparent',
+                  color: active ? 'var(--fg)' : 'var(--muted)',
+                }}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {loading && <p style={{ color: 'var(--muted)', fontSize: 'var(--text-13)' }}>Searching…</p>}
+      {error && <p style={{ color: 'var(--red)', fontSize: 'var(--text-13)' }}>{error}</p>}
+      {!loading && !error && query && results.length === 0 && (
+        <p style={{ color: 'var(--muted2)', fontSize: 'var(--text-13)' }}>
+          No results for &ldquo;{query}&rdquo;
+        </p>
+      )}
+
+      <div className="flex flex-col" style={{ gap: 8 }}>
+        {results.map((r) => (
+          <SearchResult key={`${r.media_type}-${r.id}`} result={r} onAdd={setPending} />
+        ))}
+      </div>
+
+      {pending && (
+        <StatusPicker
+          onSelect={(status) => handleAdd(pending, status)}
+          onCancel={() => setPending(null)}
+        />
+      )}
+    </>
+  )
+}
+
+export default function ShareTargetPage() {
+  return (
+    <div className="subpage-root">
+      <header className="flex items-center gap-3 mb-5">
+        <Link
+          href="/"
+          className="flex items-center justify-center w-[32px] h-[32px] rounded-full border-none flex-shrink-0"
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="10 4 6 8 10 12" />
+          </svg>
+        </Link>
+        <h1 style={{ fontSize: 'var(--text-17)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--fg)' }}>
+          Add from Netflix
+        </h1>
+      </header>
+
+      <Suspense fallback={<p style={{ color: 'var(--muted)', fontSize: 'var(--text-13)' }}>Loading…</p>}>
+        <ShareTargetContent />
+      </Suspense>
+    </div>
+  )
+}

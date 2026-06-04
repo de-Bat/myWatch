@@ -28,6 +28,7 @@ const serwist = new Serwist({
     { url: '/profile', revision: buildId },
     { url: '/search', revision: buildId },
     { url: '/offline', revision: buildId },
+    { url: '/share-target', revision: buildId },
   ],
   skipWaiting: true,
   clientsClaim: true,

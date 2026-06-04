@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 
-export default function manifest(): MetadataRoute.Manifest {
+export default function manifest(): MetadataRoute.Manifest & { share_target?: unknown } {
   return {
     name: 'myWatch',
     short_name: 'myWatch',
@@ -21,5 +21,14 @@ export default function manifest(): MetadataRoute.Manifest {
         type: 'image/png',
       },
     ],
+    share_target: {
+      action: '/share-target',
+      method: 'GET',
+      params: {
+        title: 'title',
+        text: 'text',
+        url: 'url',
+      },
+    },
   }
 }
