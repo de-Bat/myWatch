@@ -207,10 +207,7 @@ export function PluginsTab() {
                         {listTypeLabel}
                       </td>
                       <td className="px-2 sm:px-4 py-2 align-middle">
-                        <div className="space-y-1">
-                          <PluginSourceBadge source={plugin.source} />
-                          <PluginLocation source={plugin.source} path={plugin.path} installed={plugin.installed} />
-                        </div>
+                        <PluginSourceBadge source={plugin.source} />
                       </td>
                       <td className="px-2 sm:px-4 py-2 align-middle text-right">
                         <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
@@ -360,13 +357,6 @@ export function PluginsTab() {
 function getPluginTypeLabel(listTypeLabels?: string[]) {
   if (!listTypeLabels || listTypeLabels.length === 0) return '-'
   return listTypeLabels.join(', ')
-}
-
-function PluginLocation({ source, path }: { source: InstalledPluginMeta['source']; path?: string; installed: boolean }) {
-  if (source === 'filesystem' && path) {
-    return <p className="text-[var(--text-10)] font-mono break-all" title={path} style={{ color: 'var(--muted2)' }}>{path}</p>
-  }
-  return null
 }
 
 function PluginStatusBadge({ enabled, installed, hasFailed }: { enabled: boolean; installed: boolean; hasFailed: boolean }) {
