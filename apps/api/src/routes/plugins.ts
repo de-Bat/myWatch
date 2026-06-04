@@ -1,6 +1,8 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import type { FastifyInstance } from 'fastify'
+import '@fastify/multipart'
+import unzipper from 'unzipper'
 import { authenticate } from '../middleware/authenticate.js'
 import type { PluginRepo } from '../repos/plugin-repo.js'
 
@@ -97,4 +99,67 @@ export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRep
       }
     },
   )
+
+  // POST /api/plugins/upload
+  app.post('/api/plugins/upload', { preHandler: [authenticate] }, async (req, reply) => {
+    const data = await req.file()
+    if (!data) return reply.status(400).send({ error: 'No file uploaded' })
+
+    let buffer: Buffer
+    try {
+      buffer = await data.toBuffer()
+    } catch {
+      return reply.status(400).send({ error: 'Failed to read uploaded file' })
+    }
+
+    let directory: unzipper.CentralDirectory
+    try {
+      directory = await unzipper.Open.buffer(buffer)
+    } catch {
+      return reply.status(400).send({ error: 'Invalid zip file' })
+    }
+
+    const manifestFile = directory.files.find((f) => f.path === 'manifest.json')
+    const bundleFile = directory.files.find((f) => f.path === 'bundle.js')
+
+    if (!manifestFile) return reply.status(400).send({ error: 'Missing manifest.json in zip' })
+    if (!bundleFile) return reply.status(400).send({ error: 'Missing bundle.js in zip' })
+
+    let manifest: { id?: unknown; displayName?: unknown }
+    try {
+      manifest = JSON.parse((await manifestFile.buffer()).toString())
+    } catch {
+      return reply.status(400).send({ error: 'manifest.json is not valid JSON' })
+    }
+
+    const { id, displayName } = manifest
+    if (typeof id !== 'string' || !ID_RE.test(id) || id.length > 64) {
+      return reply.status(400).send({ error: 'manifest id must be lowercase alphanumeric/dash, max 64 chars' })
+    }
+    if (typeof displayName !== 'string' || !displayName.trim()) {
+      return reply.status(400).send({ error: 'manifest displayName is required' })
+    }
+    if (BUILTIN_IDS.has(id)) {
+      return reply.status(400).send({ error: `Plugin id "${id}" conflicts with a built-in plugin` })
+    }
+
+    const bundleBuffer = await bundleFile.buffer()
+    if (bundleBuffer.length > 5 * 1024 * 1024) {
+      return reply.status(400).send({ error: 'bundle.js exceeds 5 MB limit' })
+    }
+
+    const pluginDir = path.join(PLUGINS_DIR, id)
+    await fs.mkdir(pluginDir, { recursive: true })
+    await fs.writeFile(path.join(pluginDir, 'bundle.js'), bundleBuffer)
+
+    await pluginRepo.upsert({
+      id,
+      displayName: displayName.trim(),
+      source: 'custom',
+      enabled: true,
+      installedAt: new Date().toISOString(),
+    })
+
+    return reply.status(201).send({ id, displayName: displayName.trim(), source: 'custom', enabled: true })
+  })
 }

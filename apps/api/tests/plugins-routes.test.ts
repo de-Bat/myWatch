@@ -137,3 +137,75 @@ describe('DELETE /api/plugins/:id', () => {
     expect(res.statusCode).toBe(404)
   })
 })
+
+describe('POST /api/plugins/upload', () => {
+  it('returns 400 when no file uploaded', async () => {
+    const app = await createApp({ pluginRepo: makeMockPluginRepo() })
+    const boundary = 'boundary123'
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/plugins/upload',
+      headers: {
+        ...AUTH_HEADER,
+        'content-type': `multipart/form-data; boundary=${boundary}`,
+      },
+      payload: `--${boundary}--\r\n`,
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 400 when zip missing bundle.js', async () => {
+    const { default: JSZip } = await import('jszip')
+    const zip = new JSZip()
+    zip.file('manifest.json', JSON.stringify({ id: 'test-plugin', displayName: 'Test' }))
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
+
+    const app = await createApp({ pluginRepo: makeMockPluginRepo() })
+    const boundary = 'boundary456'
+    const header = Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="test.zip"\r\nContent-Type: application/zip\r\n\r\n`
+    )
+    const footer = Buffer.from(`\r\n--${boundary}--\r\n`)
+    const payload = Buffer.concat([header, zipBuffer, footer])
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/plugins/upload',
+      headers: {
+        ...AUTH_HEADER,
+        'content-type': `multipart/form-data; boundary=${boundary}`,
+      },
+      payload,
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json<{ error: string }>().error).toMatch(/bundle\.js/)
+  })
+
+  it('returns 400 when plugin id collides with builtin', async () => {
+    const { default: JSZip } = await import('jszip')
+    const zip = new JSZip()
+    zip.file('manifest.json', JSON.stringify({ id: 'youtube', displayName: 'Test' }))
+    zip.file('bundle.js', '(function(){window.__mywatchPlugins=window.__mywatchPlugins||[];})();')
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
+
+    const app = await createApp({ pluginRepo: makeMockPluginRepo() })
+    const boundary = 'boundary789'
+    const header = Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="test.zip"\r\nContent-Type: application/zip\r\n\r\n`
+    )
+    const footer = Buffer.from(`\r\n--${boundary}--\r\n`)
+    const payload = Buffer.concat([header, zipBuffer, footer])
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/plugins/upload',
+      headers: {
+        ...AUTH_HEADER,
+        'content-type': `multipart/form-data; boundary=${boundary}`,
+      },
+      payload,
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json<{ error: string }>().error).toMatch(/builtin/)
+  })
+})
