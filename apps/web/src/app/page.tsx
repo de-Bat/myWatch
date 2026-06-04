@@ -1328,6 +1328,7 @@ function HomePageInner() {
                 item={item}
                 jellyfinProgress={progressMap?.get(`${item.tmdbId}-${item.mediaType}`) ?? undefined}
                 onSelect={() => setPanel({ tmdbId: item.tmdbId, mediaType: item.mediaType as MediaType })}
+                compact={isMobile}
               />
             ))}
           </div>
