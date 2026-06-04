@@ -1,0 +1,100 @@
+import path from 'node:path'
+import fs from 'node:fs/promises'
+import type { FastifyInstance } from 'fastify'
+import { authenticate } from '../middleware/authenticate.js'
+import type { PluginRepo } from '../repos/plugin-repo.js'
+
+const BUILTIN_PLUGINS = [
+  { id: 'youtube', displayName: 'YouTube Links' },
+] as const
+
+type BuiltinId = (typeof BUILTIN_PLUGINS)[number]['id']
+const BUILTIN_IDS = new Set<string>(BUILTIN_PLUGINS.map((p) => p.id))
+
+const DATA_DIR = path.resolve(process.cwd(), 'data')
+export const PLUGINS_DIR = path.join(DATA_DIR, 'plugins')
+
+const ID_RE = /^[a-z0-9-]+$/
+
+export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRepo) {
+  // GET /api/plugins
+  app.get('/api/plugins', { preHandler: [authenticate] }, async (_req, reply) => {
+    const dbRows = await pluginRepo.list()
+    const dbMap = new Map(dbRows.map((r) => [r.id, r]))
+
+    const builtins = BUILTIN_PLUGINS.map((p) => ({
+      id: p.id,
+      displayName: p.displayName,
+      source: 'builtin' as const,
+      enabled: dbMap.get(p.id)?.enabled ?? true,
+    }))
+
+    const customs = dbRows
+      .filter((r) => r.source === 'custom')
+      .map((r) => ({
+        id: r.id,
+        displayName: r.displayName,
+        source: 'custom' as const,
+        enabled: r.enabled,
+        installedAt: r.installedAt,
+      }))
+
+    return reply.send({ plugins: [...builtins, ...customs] })
+  })
+
+  // PATCH /api/plugins/:id
+  app.patch<{ Params: { id: string }; Body: { enabled: unknown } }>(
+    '/api/plugins/:id',
+    { preHandler: [authenticate] },
+    async (req, reply) => {
+      const { id } = req.params
+      const { enabled } = req.body
+      if (typeof enabled !== 'boolean') {
+        return reply.status(400).send({ error: 'enabled must be boolean' })
+      }
+      const existing = await pluginRepo.getById(id)
+      if (!existing) {
+        const builtin = BUILTIN_PLUGINS.find((p) => p.id === id)
+        if (!builtin) return reply.status(404).send({ error: 'Plugin not found' })
+        await pluginRepo.upsert({ id: builtin.id, displayName: builtin.displayName, source: 'builtin', enabled })
+      } else {
+        await pluginRepo.setEnabled(id, enabled)
+      }
+      return reply.send({ ok: true })
+    },
+  )
+
+  // DELETE /api/plugins/:id
+  app.delete<{ Params: { id: string } }>(
+    '/api/plugins/:id',
+    { preHandler: [authenticate] },
+    async (req, reply) => {
+      const { id } = req.params
+      if (BUILTIN_IDS.has(id)) {
+        return reply.status(400).send({ error: 'Cannot remove built-in plugins' })
+      }
+      const existing = await pluginRepo.getById(id)
+      if (!existing) return reply.status(404).send({ error: 'Plugin not found' })
+      const pluginDir = path.join(PLUGINS_DIR, id)
+      await fs.rm(pluginDir, { recursive: true, force: true })
+      await pluginRepo.remove(id)
+      return reply.send({ ok: true })
+    },
+  )
+
+  // GET /api/plugins/:id/bundle.js — no auth, same-origin fetch via script tag
+  app.get<{ Params: { id: string } }>(
+    '/api/plugins/:id/bundle.js',
+    async (req, reply) => {
+      const { id } = req.params
+      if (!ID_RE.test(id)) return reply.status(400).send({ error: 'Invalid plugin id' })
+      const bundlePath = path.join(PLUGINS_DIR, id, 'bundle.js')
+      try {
+        const content = await fs.readFile(bundlePath, 'utf-8')
+        return reply.header('content-type', 'application/javascript; charset=utf-8').send(content)
+      } catch {
+        return reply.status(404).send({ error: 'Bundle not found' })
+      }
+    },
+  )
+}
