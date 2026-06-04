@@ -19,6 +19,9 @@ import { usePlaylists, useSmartPlaylistItems, ALL_LIST_UUID, MAIN_LIST_UUID } fr
 import { EditPlaylistModal } from '@/components/EditPlaylistModal'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import type { Playlist, WatchlistItem } from '@mywatch/core'
+import { useListTypePlugin, isPluginListType } from '@/plugins'
+import { usePluginItems, useUpsertPluginItem } from '@/hooks/usePluginItems'
+import type { PluginItem } from '@mywatch/core'
 
 const STATUS_TABS: Array<WatchStatus | 'all'> = ['all', 'planned', 'in_progress', 'watched', 'quit']
 const STATUS_LABELS: Record<WatchStatus | 'all', string> = {
@@ -172,6 +175,13 @@ function HomePageInner() {
   }, [playlists, activeListId])
 
   const activeList = playlists?.find((p) => p.id === activeListId) || playlists?.find((p) => p.isDefault) || playlists?.[0]
+
+  const isPluginList = activeList ? isPluginListType(activeList.type) : false
+  const activeListPlugin = useListTypePlugin(isPluginList ? activeList?.type : undefined)
+  const rawPluginItems = usePluginItems(isPluginList ? activeList?.id : undefined)
+  const pluginItems = rawPluginItems ?? []
+  const upsertPluginItem = useUpsertPluginItem()
+  const [showPluginAddModal, setShowPluginAddModal] = useState(false)
 
   const activeManualItems = useLiveQuery(async () => {
     if (!activeList || activeList.type !== 'manual') return null
@@ -494,7 +504,7 @@ function HomePageInner() {
                               color: 'var(--muted2)',
                             }}
                           >
-                            {p.type === 'smart' ? 'Smart' : 'Manual'}
+                            {p.type === 'smart' ? 'Smart' : p.type === 'manual' ? 'Manual' : p.type.charAt(0).toUpperCase() + p.type.slice(1)}
                           </span>
 
                           <button
@@ -543,7 +553,7 @@ function HomePageInner() {
         <nav className="flex items-center gap-[2px] flex-shrink-0">
           {/* Add (navigate to /search to add new content) */}
           <button
-            onClick={() => router.push('/search')}
+            onClick={() => isPluginList ? setShowPluginAddModal(true) : router.push('/search')}
             title="Add"
             className="flex items-center justify-center border-none cursor-pointer transition-all duration-100"
             style={{ width: '2.43rem', height: '2.43rem', color: 'var(--muted)', background: 'transparent', borderRadius: 'var(--rsm)' }}
@@ -1235,6 +1245,36 @@ function HomePageInner() {
       <div className="content-area">
         {allItems === undefined ? (
           <p style={{ color: 'var(--muted)', fontSize: 'var(--text-13)' }}>Loading…</p>
+        ) : isPluginList ? (
+          activeListPlugin ? (
+            <div className="flex flex-col" style={{ gap: 8 }}>
+              {pluginItems.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 text-center" style={{ padding: '64px 16px 48px' }}>
+                  <div
+                    className="flex items-center justify-center"
+                    style={{ width: 52, height: 52, borderRadius: 13, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted2)' }}
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                  </div>
+                  <p className="font-semibold" style={{ fontSize: 'var(--text-15)', color: 'var(--fg2)', letterSpacing: '-0.02em' }}>
+                    No items yet
+                  </p>
+                  <p style={{ fontSize: 'var(--text-13)', color: 'var(--muted2)', maxWidth: 220, lineHeight: 1.5, marginTop: -4 }}>
+                    Tap + to add your first {activeListPlugin.label} item
+                  </p>
+                </div>
+              ) : (
+                pluginItems.map((pi: PluginItem) => {
+                  const Card = activeListPlugin.CardComponent
+                  return <Card key={pi.id} item={pi} />
+                })
+              )}
+            </div>
+          ) : (
+            <p style={{ color: 'var(--muted)', fontSize: 'var(--text-13)' }}>Plugin not loaded.</p>
+          )
         ) : displayed.length === 0 ? (
           <div className="flex flex-col items-center gap-3 text-center" style={{ padding: '64px 16px 48px' }}>
             <div
@@ -1308,6 +1348,20 @@ function HomePageInner() {
           onCreated={(id) => setActiveListId(id)}
         />
       )}
+
+      {showPluginAddModal && activeListPlugin?.AddItemModal && activeList && (() => {
+        const AddModal = activeListPlugin.AddItemModal!
+        return (
+          <AddModal
+            playlistId={activeList.id}
+            onClose={() => setShowPluginAddModal(false)}
+            onAdded={async (item) => {
+              await upsertPluginItem(item)
+              setShowPluginAddModal(false)
+            }}
+          />
+        )
+      })()}
     </div>
   )
 }
