@@ -4,6 +4,7 @@ import { createWatchlistRepo } from './repos/watchlist-repo.js'
 import { createPlaylistRepo } from './repos/playlist-repo.js'
 import { createJellyfinRepo } from './repos/jellyfin-repo.js'
 import { createRecapRepo } from './repos/recap-repo.js'
+import { createPluginRepo } from './repos/plugin-repo.js'
 import { createApp } from './app.js'
 import { startJellyfinPoller } from './services/jellyfin-poller.js'
 import { createArrService } from './services/arr-service.js'
@@ -14,6 +15,7 @@ const watchlistRepo = createWatchlistRepo(sql)
 const playlistRepo = createPlaylistRepo(sql)
 const jellyfinRepo = createJellyfinRepo(sql)
 const recapRepo = createRecapRepo(sql)
+const pluginRepo = createPluginRepo(sql)
 
 const recapGenerator = createRecapGenerator(sql, userRepo, recapRepo)
 const arrService = createArrService(userRepo)
@@ -24,6 +26,7 @@ const app = await createApp({
   playlistRepo,
   jellyfinRepo,
   recapRepo,
+  pluginRepo,
   triggerBackgroundRecap: recapGenerator.triggerBackgroundRecap,
   arrService,
 })

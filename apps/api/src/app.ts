@@ -1,17 +1,20 @@
 import Fastify from 'fastify'
 import jwt from '@fastify/jwt'
 import cors from '@fastify/cors'
+import multipart from '@fastify/multipart'
 import type { FastifyInstance } from 'fastify'
 import type { UserRepo } from './repos/user-repo.js'
 import type { WatchlistRepo } from './repos/watchlist-repo.js'
 import type { PlaylistRepo } from './repos/playlist-repo.js'
 import type { JellyfinRepo } from './repos/jellyfin-repo.js'
 import type { RecapRepo } from './repos/recap-repo.js'
+import type { PluginRepo } from './repos/plugin-repo.js'
 import { registerAuthRoutes } from './routes/auth.js'
 import { registerOAuthRoutes } from './routes/oauth.js'
 import { registerSyncRoutes } from './routes/sync.js'
 import { registerSettingsRoutes } from './routes/settings.js'
 import { registerArrRoutes } from './routes/arr.js'
+import { registerPluginRoutes } from './routes/plugins.js'
 
 export interface AppDeps {
   userRepo?: UserRepo
@@ -19,6 +22,7 @@ export interface AppDeps {
   playlistRepo?: PlaylistRepo
   jellyfinRepo?: JellyfinRepo
   recapRepo?: RecapRepo
+  pluginRepo?: PluginRepo
   triggerBackgroundRecap?: (userId: string, tmdbId: number, mediaType: 'movie' | 'tv') => Promise<void>
   arrService?: any
 }
@@ -35,6 +39,8 @@ export async function createApp(deps?: AppDeps): Promise<FastifyInstance> {
   await app.register(jwt, {
     secret: process.env.JWT_SECRET ?? 'dev-secret-change-in-production',
   })
+
+  await app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024 } })
 
   app.get('/health', async () => ({ status: 'ok' }))
 
@@ -57,6 +63,10 @@ export async function createApp(deps?: AppDeps): Promise<FastifyInstance> {
 
   if (deps?.arrService) {
     registerArrRoutes(app, deps.arrService)
+  }
+
+  if (deps?.pluginRepo) {
+    registerPluginRoutes(app, deps.pluginRepo)
   }
 
   return app

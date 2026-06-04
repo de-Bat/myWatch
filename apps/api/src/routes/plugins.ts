@@ -140,7 +140,7 @@ export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRep
       return reply.status(400).send({ error: 'manifest displayName is required' })
     }
     if (BUILTIN_IDS.has(id)) {
-      return reply.status(400).send({ error: `Plugin id "${id}" conflicts with a built-in plugin` })
+      return reply.status(400).send({ error: `Plugin id "${id}" conflicts with a builtin plugin` })
     }
 
     const bundleBuffer = await bundleFile.buffer()
