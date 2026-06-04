@@ -81,6 +81,9 @@ importers:
       '@mywatch/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@mywatch/plugin-sdk':
+        specifier: workspace:*
+        version: link:../../packages/plugin-sdk
       '@mywatch/sync':
         specifier: workspace:*
         version: link:../../packages/sync
@@ -160,6 +163,12 @@ importers:
       zod:
         specifier: ^3.23.0
         version: 3.25.76
+
+  packages/plugin-sdk:
+    dependencies:
+      react:
+        specifier: '>=18.0.0'
+        version: 18.3.1
 
   packages/sync:
     dependencies:

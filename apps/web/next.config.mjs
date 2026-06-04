@@ -1,8 +1,18 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { readFileSync } from 'fs'
 import withSerwistInit from '@serwist/next'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+// Read discovered plugin package names for transpilation
+let discoveredPlugins = []
+try {
+  const manifestPath = new URL('./src/plugins/.plugins-manifest.json', import.meta.url)
+  discoveredPlugins = JSON.parse(readFileSync(manifestPath, 'utf8')).map((p) => p.name)
+} catch {
+  // no manifest yet — scanner hasn't run
+}
 
 const withSerwist = withSerwistInit({
   swSrc: 'src/app/sw.ts',
@@ -12,7 +22,7 @@ const withSerwist = withSerwistInit({
 
 /** @type {import('next').NextConfig} */
 const config = {
-  transpilePackages: ['@mywatch/core', '@mywatch/tmdb', '@mywatch/sync'],
+  transpilePackages: ['@mywatch/core', '@mywatch/tmdb', '@mywatch/sync', '@mywatch/plugin-sdk', ...discoveredPlugins],
   output: 'standalone',
   // Required for pnpm monorepo: tells nft to trace files from the workspace root
   // so root node_modules (where pnpm stores packages) are included in standalone output.
