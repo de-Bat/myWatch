@@ -171,12 +171,12 @@ export function PluginsTab() {
               </colgroup>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border2)', background: 'rgba(255,255,255,0.01)' }}>
-                  <th className="px-2 sm:px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Name</th>
-                  <th className="px-2 sm:px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Description</th>
-                  <th className="px-2 sm:px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Status</th>
-                  <th className="px-2 sm:px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Type</th>
-                  <th className="px-2 sm:px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Source</th>
-                  <th className="px-2 sm:px-4 py-3 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase text-right" style={{ color: 'var(--muted2)' }}>Operation</th>
+                  <th className="px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Name</th>
+                  <th className="px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Description</th>
+                  <th className="px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Status</th>
+                  <th className="px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Type</th>
+                  <th className="px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Source</th>
+                  <th className="px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase text-right" style={{ color: 'var(--muted2)' }}>Operation</th>
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: 'var(--border2)' }}>
@@ -185,7 +185,7 @@ export function PluginsTab() {
                   const listTypeLabel = getPluginTypeLabel(runtimePlugin?.listTypes?.map((listType) => listType.label))
                   return (
                     <tr key={plugin.id} className="transition-colors duration-[100ms] hover:bg-[rgba(255,255,255,0.02)]">
-                      <td className="px-2 sm:px-4 py-3.5">
+                      <td className="px-2 sm:px-4 py-2">
                         <div className="min-w-0">
                           <p className="text-[var(--text-13h)] font-semibold break-words" style={{ color: 'var(--fg)' }}>
                             {plugin.displayName}
@@ -195,24 +195,24 @@ export function PluginsTab() {
                           </p>
                         </div>
                       </td>
-                      <td className="px-2 sm:px-4 py-3.5 align-middle">
-                        <p className="text-[var(--text-12)] break-words" style={{ color: 'var(--fg2)', lineHeight: 1.4 }}>
+                      <td className="px-2 sm:px-4 py-2 align-middle">
+                        <p className="text-[var(--text-10)] text-xs break-words line-clamp-2" title={plugin.description} style={{ color: 'var(--muted2)', lineHeight: 1.3 }}>
                           {plugin.description}
                         </p>
                       </td>
-                      <td className="px-2 sm:px-4 py-3.5 align-middle">
+                      <td className="px-2 sm:px-4 py-2 align-middle">
                         <PluginStatusBadge enabled={plugin.enabled} installed={plugin.installed} hasFailed={plugin.hasFailed} />
                       </td>
-                      <td className="px-2 sm:px-4 py-3.5 align-middle text-[var(--text-12)] break-words" style={{ color: 'var(--fg2)' }}>
+                      <td className="px-2 sm:px-4 py-2 align-middle text-[var(--text-12)] break-words" style={{ color: 'var(--fg2)' }}>
                         {listTypeLabel}
                       </td>
-                      <td className="px-2 sm:px-4 py-3.5 align-middle">
+                      <td className="px-2 sm:px-4 py-2 align-middle">
                         <div className="space-y-1">
                           <PluginSourceBadge source={plugin.source} />
                           <PluginLocation source={plugin.source} path={plugin.path} installed={plugin.installed} />
                         </div>
                       </td>
-                      <td className="px-2 sm:px-4 py-3.5 align-middle text-right">
+                      <td className="px-2 sm:px-4 py-2 align-middle text-right">
                         <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
                           {plugin.hasFailed ? (
                             <button
