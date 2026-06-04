@@ -160,23 +160,15 @@ export function PluginsTab() {
           </div>
         ) : (
           <div>
-            <table className="w-full table-fixed text-left border-collapse">
-              <colgroup>
-                <col style={{ width: '18%' }} />
-                <col style={{ width: '24%' }} />
-                <col style={{ width: '13%' }} />
-                <col style={{ width: '12%' }} />
-                <col style={{ width: '17%' }} />
-                <col style={{ width: '16%' }} />
-              </colgroup>
+             <table className="w-full table-fixed text-left border-collapse">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border2)', background: 'rgba(255,255,255,0.01)' }}>
-                  <th className="px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Name</th>
-                  <th className="px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Description</th>
-                  <th className="px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Status</th>
-                  <th className="px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Type</th>
-                  <th className="px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Source</th>
-                  <th className="px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase text-right" style={{ color: 'var(--muted2)' }}>Operation</th>
+                  <th className="w-[32%] md:w-[18%] px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Name</th>
+                  <th className="hidden md:table-cell md:w-[24%] px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Description</th>
+                  <th className="w-[19%] md:w-[14%] px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Status</th>
+                  <th className="w-[12%] md:w-[12%] px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Type</th>
+                  <th className="w-[19%] md:w-[16%] px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>Source</th>
+                  <th className="w-[18%] md:w-[16%] px-2 sm:px-4 py-2 text-[var(--text-10)] font-bold tracking-[0.08em] uppercase text-right" style={{ color: 'var(--muted2)' }}>Operation</th>
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: 'var(--border2)' }}>
@@ -193,9 +185,12 @@ export function PluginsTab() {
                           <p className="text-[var(--text-10)] text-xs font-mono" style={{ color: 'var(--muted2)', marginTop: '2px' }}>
                             id: {plugin.id}
                           </p>
+                          <p className="text-[var(--text-10)] text-xs break-words mt-1 block md:hidden" style={{ color: 'var(--muted2)', lineHeight: 1.3 }}>
+                            {plugin.description}
+                          </p>
                         </div>
                       </td>
-                      <td className="px-2 sm:px-4 py-2 align-middle">
+                      <td className="hidden md:table-cell px-2 sm:px-4 py-2 align-middle">
                         <p className="text-[var(--text-10)] text-xs break-words line-clamp-2" title={plugin.description} style={{ color: 'var(--muted2)', lineHeight: 1.3 }}>
                           {plugin.description}
                         </p>
@@ -210,12 +205,12 @@ export function PluginsTab() {
                         <PluginSourceBadge source={plugin.source} />
                       </td>
                       <td className="px-2 sm:px-4 py-2 align-middle text-right">
-                        <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+                        <div className="flex flex-wrap items-center justify-end gap-1 sm:gap-2">
                           {plugin.hasFailed ? (
                             <button
                               onClick={refresh}
                               aria-label={`Retry ${plugin.displayName}`}
-                              className="rounded-[6px] px-2 sm:px-3 py-1.5 text-[var(--text-12)] font-semibold cursor-pointer border transition-colors hover:bg-[var(--surface2)]"
+                              className="rounded-[6px] px-1.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[12px] font-semibold cursor-pointer border transition-colors hover:bg-[var(--surface2)]"
                               style={{ borderColor: 'var(--border)', background: 'transparent', color: 'var(--accent2)' }}
                             >
                               Retry
@@ -224,7 +219,7 @@ export function PluginsTab() {
                             <button
                               onClick={() => togglePlugin(plugin.id, plugin.enabled)}
                               aria-label={`${plugin.enabled ? 'Disable' : plugin.installed ? 'Start' : 'Load'} ${plugin.displayName}`}
-                              className="rounded-[6px] px-2 sm:px-3 py-1.5 text-[var(--text-12)] font-semibold cursor-pointer border transition-colors hover:bg-[var(--surface2)]"
+                              className="rounded-[6px] px-1.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[12px] font-semibold cursor-pointer border transition-colors hover:bg-[var(--surface2)]"
                               style={{
                                 borderColor: 'var(--border)',
                                 background: plugin.enabled ? 'transparent' : 'var(--accent)',
@@ -237,7 +232,7 @@ export function PluginsTab() {
                           {plugin.installed && plugin.source !== 'builtin' && (
                             <button
                               onClick={() => removePlugin(plugin.id, plugin.displayName)}
-                              className="text-[var(--text-12)] font-semibold transition-colors duration-100 p-1 rounded cursor-pointer border-none bg-transparent hover:opacity-80"
+                              className="text-[10px] sm:text-[12px] font-semibold transition-colors duration-100 p-1 rounded cursor-pointer border-none bg-transparent hover:opacity-80"
                               style={{ color: 'var(--red)' }}
                             >
                               Remove
@@ -380,7 +375,7 @@ function PluginStatusBadge({ enabled, installed, hasFailed }: { enabled: boolean
 
   return (
     <span
-      className="text-[var(--text-10)] font-bold uppercase tracking-[0.06em] px-[7px] py-[2.5px] rounded-[4px] inline-block whitespace-nowrap"
+      className="text-[9px] sm:text-[10px] font-bold uppercase tracking-normal sm:tracking-[0.06em] px-1 sm:px-[7px] py-[2px] sm:py-[2.5px] rounded-[4px] inline-block whitespace-nowrap"
       style={{ background: bg, color, border: `1px solid ${color}22` }}
     >
       {label}
@@ -409,7 +404,7 @@ function PluginSourceBadge({ source }: { source: InstalledPluginMeta['source'] }
 
   return (
     <span
-      className="text-[var(--text-10)] font-bold uppercase tracking-[0.06em] px-[7px] py-[2.5px] rounded-[4px] inline-block whitespace-nowrap"
+      className="text-[9px] sm:text-[10px] font-bold uppercase tracking-normal sm:tracking-[0.06em] px-1 sm:px-[7px] py-[2px] sm:py-[2.5px] rounded-[4px] inline-block whitespace-nowrap"
       style={{ background: bg, color, border: `1px solid ${color}22` }}
     >
       {label}
