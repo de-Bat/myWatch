@@ -356,7 +356,7 @@ export function PluginsTab() {
 
 function getPluginTypeLabel(listTypeLabels?: string[]) {
   if (!listTypeLabels || listTypeLabels.length === 0) return '-'
-  return listTypeLabels.join(', ')
+  return 'List'
 }
 
 function PluginStatusBadge({ enabled, installed, hasFailed }: { enabled: boolean; installed: boolean; hasFailed: boolean }) {

@@ -59,7 +59,7 @@ describe('PluginsTab', () => {
 
     const youtubeRow = screen.getByRole('row', { name: /youtube links/i })
     expect(within(youtubeRow).getByText(/enabled/i)).toBeTruthy()
-    expect(within(youtubeRow).getByText('YouTube')).toBeTruthy()
+    expect(within(youtubeRow).getByText('List')).toBeTruthy()
     expect(within(youtubeRow).getByText('Built-in')).toBeTruthy()
     expect(within(youtubeRow).getByRole('button', { name: /disable youtube links/i })).toBeTruthy()
 
