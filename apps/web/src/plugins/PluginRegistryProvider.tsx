@@ -67,7 +67,7 @@ export function PluginRegistryProvider({ children }: { children: ReactNode }) {
       setIsLoading(true)
       setError(null)
       try {
-        const token = (session as unknown as { accessToken?: string })?.accessToken ?? ''
+        const token = (session as unknown as { apiToken?: string })?.apiToken ?? ''
         const res = await fetch(pluginApiUrl('/api/user/plugins'), {
           headers: { authorization: `Bearer ${token}` },
         })
