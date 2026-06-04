@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/scan-plugins.mjs && next dev",
+    "build": "node scripts/scan-plugins.mjs && next build",
     "start": "next start",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "scan-plugins": "node scripts/scan-plugins.mjs"
   },
   "dependencies": {
     "@mywatch/core": "workspace:*",
