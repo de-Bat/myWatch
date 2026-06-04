@@ -59,10 +59,12 @@ export function WatchlistItemCard({
   item,
   onSelect,
   jellyfinProgress,
+  compact,
 }: {
   item: WatchlistItem
   onSelect?: () => void
   jellyfinProgress?: JellyfinProgress
+  compact?: boolean
 }) {
   const { data: session } = useSession()
   const { settings } = useSettings()
@@ -140,7 +142,7 @@ export function WatchlistItemCard({
       className="relative overflow-hidden flex gap-3 rounded-[var(--r)] border cursor-pointer transition-all duration-[120ms]
         hover:-translate-y-px hover:shadow-[0_2px_10px_rgba(0,0,0,.25)]"
       style={{
-        padding: '14px 16px',
+        padding: compact ? '10px 12px' : '14px 16px',
         background: 'var(--surface)',
         borderColor: 'var(--border2)',
         alignItems: 'flex-start',
@@ -158,8 +160,12 @@ export function WatchlistItemCard({
     >
       {/* Poster */}
       <div
-        className="flex-shrink-0 w-[86px] h-[129px] rounded-[8px] overflow-hidden"
-        style={{ background: 'var(--surface2)' }}
+        className="flex-shrink-0 overflow-hidden rounded-[8px]"
+        style={{
+          width: compact ? 64 : 86,
+          height: compact ? 96 : 129,
+          background: 'var(--surface2)',
+        }}
       >
         {meta?.posterPath ? (
           <img
@@ -178,7 +184,7 @@ export function WatchlistItemCard({
       <CardMenu item={item} globalSettings={baseCardMeta} />
 
       {/* Body */}
-      <div className="flex-1 min-w-0 flex flex-col gap-[6px] pt-[1px] overflow-visible">
+      <div className="flex-1 min-w-0 flex flex-col overflow-visible" style={{ gap: compact ? 4 : 6, paddingTop: 1 }}>
 
         {/* Row 1: [Movie/TV] Title */}
         <div className="flex items-center gap-[6px] min-w-0">
