@@ -44,6 +44,13 @@ const VIEW_STORAGE_KEY = 'mywatch_view'
 
 function HomePageInner() {
   const { data: session } = useSession()
+  const { settings, update: updateSettings } = useSettings()
+  const { progressMap } = useJellyfinProgress()
+  const allItems = useWatchlistItems()
+  const playlists = usePlaylists()
+  const [showPluginAddModal, setShowPluginAddModal] = useState(false)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [sharePluginType, setSharePluginType] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
   const [importBanner, setImportBanner] = useState<{ count: number } | null>(null)
@@ -174,12 +181,6 @@ function HomePageInner() {
     localStorage.setItem(VIEW_STORAGE_KEY, v)
   }
 
-  const { settings, update: updateSettings } = useSettings()
-  const { progressMap } = useJellyfinProgress()
-  const allItems = useWatchlistItems()
-
-  const playlists = usePlaylists()
-
   useEffect(() => {
     if (playlists && activeListId === null) {
       const defaultList = playlists.find((p) => p.isDefault)
@@ -203,9 +204,6 @@ function HomePageInner() {
   const rawPluginItems = usePluginItems(isPluginList ? activeList?.id : undefined)
   const pluginItems = rawPluginItems ?? []
   const upsertPluginItem = useUpsertPluginItem()
-  const [showPluginAddModal, setShowPluginAddModal] = useState(false)
-  const [shareUrl, setShareUrl] = useState<string | null>(null)
-  const [sharePluginType, setSharePluginType] = useState<string | null>(null)
 
   const activeManualItems = useLiveQuery(async () => {
     if (!activeList || activeList.type !== 'manual') return null
