@@ -1,4 +1,5 @@
 import { defineWorkspace } from 'vitest/config'
+import react from '@vitejs/plugin-react'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -17,6 +18,7 @@ export default defineWorkspace([
     },
   },
   {
+    plugins: [react()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'apps/web/src'),

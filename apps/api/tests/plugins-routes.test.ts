@@ -24,7 +24,7 @@ vi.mock('../src/middleware/authenticate.js', () => ({
 }))
 
 describe('GET /api/plugins', () => {
-  it('returns built-in plugins with default enabled=true when no DB record', async () => {
+  it('returns built-in plugins with default enabled=false when no DB record', async () => {
     const pluginRepo = makeMockPluginRepo({ list: vi.fn().mockResolvedValue([]) })
     const app = await createApp({ pluginRepo })
     const res = await app.inject({ method: 'GET', url: '/api/plugins', headers: AUTH_HEADER })
@@ -32,7 +32,7 @@ describe('GET /api/plugins', () => {
     const body = res.json<{ plugins: InstalledPluginMeta[] }>()
     const youtube = body.plugins.find((p) => p.id === 'youtube')
     expect(youtube).toBeDefined()
-    expect(youtube?.enabled).toBe(true)
+    expect(youtube?.enabled).toBe(false)
     expect(youtube?.source).toBe('builtin')
   })
 

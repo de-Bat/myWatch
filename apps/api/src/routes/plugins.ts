@@ -28,7 +28,7 @@ export function registerPluginRoutes(app: FastifyInstance, pluginRepo: PluginRep
       id: p.id,
       displayName: p.displayName,
       source: 'builtin' as const,
-      enabled: dbMap.get(p.id)?.enabled ?? true,
+      enabled: dbMap.get(p.id)?.enabled ?? false,
     }))
 
     const customs = dbRows
