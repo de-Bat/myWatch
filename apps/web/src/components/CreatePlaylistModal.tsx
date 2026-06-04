@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import type { SmartRules, WatchStatus, MediaType } from '@mywatch/core'
 import { useUpsertPlaylist } from '@/hooks/usePlaylists'
+import { usePlugins } from '@/plugins'
 
 interface Props {
   onClose: () => void
@@ -18,9 +19,12 @@ const WATCH_STATUSES: { value: WatchStatus; label: string }[] = [
 export function CreatePlaylistModal({ onClose, onCreated }: Props) {
   const upsert = useUpsertPlaylist()
 
+  const plugins = usePlugins()
+  const pluginListTypes = plugins.flatMap((p) => p.listTypes ?? [])
+
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [type, setType] = useState<'manual' | 'smart'>('manual')
+  const [type, setType] = useState<string>('manual')
   const [statuses, setStatuses] = useState<WatchStatus[]>([])
   const [mediaTypes, setMediaTypes] = useState<MediaType[]>([])
   const [minRating, setMinRating] = useState<string>('')
@@ -132,35 +136,32 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
             <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
               Type
             </label>
-            <div
-              className="flex"
-              style={{
-                background: 'var(--bg)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--rsm)',
-                padding: 2,
-                gap: 1,
-              }}
-            >
-              {(['manual', 'smart'] as const).map((t) => (
+            <div className="flex flex-wrap gap-[5px]">
+              {[
+                { id: 'manual', label: 'Manual' },
+                { id: 'smart', label: 'Smart (auto)' },
+                ...pluginListTypes.map((lt) => ({ id: lt.id, label: lt.label })),
+              ].map((t) => (
                 <button
-                  key={t}
-                  onClick={() => setType(t)}
-                  className="flex-1 py-[6px] text-[var(--text-12)] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                  key={t.id}
+                  onClick={() => setType(t.id)}
+                  className="px-[9px] py-[4px] rounded-full text-[var(--text-11)] font-medium transition-all duration-100 cursor-pointer border"
                   style={{
-                    background: type === t ? 'var(--surface)' : 'transparent',
-                    color: type === t ? 'var(--fg)' : 'var(--muted)',
-                    fontWeight: type === t ? 600 : 500,
+                    background: type === t.id ? 'var(--accent-bg)' : 'transparent',
+                    color: type === t.id ? 'var(--accent2)' : 'var(--muted)',
+                    borderColor: type === t.id ? 'var(--accent)' : 'var(--border2)',
                   }}
                 >
-                  {t === 'manual' ? 'Manual' : 'Smart (auto)'}
+                  {t.label}
                 </button>
               ))}
             </div>
             <p className="text-[var(--text-11)]" style={{ color: 'var(--muted2)' }}>
               {type === 'manual'
                 ? 'Add items manually. Drag to reorder.'
-                : 'Items auto-populate based on rules below.'}
+                : type === 'smart'
+                ? 'Items auto-populate based on rules below.'
+                : `Plugin-managed list (${pluginListTypes.find((lt) => lt.id === type)?.label ?? type}).`}
             </p>
           </div>
 
