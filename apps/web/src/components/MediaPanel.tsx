@@ -85,6 +85,14 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
   const [requestError, setRequestError] = useState<string | null>(null)
   const [requestSuccess, setRequestSuccess] = useState<string | null>(null)
   const [statusPickerOpen, setStatusPickerOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   useEffect(() => {
     if (!session?.apiToken) return
@@ -314,7 +322,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
         <div className="flex-shrink-0 relative">
           {meta?.backdropPath ? (
             <>
-              <div className="relative h-36 overflow-hidden">
+              <div className="relative overflow-hidden" style={{ height: isMobile ? 80 : 144 }}>
                 <img src={`${TMDB_BACKDROP}${meta.backdropPath}`} alt="" className="w-full h-full object-cover" />
                 <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, var(--bg) 0%, transparent 55%)' }} />
               </div>
@@ -386,7 +394,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
-        <div style={{ padding: '0 20px 40px' }} className="flex flex-col gap-5">
+        <div style={{ padding: isMobile ? '0 14px 28px' : '0 20px 40px', display: 'flex', flexDirection: 'column', gap: isMobile ? 16 : 20 }}>
           {/* Header: poster + title */}
           <div className="flex gap-4 items-start">
             {meta?.posterPath && (
@@ -394,7 +402,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                 src={`${TMDB_POSTER}${meta.posterPath}`}
                 alt=""
                 className="flex-shrink-0 rounded-[8px]"
-                style={{ width: 88, boxShadow: '0 4px 20px rgba(0,0,0,.5)', border: '2px solid var(--border)' }}
+                style={{ width: isMobile ? 68 : 88, boxShadow: '0 4px 20px rgba(0,0,0,.5)', border: '2px solid var(--border)' }}
               />
             )}
             <div className="flex flex-col gap-[5px] pt-[4px] min-w-0">
@@ -501,7 +509,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
             <p style={{ fontSize: 'var(--text-13)', color: 'var(--fg2)', lineHeight: 1.6 }}>{meta.overview}</p>
           )}
 
-          <Divider />
+          <Divider compact={isMobile} />
 
           {/* Status */}
           <div className="flex flex-col gap-[8px]">
@@ -836,7 +844,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
             </div>
           )}
 
-          <Divider />
+          <Divider compact={isMobile} />
 
           {/* Rating */}
           <div className="flex flex-col gap-[8px]">
@@ -846,8 +854,10 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
                 <button
                   key={n}
                   onClick={() => setRating(rating === n ? null : n)}
-                  className="w-[28px] h-[28px] rounded-[5px] text-[var(--text-12)] font-semibold transition-all duration-100 cursor-pointer border-none"
+                  className="rounded-[5px] text-[var(--text-12)] font-semibold transition-all duration-100 cursor-pointer border-none"
                   style={{
+                    width: isMobile ? 24 : 28,
+                    height: isMobile ? 24 : 28,
                     background: rating != null && n <= rating ? 'var(--amber)' : 'var(--surface)',
                     color: rating != null && n <= rating ? '#18181b' : 'var(--muted)',
                     border: `1px solid ${rating != null && n <= rating ? 'transparent' : 'var(--border2)'}`,
@@ -911,7 +921,7 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
             )}
           </div>
 
-          <Divider />
+          <Divider compact={isMobile} />
 
           {/* Where to watch */}
           <div className="flex flex-col gap-[8px]">
@@ -1008,8 +1018,8 @@ export function MediaPanel({ tmdbId, mediaType, onClose, jellyfinProgress }: Pro
   )
 }
 
-function Divider() {
-  return <div style={{ height: 1, background: 'var(--border2)', margin: '0 -20px' }} />
+function Divider({ compact }: { compact?: boolean }) {
+  return <div style={{ height: 1, background: 'var(--border2)', margin: compact ? '0 -14px' : '0 -20px' }} />
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
