@@ -71,7 +71,7 @@ export interface Playlist {
   userId: string
   name: string
   description: string | null
-  type: 'manual' | 'smart'
+  type: 'manual' | 'smart' | (string & {})
   smartRules: SmartRules | null
   sortOrder: number
   createdAt: string
@@ -121,3 +121,13 @@ export interface ProgressRecap {
   updatedAt: string
 }
 
+export interface PluginItem {
+  id: string
+  pluginId: string
+  listTypeId: string
+  playlistId: string
+  data: Record<string, unknown>
+  addedAt: string
+  updatedAt: string
+  deletedAt: string | null
+}
