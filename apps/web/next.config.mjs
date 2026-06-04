@@ -30,10 +30,8 @@ const config = {
     outputFileTracingRoot: path.join(__dirname, '../../'),
   },
   webpack: (config) => {
-    // Plugin .tsx source entries confuse webpack's scope hoisting → TDZ at runtime.
-    if (discoveredPlugins.length > 0) {
-      config.optimization.concatenateModules = false
-    }
+    // Disable scope hoisting to avoid runtime TDZ with complex imports
+    config.optimization.concatenateModules = false
     return config
   },
   eslint: {
