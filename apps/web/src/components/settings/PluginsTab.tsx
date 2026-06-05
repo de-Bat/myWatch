@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import type { InstalledPluginMeta } from '@mywatch/core'
 import { usePluginRegistryContext } from '@/plugins/PluginRegistryProvider'
@@ -17,6 +17,12 @@ type PluginInventoryRow = {
   path?: string
   installed: boolean
   hasFailed: boolean
+  appearsInAllList: boolean
+  appearsInDedicatedList: boolean
+  useCustomMediaCard: boolean
+  typeBadge: string
+  showInListView: boolean
+  showInGridView: boolean
 }
 
 export function PluginsTab() {
@@ -29,6 +35,7 @@ export function PluginsTab() {
   const [localError, setLocalError] = useState<string | null>(null)
   const [installingLocal, setInstallingLocal] = useState(false)
   const [showLoadTools, setShowLoadTools] = useState(false)
+  const [expandedPluginId, setExpandedPluginId] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const token = (session as unknown as { apiToken?: string })?.apiToken ?? ''
@@ -104,16 +111,25 @@ export function PluginsTab() {
   const catalogById = new Map(OFFICIAL_CATALOG.map((entry) => [entry.id, entry]))
   const registryById = new Map(PLUGINS.map((plugin) => [plugin.id, plugin]))
   const rows: PluginInventoryRow[] = [
-    ...installedMeta.map((plugin) => ({
-      id: plugin.id,
-      displayName: plugin.displayName,
-      description: catalogById.get(plugin.id)?.description ?? 'Loaded plugin bundle.',
-      enabled: plugin.enabled,
-      source: plugin.source,
-      path: plugin.path,
-      installed: true,
-      hasFailed: failedIds.has(plugin.id),
-    })),
+    ...installedMeta.map((plugin) => {
+      const catalogEntry = catalogById.get(plugin.id)
+      return {
+        id: plugin.id,
+        displayName: plugin.displayName,
+        description: catalogEntry?.description ?? 'Loaded plugin bundle.',
+        enabled: plugin.enabled,
+        source: plugin.source,
+        path: plugin.path,
+        installed: true,
+        hasFailed: failedIds.has(plugin.id),
+        appearsInAllList: plugin.appearsInAllList ?? catalogEntry?.appearsInAllList ?? false,
+        appearsInDedicatedList: plugin.appearsInDedicatedList ?? catalogEntry?.appearsInDedicatedList ?? true,
+        useCustomMediaCard: plugin.useCustomMediaCard ?? catalogEntry?.useCustomMediaCard ?? false,
+        typeBadge: plugin.typeBadge ?? catalogEntry?.typeBadge ?? 'List',
+        showInListView: plugin.showInListView ?? catalogEntry?.showInListView ?? true,
+        showInGridView: plugin.showInGridView ?? catalogEntry?.showInGridView ?? true,
+      }
+    }),
     ...OFFICIAL_CATALOG.filter((entry) => !installedIds.has(entry.id)).map((entry) => ({
       id: entry.id,
       displayName: entry.displayName,
@@ -122,6 +138,12 @@ export function PluginsTab() {
       source: 'builtin' as const,
       installed: false,
       hasFailed: false,
+      appearsInAllList: entry.appearsInAllList ?? false,
+      appearsInDedicatedList: entry.appearsInDedicatedList ?? true,
+      useCustomMediaCard: entry.useCustomMediaCard ?? false,
+      typeBadge: entry.typeBadge ?? 'List',
+      showInListView: entry.showInListView ?? true,
+      showInGridView: entry.showInGridView ?? true,
     })),
   ]
 
@@ -173,74 +195,85 @@ export function PluginsTab() {
               </thead>
               <tbody className="divide-y" style={{ borderColor: 'var(--border2)' }}>
                 {rows.map((plugin) => {
-                  const runtimePlugin = registryById.get(plugin.id)
-                  const listTypeLabel = getPluginTypeLabel(runtimePlugin?.listTypes?.map((listType) => listType.label))
+                  const isExpanded = expandedPluginId === plugin.id
                   return (
-                    <tr key={plugin.id} className="transition-colors duration-[100ms] hover:bg-[rgba(255,255,255,0.02)]">
-                      <td className="px-2 sm:px-4 py-2">
-                        <div className="min-w-0">
-                          <p className="text-[var(--text-13h)] font-semibold break-words" style={{ color: 'var(--fg)' }}>
-                            {plugin.displayName}
-                          </p>
-                          <p className="text-[var(--text-10)] text-xs font-mono" style={{ color: 'var(--muted2)', marginTop: '2px' }}>
-                            id: {plugin.id}
-                          </p>
-                          <p className="text-[var(--text-10)] text-xs break-words mt-1 block md:hidden" style={{ color: 'var(--muted2)', lineHeight: 1.3 }}>
+                    <React.Fragment key={plugin.id}>
+                      <tr
+                        onClick={() => setExpandedPluginId(isExpanded ? null : plugin.id)}
+                        className="transition-colors duration-[100ms] hover:bg-[rgba(255,255,255,0.02)] cursor-pointer"
+                      >
+                        <td className="px-2 sm:px-4 py-2">
+                          <div className="min-w-0">
+                            <p className="text-[var(--text-13h)] font-semibold break-words" style={{ color: 'var(--fg)' }}>
+                              {plugin.displayName}
+                            </p>
+                            <p className="text-[var(--text-10)] text-xs font-mono" style={{ color: 'var(--muted2)', marginTop: '2px' }}>
+                              id: {plugin.id}
+                            </p>
+                            <p className="text-[var(--text-10)] text-xs break-words mt-1 block md:hidden" style={{ color: 'var(--muted2)', lineHeight: 1.3 }}>
+                              {plugin.description}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="hidden md:table-cell px-2 sm:px-4 py-2 align-middle">
+                          <p className="text-[var(--text-10)] text-xs break-words line-clamp-2" title={plugin.description} style={{ color: 'var(--muted2)', lineHeight: 1.3 }}>
                             {plugin.description}
                           </p>
-                        </div>
-                      </td>
-                      <td className="hidden md:table-cell px-2 sm:px-4 py-2 align-middle">
-                        <p className="text-[var(--text-10)] text-xs break-words line-clamp-2" title={plugin.description} style={{ color: 'var(--muted2)', lineHeight: 1.3 }}>
-                          {plugin.description}
-                        </p>
-                      </td>
-                      <td className="px-2 sm:px-4 py-2 align-middle">
-                        <PluginStatusBadge enabled={plugin.enabled} installed={plugin.installed} hasFailed={plugin.hasFailed} />
-                      </td>
-                      <td className="px-2 sm:px-4 py-2 align-middle text-[var(--text-12)] break-words" style={{ color: 'var(--fg2)' }}>
-                        {listTypeLabel}
-                      </td>
-                      <td className="px-2 sm:px-4 py-2 align-middle">
-                        <PluginSourceBadge source={plugin.source} />
-                      </td>
-                      <td className="px-2 sm:px-4 py-2 align-middle text-right">
-                        <div className="flex flex-wrap items-center justify-end gap-1 sm:gap-2">
-                          {plugin.hasFailed ? (
-                            <button
-                              onClick={refresh}
-                              aria-label={`Retry ${plugin.displayName}`}
-                              className="rounded-[6px] px-1.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[12px] font-semibold cursor-pointer border transition-colors hover:bg-[var(--surface2)]"
-                              style={{ borderColor: 'var(--border)', background: 'transparent', color: 'var(--accent2)' }}
-                            >
-                              Retry
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => togglePlugin(plugin.id, plugin.enabled)}
-                              aria-label={`${plugin.enabled ? 'Disable' : plugin.installed ? 'Start' : 'Load'} ${plugin.displayName}`}
-                              className="rounded-[6px] px-1.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[12px] font-semibold cursor-pointer border transition-colors hover:bg-[var(--surface2)]"
-                              style={{
-                                borderColor: 'var(--border)',
-                                background: plugin.enabled ? 'transparent' : 'var(--accent)',
-                                color: plugin.enabled ? 'var(--fg)' : '#fff',
-                              }}
-                            >
-                              {plugin.enabled ? 'Disable' : plugin.installed ? 'Start' : 'Load'}
-                            </button>
-                          )}
-                          {plugin.installed && plugin.source !== 'builtin' && (
-                            <button
-                              onClick={() => removePlugin(plugin.id, plugin.displayName)}
-                              className="text-[10px] sm:text-[12px] font-semibold transition-colors duration-100 p-1 rounded cursor-pointer border-none bg-transparent hover:opacity-80"
-                              style={{ color: 'var(--red)' }}
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="px-2 sm:px-4 py-2 align-middle">
+                          <PluginStatusBadge enabled={plugin.enabled} installed={plugin.installed} hasFailed={plugin.hasFailed} />
+                        </td>
+                        <td className="px-2 sm:px-4 py-2 align-middle">
+                          <PluginTypeBadge typeBadge={plugin.typeBadge} />
+                        </td>
+                        <td className="px-2 sm:px-4 py-2 align-middle">
+                          <PluginSourceBadge source={plugin.source} />
+                        </td>
+                        <td className="px-2 sm:px-4 py-2 align-middle text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex flex-wrap items-center justify-end gap-1 sm:gap-2">
+                            {plugin.hasFailed ? (
+                              <button
+                                onClick={refresh}
+                                aria-label={`Retry ${plugin.displayName}`}
+                                className="rounded-[6px] px-1.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[12px] font-semibold cursor-pointer border transition-colors hover:bg-[var(--surface2)]"
+                                style={{ borderColor: 'var(--border)', background: 'transparent', color: 'var(--accent2)' }}
+                              >
+                                Retry
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => togglePlugin(plugin.id, plugin.enabled)}
+                                aria-label={`${plugin.enabled ? 'Disable' : plugin.installed ? 'Start' : 'Load'} ${plugin.displayName}`}
+                                className="rounded-[6px] px-1.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[12px] font-semibold cursor-pointer border transition-colors hover:bg-[var(--surface2)]"
+                                style={{
+                                  borderColor: 'var(--border)',
+                                  background: plugin.enabled ? 'transparent' : 'var(--accent)',
+                                  color: plugin.enabled ? 'var(--fg)' : '#fff',
+                                }}
+                              >
+                                {plugin.enabled ? 'Disable' : plugin.installed ? 'Start' : 'Load'}
+                              </button>
+                            )}
+                            {plugin.installed && plugin.source !== 'builtin' && (
+                              <button
+                                onClick={() => removePlugin(plugin.id, plugin.displayName)}
+                                className="text-[10px] sm:text-[12px] font-semibold transition-colors duration-100 p-1 rounded cursor-pointer border-none bg-transparent hover:opacity-80"
+                                style={{ color: 'var(--red)' }}
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr style={{ background: 'rgba(255,255,255,0.015)' }}>
+                          <td colSpan={6} className="px-4 py-4" style={{ borderTop: '1px solid var(--border2)' }}>
+                            <PluginPropertiesPanel plugin={plugin} />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   )
                 })}
               </tbody>
@@ -349,9 +382,56 @@ export function PluginsTab() {
   )
 }
 
-function getPluginTypeLabel(listTypeLabels?: string[]) {
-  if (!listTypeLabels || listTypeLabels.length === 0) return '-'
-  return 'List'
+function PluginTypeBadge({ typeBadge }: { typeBadge: string }) {
+  return (
+    <span
+      className="text-[9px] sm:text-[10px] font-bold uppercase tracking-normal sm:tracking-[0.06em] px-1 sm:px-[7px] py-[2px] sm:py-[2.5px] rounded-[4px] inline-block whitespace-nowrap"
+      style={{ background: 'rgba(99,102,241,0.15)', color: 'var(--indigo, #818cf8)', border: '1px solid rgba(99,102,241,0.22)' }}
+    >
+      {typeBadge}
+    </span>
+  )
+}
+
+function PropRow({ label, value }: { label: string; value: boolean | string }) {
+  const isBool = typeof value === 'boolean'
+  return (
+    <div className="flex items-center justify-between gap-4 py-[5px]" style={{ borderBottom: '1px solid var(--border2)' }}>
+      <span className="text-[var(--text-11)] font-medium" style={{ color: 'var(--muted)' }}>{label}</span>
+      {isBool ? (
+        <span
+          className="text-[9px] font-bold uppercase tracking-[0.06em] px-[6px] py-[2px] rounded-[4px]"
+          style={{
+            background: value ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
+            color: value ? 'var(--accent2)' : 'var(--muted2)',
+            border: `1px solid ${value ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.08)'}`,
+          }}
+        >
+          {value ? 'Yes' : 'No'}
+        </span>
+      ) : (
+        <span className="text-[var(--text-12)] font-semibold" style={{ color: 'var(--fg)' }}>{value}</span>
+      )}
+    </div>
+  )
+}
+
+function PluginPropertiesPanel({ plugin }: { plugin: PluginInventoryRow }) {
+  return (
+    <div>
+      <p className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase mb-3" style={{ color: 'var(--muted2)' }}>
+        Plugin Properties
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 max-w-2xl">
+        <PropRow label="Type Badge" value={plugin.typeBadge} />
+        <PropRow label="Appears in All List" value={plugin.appearsInAllList} />
+        <PropRow label="Appears in Dedicated List" value={plugin.appearsInDedicatedList} />
+        <PropRow label="Use Custom Media Card" value={plugin.useCustomMediaCard} />
+        <PropRow label="Show in List View" value={plugin.showInListView} />
+        <PropRow label="Show in Grid View" value={plugin.showInGridView} />
+      </div>
+    </div>
+  )
 }
 
 function PluginStatusBadge({ enabled, installed, hasFailed }: { enabled: boolean; installed: boolean; hasFailed: boolean }) {

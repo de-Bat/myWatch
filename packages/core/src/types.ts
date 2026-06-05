@@ -139,4 +139,10 @@ export interface InstalledPluginMeta {
   enabled: boolean
   installedAt?: string
   path?: string
+  appearsInAllList?: boolean
+  appearsInDedicatedList?: boolean
+  useCustomMediaCard?: boolean
+  typeBadge?: string
+  showInListView?: boolean
+  showInGridView?: boolean
 }
