@@ -22,6 +22,17 @@ export const OFFICIAL_CATALOG: OfficialPluginEntry[] = [
     showInListView: true,
     showInGridView: true,
   },
+  {
+    id: 'books',
+    displayName: 'Books',
+    description: 'Track books you want to read in dedicated reading lists.',
+    appearsInAllList: false,
+    appearsInDedicatedList: true,
+    useCustomMediaCard: false,
+    typeBadge: 'B',
+    showInListView: true,
+    showInGridView: true,
+  },
 ]
 
 export function isInCatalog(id: string): boolean {
