@@ -35,7 +35,7 @@ export function GridItemCard({ item, onSelect, jellyfinProgress }: { item: Watch
   return (
     <div
       onClick={() => onSelect ? onSelect() : router.push(`/media/${item.mediaType}/${item.tmdbId}`)}
-      className="cursor-pointer flex flex-col gap-[8px] group"
+      className="cursor-pointer flex flex-col gap-[8px] group min-w-0"
     >
       {/* Poster */}
       <div

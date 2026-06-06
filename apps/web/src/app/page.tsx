@@ -1335,6 +1335,7 @@ function HomePageInner() {
               display: 'grid',
               gridTemplateColumns,
               gap: 12,
+              alignItems: 'start',
             }}
           >
             {displayed.map((item) => (
