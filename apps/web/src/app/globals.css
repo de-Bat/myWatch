@@ -142,9 +142,21 @@ html[data-font="mono"] body {
 }
 
 .controls-row {
-  overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .controls-row {
+    overflow-x: auto;
+  }
+}
+
+@media (min-width: 769px) {
+  .controls-row {
+    overflow: visible;
+    flex-wrap: wrap;
+  }
 }
 
 .controls-row::-webkit-scrollbar {

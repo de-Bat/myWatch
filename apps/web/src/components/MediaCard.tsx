@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import type { TmdbSearchResult } from '@mywatch/tmdb'
@@ -22,6 +22,20 @@ export function MediaCard({ result, existingStatus, onAdd }: Props) {
     isDownloading: boolean
     downloadPercent: number | null
   } | null>(null)
+
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function close(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [menuOpen])
 
   useEffect(() => {
     if (!session?.apiToken) return
@@ -55,7 +69,7 @@ export function MediaCard({ result, existingStatus, onAdd }: Props) {
 
   return (
     <div
-      className="flex gap-3 rounded-[var(--r)] border"
+      className="flex gap-3 rounded-[var(--r)] border relative"
       style={{ padding: '11px 12px', background: 'var(--surface)', borderColor: 'var(--border2)' }}
     >
       <Link href={`/media/${result.media_type}/${result.id}`} className="flex-shrink-0">
@@ -74,14 +88,69 @@ export function MediaCard({ result, existingStatus, onAdd }: Props) {
       </Link>
 
       <div className="flex-1 min-w-0 flex flex-col gap-[3px] pt-[1px]">
-        <Link href={`/media/${result.media_type}/${result.id}`}>
-          <div
-            className="text-[1rem] font-semibold tracking-[-0.015em] truncate leading-[1.25] hover:opacity-80"
-            style={{ color: 'var(--fg)' }}
-          >
-            {title}
+        <div className="flex items-start justify-between gap-2">
+          <Link href={`/media/${result.media_type}/${result.id}`} className="min-w-0">
+            <div
+              className="text-[1rem] font-semibold tracking-[-0.015em] truncate leading-[1.25] hover:opacity-80"
+              style={{ color: 'var(--fg)' }}
+            >
+              {title}
+            </div>
+          </Link>
+
+          <div className="relative flex-shrink-0" ref={menuRef}>
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setMenuOpen(!menuOpen)
+              }}
+              className="w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--surface2)] transition-colors"
+              style={{ color: 'var(--muted)' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5" r="2" />
+                <circle cx="12" cy="12" r="2" />
+                <circle cx="12" cy="19" r="2" />
+              </svg>
+            </button>
+
+            {menuOpen && (
+              <div
+                className="absolute right-0 top-full mt-1 rounded-[8px] py-1 min-w-[160px] z-50"
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,.4)',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {!existingStatus && (
+                  <button
+                    onClick={() => {
+                      onAdd(result)
+                      setMenuOpen(false)
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-[var(--text-12)] transition-colors hover:bg-[var(--surface2)] flex items-center gap-2"
+                    style={{ color: 'var(--fg)' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add to Watchlist
+                  </button>
+                )}
+                <Link
+                  href={`/media/${result.media_type}/${result.id}`}
+                  onClick={() => setMenuOpen(false)}
+                  className="w-full text-left px-3 py-1.5 text-[var(--text-12)] transition-colors hover:bg-[var(--surface2)] flex items-center gap-2"
+                  style={{ color: 'var(--fg)' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                  View Details
+                </Link>
+              </div>
+            )}
           </div>
-        </Link>
+        </div>
 
         <div
           className="flex items-center gap-[5px] text-[var(--text-11h)] leading-none mb-[2px]"
@@ -130,10 +199,14 @@ export function MediaCard({ result, existingStatus, onAdd }: Props) {
             </span>
           )}
 
+          {/* "+ Add" button is now primarily in the dots menu, but we can keep it here for larger screens or remove it. 
+              Since the request was to improve mobile UI, let's keep the menu and optionally show the inline button. 
+              Actually, let's keep the inline button but maybe hide it on mobile, or just remove it to clean up the UI. 
+              I'll leave it but add hidden sm:block to it. */}
           {!existingStatus && !arrStatus?.hasFile && !arrStatus?.isDownloading && (
             <button
               onClick={() => onAdd(result)}
-              className="text-[var(--text-11)] font-semibold px-[10px] py-[3px] rounded-full border-none cursor-pointer transition-colors duration-100"
+              className="hidden sm:block text-[var(--text-11)] font-semibold px-[10px] py-[3px] rounded-full border-none cursor-pointer transition-colors duration-100"
               style={{ background: 'var(--accent)', color: '#fff' }}
               onMouseEnter={(e) => (e.currentTarget.style.background = '#4f46e5')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}
