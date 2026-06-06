@@ -29,7 +29,50 @@ A local-first media watchlist app. Track movies and TV shows across devices with
 | Metadata | TMDB API |
 | Language | TypeScript 5.5 throughout |
 | Monorepo | pnpm workspaces |
-| Tests | Vitest — 103 tests |
+| Tests | Vitest — 111 tests |
+
+## Plugins
+
+myWatch supports plugins that add new list types beyond movies/TV. Plugins live under `plugins/` and are auto-discovered at build time.
+
+### Books Plugin
+
+Tracks books in dedicated reading lists. Not shown in the All view.
+
+**Create a books list:** New List → type **Books** → name it → Create
+
+**Add a book:** Open list → **+** → search by title, author, or ISBN → select result → Add Book. No results? Click "Add manually" → enter title + author.
+
+**Cards show:** cover image (from Open Library), title, author, year, green **Read** badge when read, and a 🔗 store link (if configured).
+
+**Grid / list view:** use the view toggle top-right. Grid renders covers in 2:3 portrait layout; list renders compact rows.
+
+**Configure bookstore:** Settings → Plugins → Books → enter your store's search URL (e.g. `https://bookshop.org/search`). Plugin appends `?q=title+author` automatically.
+
+**Data per book:**
+```typescript
+{
+  title: string
+  author: string
+  coverUrl?: string      // Open Library cover
+  year?: number
+  isbn?: string
+  openLibraryKey?: string
+  read: boolean
+}
+```
+
+### Building a Plugin
+
+```
+plugins/mywatch-plugin-<name>/
+├── package.json          # mywatch.id + mywatch.displayName required
+├── tsconfig.json
+└── src/
+    └── index.tsx         # export default: MyWatchPlugin
+```
+
+Register in `apps/web/src/plugins/official-catalog.ts` and `apps/api/src/routes/plugins.ts`, then run `node apps/web/scripts/scan-plugins.mjs` to regenerate the registry.
 
 ## Monorepo Structure
 
@@ -40,8 +83,12 @@ myWatch/
 │   └── web/          — Next.js 14 frontend
 ├── packages/
 │   ├── core/         — shared types, Zod schemas, status machine
+│   ├── plugin-sdk/   — plugin interfaces (MyWatchPlugin, PluginCardProps, etc.)
 │   ├── tmdb/         — TMDB API client, normalization, cache utils
 │   └── sync/         — conflict resolution (LWW), device ID
+├── plugins/
+│   ├── mywatch-plugin-youtube/   — YouTube links plugin
+│   └── mywatch-plugin-books/     — Books plugin
 ├── docker-compose.yml
 ├── SETUP.md          — full setup guide
 └── .env.example      — environment variable template
@@ -88,7 +135,7 @@ See [SETUP.md](./SETUP.md) for the full guide.
 # Install all dependencies
 pnpm install
 
-# Run all 103 tests
+# Run all tests
 pnpm test
 
 # Type-check web app
