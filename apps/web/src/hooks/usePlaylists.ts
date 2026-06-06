@@ -229,7 +229,8 @@ export function usePlaylistContentsEditor(playlistId: string) {
 
 export function useDeletePlaylist() {
   return useCallback(async (id: string) => {
-    await db.playlists.where('id').equals(id).modify({ deletedAt: new Date().toISOString() })
+    const now = new Date().toISOString()
+    await db.playlists.where('id').equals(id).modify({ deletedAt: now, updatedAt: now })
   }, [])
 }
 

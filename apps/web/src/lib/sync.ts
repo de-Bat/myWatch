@@ -12,18 +12,16 @@ export async function pushPendingItems(token: string, userId: string, connId?: s
   const claimed = items.map((item) => ({ ...item, userId }))
   if (claimed.length > 0) await db.watchlistItems.bulkPut(claimed)
 
-  // Gather public playlists + their items for sync
+  // Gather all playlists + their items for sync (private playlists are handled by filtering on pull)
   const allPlaylists = await db.playlists.toArray()
-  const publicPlaylists = allPlaylists
-    .filter((p) => p.deletedAt === null && (p.visibility ?? 'public') === 'public')
-    .map((p) => ({ ...p, userId }))
-  const publicPlaylistIds = new Set(publicPlaylists.map((p) => p.id))
+  const pushPlaylists = allPlaylists.map((p) => ({ ...p, userId }))
+  const pushPlaylistIds = new Set(pushPlaylists.map((p) => p.id))
   const allPlaylistItems = await db.playlistItems.toArray()
-  const publicPlaylistItems = allPlaylistItems.filter((i) => publicPlaylistIds.has(i.playlistId))
+  const pushPlaylistItems = allPlaylistItems.filter((i) => pushPlaylistIds.has(i.playlistId))
 
-  if (pending.length === 0 && publicPlaylists.length === 0) return
+  if (pending.length === 0 && pushPlaylists.length === 0) return
 
-  await apiClient.sync.push(claimed, publicPlaylists, publicPlaylistItems, token, connId)
+  await apiClient.sync.push(claimed, pushPlaylists, pushPlaylistItems, token, connId)
   if (itemIds.length > 0) {
     await db.pendingPushes.where('itemId').anyOf(itemIds).delete()
   }
@@ -54,7 +52,12 @@ export async function pullItems(since: string, token: string): Promise<{ pulledA
     ? await db.playlists.where('id').anyOf(remotePlaylistIds).toArray()
     : []
   const localPlaylistMap = new Map(localPlaylists.map((p) => [p.id, p]))
+  const localDeviceId = typeof window !== 'undefined' ? localStorage.getItem('mywatch-device-id') : null
+
   const resolvedPlaylists = remotePlaylists.filter((remote) => {
+    if (remote.visibility === 'private' && remote.deviceId !== localDeviceId) {
+      return false
+    }
     const local = localPlaylistMap.get(remote.id)
     return local === undefined || remote.updatedAt > local.updatedAt
   })

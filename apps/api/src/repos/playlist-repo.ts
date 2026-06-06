@@ -13,7 +13,7 @@ interface PlaylistRow {
   user_id: string
   name: string
   description: string | null
-  type: 'manual' | 'smart'
+  type: string
   smart_rules: unknown
   sort_order: number
   created_at: Date

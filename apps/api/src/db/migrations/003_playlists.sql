@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS playlists (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   description TEXT,
-  type TEXT NOT NULL CHECK (type IN ('manual', 'smart')),
+  type TEXT NOT NULL,
   smart_rules JSONB,
   sort_order INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
