@@ -8,6 +8,7 @@ import type { PluginRepo } from '../repos/plugin-repo.js'
 
 const BUILTIN_PLUGINS = [
   { id: 'youtube', displayName: 'YouTube Links' },
+  { id: 'books', displayName: 'Books' },
 ] as const
 
 type BuiltinId = (typeof BUILTIN_PLUGINS)[number]['id']
