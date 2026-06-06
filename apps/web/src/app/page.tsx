@@ -14,7 +14,7 @@ import { GridItemCard } from '@/components/GridItemCard'
 import { MediaPanel } from '@/components/MediaPanel'
 import { db } from '@/lib/db'
 import { fuzzyFilterItems } from '@/lib/fuzzySearch'
-import { usePlaylists, useSmartPlaylistItems, ALL_LIST_UUID, MAIN_LIST_UUID } from '@/hooks/usePlaylists'
+import { usePlaylists, useSmartPlaylistItems, useUpsertPlaylist, ALL_LIST_UUID, MAIN_LIST_UUID } from '@/hooks/usePlaylists'
 import { EditPlaylistModal } from '@/components/EditPlaylistModal'
 import { CreatePlaylistModal } from '@/components/CreatePlaylistModal'
 import type { Playlist, WatchlistItem } from '@mywatch/core'
@@ -51,6 +51,7 @@ function HomePageInner() {
   const [showPluginAddModal, setShowPluginAddModal] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [sharePluginType, setSharePluginType] = useState<string | null>(null)
+  const shareListCreating = useRef(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const [importBanner, setImportBanner] = useState<{ count: number } | null>(null)
@@ -128,8 +129,24 @@ function HomePageInner() {
     if (!sharePluginType || !playlists) return
     const matchingList = playlists.find((p) => p.type === sharePluginType)
     if (matchingList) {
+      shareListCreating.current = false
       setActiveListId(matchingList.id)
       setShowPluginAddModal(true)
+    } else if (!shareListCreating.current) {
+      shareListCreating.current = true
+      const label = shareListPlugin?.label ?? sharePluginType
+      upsertPlaylist({
+        userId: session?.user?.id ?? '',
+        name: label,
+        description: '',
+        type: sharePluginType,
+        smartRules: null,
+        sortOrder: playlists.length,
+        isDefault: false,
+      }).catch((err) => {
+        shareListCreating.current = false
+        console.error('Failed to create plugin list for share:', err)
+      })
     }
   }, [sharePluginType, playlists]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -201,6 +218,8 @@ function HomePageInner() {
 
   const isPluginList = activeList ? isPluginListType(activeList.type) : false
   const activeListPlugin = useListTypePlugin(isPluginList ? activeList?.type : undefined)
+  const shareListPlugin = useListTypePlugin(sharePluginType ?? undefined)
+  const upsertPlaylist = useUpsertPlaylist()
   const rawPluginItems = usePluginItems(isPluginList ? activeList?.id : undefined)
   const pluginItems = rawPluginItems ?? []
   const upsertPluginItem = useUpsertPluginItem()
