@@ -28,6 +28,7 @@ export function EditPlaylistModal({ playlist, onClose }: Props) {
   const [description, setDescription] = useState(playlist.description ?? '')
   const [isDefault, setIsDefault] = useState(!!playlist.isDefault)
   const [type, setType] = useState<'manual' | 'smart'>(playlist.type)
+  const [visibility, setVisibility] = useState<'public' | 'private'>(playlist.visibility ?? 'public')
 
   // Smart rules states
   const [statuses, setStatuses] = useState<WatchStatus[]>(playlist.smartRules?.statuses ?? [])
@@ -102,6 +103,7 @@ export function EditPlaylistModal({ playlist, onClose }: Props) {
         isDefault,
         type: isSystemList ? playlist.type : type,
         smartRules,
+        visibility: isSystemList ? 'public' : visibility,
       })
 
       // Save manual contents updates if applicable
@@ -219,6 +221,35 @@ export function EditPlaylistModal({ playlist, onClose }: Props) {
           {!isSystemList && (
             <>
               <hr style={{ border: 'none', borderTop: '1px solid var(--border2)', margin: '16px 0' }} />
+
+              {/* Visibility */}
+              <div className="space-y-2">
+                <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+                  Visibility
+                </label>
+                <div
+                  className="flex"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}
+                >
+                  {(['public', 'private'] as const).map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => setVisibility(v)}
+                      className="flex-1 py-[6px] text-[var(--text-12)] font-medium rounded-[4px] transition-all duration-100 cursor-pointer border-none"
+                      style={{
+                        background: visibility === v ? 'var(--surface)' : 'transparent',
+                        color: visibility === v ? 'var(--fg)' : 'var(--muted)',
+                        fontWeight: visibility === v ? 600 : 500,
+                      }}
+                    >
+                      {v === 'public' ? 'Shared' : 'Private'}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[var(--text-11)]" style={{ color: 'var(--muted2)' }}>
+                  {visibility === 'public' ? 'Synced across all your devices.' : 'Stays on this device only.'}
+                </p>
+              </div>
 
               {/* Type toggle */}
               <div className="space-y-2">

@@ -4,22 +4,34 @@ import { apiClient } from './api-client'
 
 export async function pushPendingItems(token: string, userId: string, connId?: string): Promise<void> {
   const pending = await db.pendingPushes.toArray()
-  if (pending.length === 0) return
 
   const itemIds = [...new Set(pending.map((p) => p.itemId))]
   const items = await db.watchlistItems.where('id').anyOf(itemIds).toArray()
 
   // Claim items for the authenticated user (handles guest → auth migration)
   const claimed = items.map((item) => ({ ...item, userId }))
-  await db.watchlistItems.bulkPut(claimed)
+  if (claimed.length > 0) await db.watchlistItems.bulkPut(claimed)
 
-  await apiClient.sync.push(claimed, token, connId)
-  await db.pendingPushes.where('itemId').anyOf(itemIds).delete()
+  // Gather public playlists + their items for sync
+  const allPlaylists = await db.playlists.toArray()
+  const publicPlaylists = allPlaylists
+    .filter((p) => p.deletedAt === null && (p.visibility ?? 'public') === 'public')
+    .map((p) => ({ ...p, userId }))
+  const publicPlaylistIds = new Set(publicPlaylists.map((p) => p.id))
+  const allPlaylistItems = await db.playlistItems.toArray()
+  const publicPlaylistItems = allPlaylistItems.filter((i) => publicPlaylistIds.has(i.playlistId))
+
+  if (pending.length === 0 && publicPlaylists.length === 0) return
+
+  await apiClient.sync.push(claimed, publicPlaylists, publicPlaylistItems, token, connId)
+  if (itemIds.length > 0) {
+    await db.pendingPushes.where('itemId').anyOf(itemIds).delete()
+  }
 }
 
 export async function pullItems(since: string, token: string): Promise<{ pulledAt: string; count: number }> {
-  const { items: remoteItems, jellyfinProgress = [], progressRecaps = [], pulledAt } = await apiClient.sync.pull(since, token)
-  if (remoteItems.length === 0 && jellyfinProgress.length === 0 && progressRecaps.length === 0) {
+  const { items: remoteItems, playlists: remotePlaylists = [], playlistItems: remotePlaylistItems = [], jellyfinProgress = [], progressRecaps = [], pulledAt } = await apiClient.sync.pull(since, token)
+  if (remoteItems.length === 0 && remotePlaylists.length === 0 && jellyfinProgress.length === 0 && progressRecaps.length === 0) {
     return { pulledAt, count: 0 }
   }
 
@@ -35,10 +47,27 @@ export async function pullItems(since: string, token: string): Promise<{ pulledA
     const local = localMap.get(item.id)
     return local === undefined || local.updatedAt !== item.updatedAt
   })
-  
-  await db.transaction('rw', db.watchlistItems, db.jellyfinProgress, db.progressRecaps, async () => {
+
+  // Merge remote playlists (LWW by updatedAt)
+  const remotePlaylistIds = remotePlaylists.map((p) => p.id)
+  const localPlaylists = remotePlaylistIds.length > 0
+    ? await db.playlists.where('id').anyOf(remotePlaylistIds).toArray()
+    : []
+  const localPlaylistMap = new Map(localPlaylists.map((p) => [p.id, p]))
+  const resolvedPlaylists = remotePlaylists.filter((remote) => {
+    const local = localPlaylistMap.get(remote.id)
+    return local === undefined || remote.updatedAt > local.updatedAt
+  })
+
+  await db.transaction('rw', db.watchlistItems, db.playlists, db.playlistItems, db.jellyfinProgress, db.progressRecaps, async () => {
     if (resolved.length > 0) {
       await db.watchlistItems.bulkPut(resolved)
+    }
+    if (resolvedPlaylists.length > 0) {
+      await db.playlists.bulkPut(resolvedPlaylists)
+    }
+    if (remotePlaylistItems.length > 0) {
+      await db.playlistItems.bulkPut(remotePlaylistItems)
     }
     if (jellyfinProgress.length > 0) {
       await db.jellyfinProgress.bulkPut(jellyfinProgress)
@@ -47,6 +76,6 @@ export async function pullItems(since: string, token: string): Promise<{ pulledA
       await db.progressRecaps.bulkPut(progressRecaps)
     }
   })
-  
-  return { pulledAt, count: changed.length + jellyfinProgress.length + progressRecaps.length }
+
+  return { pulledAt, count: changed.length + resolvedPlaylists.length + jellyfinProgress.length + progressRecaps.length }
 }

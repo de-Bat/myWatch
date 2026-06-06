@@ -79,6 +79,7 @@ export interface Playlist {
   deletedAt: string | null
   deviceId: string
   isDefault?: boolean
+  visibility?: 'public' | 'private'
 }
 
 export interface PlaylistItem {

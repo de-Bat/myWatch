@@ -20,6 +20,7 @@ interface PlaylistRow {
   updated_at: Date
   deleted_at: Date | null
   device_id: string
+  visibility: 'public' | 'private'
 }
 
 interface PlaylistItemRow {
@@ -44,6 +45,7 @@ function mapPlaylistRow(row: PlaylistRow): Playlist {
     updatedAt: row.updated_at.toISOString(),
     deletedAt: row.deleted_at?.toISOString() ?? null,
     deviceId: row.device_id,
+    visibility: row.visibility,
   }
 }
 
@@ -69,14 +71,16 @@ export function createPlaylistRepo(sql: Sql): PlaylistRepo {
         const deletedAt   = p.deletedAt   ?? null
         const deviceId    = p.deviceId    ?? ''
 
+        const visibility = p.visibility ?? 'public'
+
         await sql`
           INSERT INTO playlists (
             id, user_id, name, description, type, smart_rules,
-            sort_order, created_at, updated_at, device_id, deleted_at
+            sort_order, created_at, updated_at, device_id, deleted_at, visibility
           ) VALUES (
             ${p.id}, ${userId}, ${p.name}, ${description}, ${p.type},
             ${smartRules ? sql.json(smartRules as never) : null},
-            ${p.sortOrder}, ${p.createdAt}, ${p.updatedAt}, ${deviceId}, ${deletedAt}
+            ${p.sortOrder}, ${p.createdAt}, ${p.updatedAt}, ${deviceId}, ${deletedAt}, ${visibility}
           )
           ON CONFLICT (id) DO UPDATE SET
             name = EXCLUDED.name,
@@ -86,7 +90,8 @@ export function createPlaylistRepo(sql: Sql): PlaylistRepo {
             sort_order = EXCLUDED.sort_order,
             updated_at = EXCLUDED.updated_at,
             device_id = EXCLUDED.device_id,
-            deleted_at = EXCLUDED.deleted_at
+            deleted_at = EXCLUDED.deleted_at,
+            visibility = EXCLUDED.visibility
           WHERE EXCLUDED.updated_at > playlists.updated_at
         `
       }
@@ -108,7 +113,7 @@ export function createPlaylistRepo(sql: Sql): PlaylistRepo {
     async findPlaylistsSince(userId, since) {
       const rows = await sql<PlaylistRow[]>`
         SELECT id, user_id, name, description, type, smart_rules,
-               sort_order, created_at, updated_at, device_id, deleted_at
+               sort_order, created_at, updated_at, device_id, deleted_at, visibility
         FROM playlists
         WHERE user_id = ${userId}
           AND updated_at > ${since}::timestamptz

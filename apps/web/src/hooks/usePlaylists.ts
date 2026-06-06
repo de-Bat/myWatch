@@ -26,8 +26,9 @@ export async function seedDefaultPlaylists() {
     updatedAt: now,
     deviceId,
     deletedAt: null,
+    visibility: 'public',
   }
-  
+
   const mainList: Playlist = {
     id: MAIN_LIST_UUID,
     userId: '',
@@ -41,6 +42,7 @@ export async function seedDefaultPlaylists() {
     updatedAt: now,
     deviceId,
     deletedAt: null,
+    visibility: 'public',
   }
   
   await db.playlists.bulkPut([allList, mainList])
