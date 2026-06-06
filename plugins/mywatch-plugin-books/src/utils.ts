@@ -6,17 +6,7 @@ interface OpenLibraryDoc {
   first_publish_year?: number
   cover_i?: number
   isbn?: string[]
-  description?: string
-}
-
-export interface OpenLibraryResult {
-  key: string           // e.g. "/works/OL45883W"
-  title: string
-  authorName: string[]
-  firstPublishYear?: number
-  coverId?: number
-  isbn?: string[]
-  description?: string
+  description?: string | { type: string; value: string }
 }
 
 export interface BookMetadata {
@@ -56,18 +46,26 @@ export function buildCoverUrl(coverId: number, size: 'S' | 'M' | 'L' = 'M'): str
 }
 
 export async function searchBooks(query: string): Promise<BookMetadata[]> {
-  if (!query.trim()) return []
-  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query.trim())}&limit=5&fields=key,title,author_name,first_publish_year,cover_i,isbn,description`
-  const res = await fetch(url)
-  if (!res.ok) return []
-  const data = await res.json() as { docs?: OpenLibraryDoc[] }
-  return (data.docs ?? []).map((doc) => ({
-    openLibraryKey: doc.key,
-    title: doc.title,
-    author: (doc.author_name ?? [])[0] ?? 'Unknown',
-    coverUrl: doc.cover_i ? buildCoverUrl(doc.cover_i) : undefined,
-    year: doc.first_publish_year,
-    isbn: (doc.isbn ?? [])[0],
-    description: typeof doc.description === 'string' ? doc.description : undefined,
-  }))
+  try {
+    const trimmed = query.trim()
+    if (!trimmed) return []
+    const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(trimmed)}&limit=5&fields=key,title,author_name,first_publish_year,cover_i,isbn`
+    const res = await fetch(url)
+    if (!res.ok) return []
+    const data = await res.json() as { docs?: OpenLibraryDoc[] }
+    return (data.docs ?? []).map((doc) => {
+      const d = doc.description
+      return {
+        openLibraryKey: doc.key,
+        title: doc.title,
+        author: (doc.author_name ?? [])[0] ?? 'Unknown',
+        coverUrl: doc.cover_i ? buildCoverUrl(doc.cover_i) : undefined,
+        year: doc.first_publish_year,
+        isbn: (doc.isbn ?? [])[0],
+        description: typeof d === 'string' ? d : (d && typeof d === 'object' ? (d as { value: string }).value : undefined),
+      }
+    })
+  } catch {
+    return []
+  }
 }
