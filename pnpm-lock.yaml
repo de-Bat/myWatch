@@ -114,6 +114,12 @@ importers:
       fuse.js:
         specifier: ^7.3.0
         version: 7.3.0
+      mywatch-plugin-books:
+        specifier: workspace:*
+        version: link:../../plugins/mywatch-plugin-books
+      mywatch-plugin-youtube:
+        specifier: workspace:*
+        version: link:../../plugins/mywatch-plugin-youtube
       next:
         specifier: 14.2.29
         version: 14.2.29(@babel/core@7.29.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)

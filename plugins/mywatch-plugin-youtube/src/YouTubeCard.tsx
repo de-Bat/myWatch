@@ -17,7 +17,7 @@ function formatDuration(seconds: number): string {
 }
 
 export function YouTubeCard({ item }: PluginCardProps) {
-  const data = item.data as YouTubeData
+  const data = item.data as unknown as YouTubeData
   const [imgError, setImgError] = useState(false)
   const watchUrl = `https://www.youtube.com/watch?v=${data.videoId}`
 

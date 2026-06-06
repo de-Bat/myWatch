@@ -44,7 +44,7 @@ function StoreLinkButton({ title, author, compact }: { title: string; author: st
 }
 
 export function BooksCard({ item, viewMode = 'list' }: PluginCardProps) {
-  const data = item.data as BookData
+  const data = item.data as unknown as BookData
   const [imgError, setImgError] = useState(false)
 
   if (viewMode === 'grid') {

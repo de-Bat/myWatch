@@ -1,5 +1,9 @@
 [
   {
+    "name": "mywatch-plugin-books",
+    "id": "books"
+  },
+  {
     "name": "mywatch-plugin-youtube",
     "id": "youtube"
   }
