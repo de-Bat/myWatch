@@ -21,6 +21,7 @@ import type { Playlist, WatchlistItem } from '@mywatch/core'
 import { useListTypePlugin, isPluginListType } from '@/plugins'
 import { usePluginItems, useUpsertPluginItem } from '@/hooks/usePluginItems'
 import type { PluginItem } from '@mywatch/core'
+import { Tooltip } from '@/components/Tooltip'
 
 const STATUS_TABS: Array<WatchStatus | 'all'> = ['all', 'planned', 'in_progress', 'watched', 'quit']
 const STATUS_LABELS: Record<WatchStatus | 'all', string> = {
@@ -29,6 +30,13 @@ const STATUS_LABELS: Record<WatchStatus | 'all', string> = {
   in_progress: 'Watching',
   watched: 'Watched',
   quit: 'Quit',
+}
+const STATUS_TIPS: Record<WatchStatus | 'all', string> = {
+  all: 'Show everything',
+  planned: 'Added but not started yet',
+  in_progress: 'Currently watching',
+  watched: 'Finished',
+  quit: 'Stopped watching before finishing',
 }
 
 const SORT_OPTIONS = [
@@ -801,6 +809,7 @@ function HomePageInner() {
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s)}
+                  title={STATUS_TIPS[s]}
                   className="inline-flex items-center whitespace-nowrap border cursor-pointer transition-all duration-[120ms]"
                   style={{
                     padding: '0.35rem 0.8rem',
@@ -1084,6 +1093,7 @@ function HomePageInner() {
                 <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ width: '0.71rem', height: '0.71rem', opacity: 0.5, transform: genreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>
                   <polyline points="2 3.5 5 6.5 8 3.5" />
                 </svg>
+                <Tooltip content="Filter by genre. Select multiple genres to show items matching any of them." />
               </button>
               {genreOpen && (
                 <div

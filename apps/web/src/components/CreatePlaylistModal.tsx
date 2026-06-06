@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { SmartRules, WatchStatus, MediaType } from '@mywatch/core'
 import { useUpsertPlaylist } from '@/hooks/usePlaylists'
 import { usePlugins } from '@/plugins'
+import { Tooltip } from './Tooltip'
 
 interface Props {
   onClose: () => void
@@ -135,9 +136,12 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
 
           {/* Type toggle */}
           <div className="space-y-2">
-            <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
-              Type
-            </label>
+            <div className="flex items-center gap-[5px]">
+              <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+                Type
+              </label>
+              <Tooltip content="Manual: add items yourself, drag to reorder. Smart: auto-fills from your watchlist by rules. Plugin types (Books, YouTube): dedicated lists for that content." />
+            </div>
             <div className="flex flex-wrap gap-[5px]">
               {[
                 { id: 'manual', label: 'Manual' },
@@ -169,9 +173,12 @@ export function CreatePlaylistModal({ onClose, onCreated }: Props) {
 
           {/* Visibility */}
           <div className="space-y-2">
-            <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
-              Visibility
-            </label>
+            <div className="flex items-center gap-[5px]">
+              <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
+                Visibility
+              </label>
+              <Tooltip content="Shared: synced across all your devices. Private: local only, never synced." />
+            </div>
             <div
               className="flex"
               style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--rsm)', padding: 2, gap: 1 }}

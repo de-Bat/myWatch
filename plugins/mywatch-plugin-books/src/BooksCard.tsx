@@ -112,6 +112,7 @@ export function BooksCard({ item, viewMode = 'list' }: PluginCardProps) {
           </p>
           {data.read && (
             <span
+              title="Marked as read"
               className="self-start text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
               style={{ background: 'rgba(134,239,172,.12)', color: 'var(--green)' }}
             >
@@ -197,6 +198,7 @@ export function BooksCard({ item, viewMode = 'list' }: PluginCardProps) {
             <>
               <span style={{ opacity: 0.35, color: 'var(--muted2)', fontSize: 'var(--text-11h)' }}>·</span>
               <span
+                title="Marked as read"
                 className="text-[var(--text-9h)] font-extrabold tracking-[0.06em] uppercase px-[5px] py-[1.5px] rounded-[3px]"
                 style={{ background: 'rgba(134,239,172,.12)', color: 'var(--green)' }}
               >
