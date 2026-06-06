@@ -14,6 +14,7 @@ export interface PluginItem {
 export interface PluginCardProps {
   item: PluginItem
   onSelect?: () => void
+  viewMode?: 'grid' | 'list'
 }
 
 export interface AddItemModalProps {
