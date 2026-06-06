@@ -458,7 +458,7 @@ function HomePageInner() {
                     padding: '1px 7px',
                   }}
                 >
-                  {displayed.length}
+                  {isPluginList ? pluginItems.length : displayed.length}
                 </span>
                 <svg
                   width="11"

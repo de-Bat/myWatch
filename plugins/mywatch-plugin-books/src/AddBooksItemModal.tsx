@@ -66,7 +66,7 @@ export function AddBooksItemModal({ playlistId, onClose, onAdded }: AddItemModal
       }
       setSaving(true)
       const now = new Date().toISOString()
-      onAdded({
+      await onAdded({
         id: crypto.randomUUID(),
         pluginId: 'books',
         listTypeId: 'books',
@@ -83,7 +83,7 @@ export function AddBooksItemModal({ playlistId, onClose, onAdded }: AddItemModal
     if (!selected) return
     setSaving(true)
     const now = new Date().toISOString()
-    onAdded({
+    await onAdded({
       id: crypto.randomUUID(),
       pluginId: 'books',
       listTypeId: 'books',

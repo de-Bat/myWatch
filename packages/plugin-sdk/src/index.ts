@@ -21,7 +21,7 @@ export interface AddItemModalProps {
   playlistId: string
   prefillUrl?: string
   onClose: () => void
-  onAdded: (item: PluginItem) => void
+  onAdded: (item: PluginItem) => void | Promise<void>
 }
 
 export interface PluginSettingsProps {

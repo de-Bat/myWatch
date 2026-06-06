@@ -70,7 +70,7 @@ export function AddYouTubeItemModal({ playlistId, prefillUrl, onClose, onAdded }
       updatedAt: now,
       deletedAt: null,
     }
-    onAdded(item)
+    await onAdded(item)
     setSaving(false)
     onClose()
   }

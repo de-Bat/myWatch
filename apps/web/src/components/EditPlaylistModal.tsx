@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { Playlist, SmartRules, WatchStatus, MediaType, WatchlistItem, MediaCache } from '@mywatch/core'
-import { useUpdatePlaylist, usePlaylistContentsEditor, ALL_LIST_UUID, MAIN_LIST_UUID } from '@/hooks/usePlaylists'
+import { useUpdatePlaylist, usePlaylistContentsEditor, useDeletePlaylist, ALL_LIST_UUID, MAIN_LIST_UUID } from '@/hooks/usePlaylists'
+import { usePlugins } from '@/plugins'
 import { db } from '@/lib/db'
 
 interface Props {
@@ -20,6 +21,7 @@ const WATCH_STATUSES: { value: WatchStatus; label: string }[] = [
 export function EditPlaylistModal({ playlist, onClose }: Props) {
   const updatePlaylist = useUpdatePlaylist()
   const editContents = usePlaylistContentsEditor(playlist.id)
+  const deletePlaylist = useDeletePlaylist()
 
   const isSystemList = playlist.id === ALL_LIST_UUID || playlist.id === MAIN_LIST_UUID
 
@@ -27,7 +29,7 @@ export function EditPlaylistModal({ playlist, onClose }: Props) {
   const [name, setName] = useState(playlist.name)
   const [description, setDescription] = useState(playlist.description ?? '')
   const [isDefault, setIsDefault] = useState(!!playlist.isDefault)
-  const [type, setType] = useState<'manual' | 'smart'>(playlist.type)
+  const [type, setType] = useState<string>(playlist.type)
   const [visibility, setVisibility] = useState<'public' | 'private'>(playlist.visibility ?? 'public')
 
   // Smart rules states
@@ -39,6 +41,12 @@ export function EditPlaylistModal({ playlist, onClose }: Props) {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [contentsSearch, setContentsSearch] = useState('')
   const [saving, setSaving] = useState(false)
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+
+  const plugins = usePlugins()
+  const pluginListTypes = plugins.flatMap((p) => p.listTypes ?? [])
+  const isPluginType = !['manual', 'smart'].includes(type)
+  const pluginTypeLabel = pluginListTypes.find((lt) => lt.id === type)?.label ?? type
 
   // Fetch all watchlist items + media cache for checklist
   const allWatchlistItems = useLiveQuery(() => db.watchlistItems.filter(i => i.deletedAt === null).toArray()) ?? []
@@ -115,6 +123,17 @@ export function EditPlaylistModal({ playlist, onClose }: Props) {
     } catch (err) {
       console.error('Failed to save list', err)
     } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    setSaving(true)
+    try {
+      await deletePlaylist(playlist.id)
+      onClose()
+    } catch (err) {
+      console.error('Failed to delete list', err)
       setSaving(false)
     }
   }
@@ -256,6 +275,17 @@ export function EditPlaylistModal({ playlist, onClose }: Props) {
                 <label className="text-[var(--text-10)] font-bold tracking-[0.08em] uppercase" style={{ color: 'var(--muted2)' }}>
                   Type
                 </label>
+                {isPluginType ? (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="px-[9px] py-[4px] rounded-full text-[var(--text-11)] font-medium border"
+                      style={{ background: 'var(--accent-bg)', color: 'var(--accent2)', borderColor: 'var(--accent)' }}
+                    >
+                      {pluginTypeLabel}
+                    </span>
+                    <span className="text-[var(--text-11)]" style={{ color: 'var(--muted2)' }}>Plugin-managed list</span>
+                  </div>
+                ) : (
                 <div
                   className="flex"
                   style={{
@@ -281,6 +311,7 @@ export function EditPlaylistModal({ playlist, onClose }: Props) {
                     </button>
                   ))}
                 </div>
+                )}
               </div>
 
               {/* Smart rules */}
@@ -423,6 +454,30 @@ export function EditPlaylistModal({ playlist, onClose }: Props) {
                   </div>
                 </div>
               )}
+            </>
+          )}
+
+          {/* Delete List Button */}
+          {!isSystemList && (
+            <>
+              <hr style={{ border: 'none', borderTop: '1px solid var(--border2)', margin: '24px 0 16px 0' }} />
+              <button
+                onClick={() => {
+                  if (showConfirmDelete) {
+                    void handleDelete()
+                  } else {
+                    setShowConfirmDelete(true)
+                  }
+                }}
+                disabled={saving}
+                className="w-full py-2.5 rounded-[6px] text-[var(--text-13)] font-semibold transition-all duration-100 cursor-pointer border-none disabled:opacity-50"
+                style={{ 
+                  background: showConfirmDelete ? 'var(--red)' : 'rgba(239, 68, 68, 0.1)', 
+                  color: showConfirmDelete ? '#fff' : 'var(--red)' 
+                }}
+              >
+                {showConfirmDelete ? 'Are you sure? Click again to delete' : 'Delete List'}
+              </button>
             </>
           )}
         </div>
