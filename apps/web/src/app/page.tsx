@@ -1288,7 +1288,14 @@ function HomePageInner() {
           <p style={{ color: 'var(--muted)', fontSize: 'var(--text-13)' }}>Loading…</p>
         ) : isPluginList ? (
           activeListPlugin ? (
-            <div className="flex flex-col" style={{ gap: 8 }}>
+            <div
+              className={viewMode === 'grid' ? 'grid' : 'flex flex-col'}
+              style={
+                viewMode === 'grid'
+                  ? { gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }
+                  : { gap: 8 }
+              }
+            >
               {pluginItems.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 text-center" style={{ padding: '64px 16px 48px' }}>
                   <div
@@ -1309,7 +1316,7 @@ function HomePageInner() {
               ) : (
                 pluginItems.map((pi: PluginItem) => {
                   const Card = activeListPlugin.CardComponent
-                  return <Card key={pi.id} item={pi} />
+                  return <Card key={pi.id} item={pi} viewMode={viewMode} />
                 })
               )}
             </div>
